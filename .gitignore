@@ -1,0 +1,26 @@
+# Variáveis de ambiente
+.env
+server/.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operacional
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build / Saída
+dist/
+build/
+
+# Lock do pacote (opcional — remova esta linha se quiser versionar o lock)
+# package-lock.json

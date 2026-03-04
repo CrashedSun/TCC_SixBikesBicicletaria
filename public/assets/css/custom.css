@@ -1,0 +1,20 @@
+/*
+Custom Css
+*/
+/* Estilo para a Tabela Rolável */
+.scrollable-table-container {
+    max-height: 400px; /* Limite de altura */
+    overflow-y: auto; /* Adiciona a barra de rolagem vertical */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+.scrollable-table-container table {
+    margin-bottom: 0; /* Remove margem inferior do Bootstrap */
+}
+.table-hover tbody tr:hover {
+    cursor: pointer;
+    background-color: #f0fff0 !important; /* Cor suave de hover */
+}
+.table-active-select {
+    background-color: #d1e7dd !important; /* Cor do Bootstrap success light */
+}

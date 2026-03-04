@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <title>SixBikes Bicicletaria</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="apple-touch-icon" href="assets/img/apple-icon.png">
+    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.ico">
+
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/templatemo.css">
+    <link rel="stylesheet" href="assets/css/custom.css">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;700;900&display=swap">
+    <link rel="stylesheet" href="assets/css/fontawesome.min.css">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .login-box {
+            max-width: 400px;
+            margin: 80px auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+        }
+
+        .login-box h2 {
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .btn-success {
+            background-color: #59ab6e;
+            border-color: #59ab6e;
+        }
+
+        .btn-success:hover {
+            background-color: #46915a;
+            border-color: #46915a;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="login-box position-relative">
+            <a href="index.html" class="btn btn-sm btn-outline-success position-absolute top-0 end-0 m-2" title="Voltar para Home">
+                &larr; Home
+            </a>
+            <h2 class="text-success text-center">Entrar</h2>
+            <form id="loginForm"> 
+                <div class="mb-3">
+                    <label for="email" class="form-label">E-mail</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Seu@email.com" required>
+                </div>
+                <div class="mb-3">
+                    <label for="senha" class="form-label">Senha</label>
+                    <input type="password" class="form-control" id="senha" name="senha" placeholder="Digite sua senha" required>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-success">Entrar</button>
+                </div>
+                <div class="mt-3 text-center">
+                    Não possui conta?
+                    <a href="registro.html" class="text-decoration-none">Inscreva-se</a>
+                </div>
+                <div class="mt-1 text-center">
+                  <a href="senha.html" class="text-decoration-none">Esqueceu a senha?</a>
+                </div>
+            </form>
+            <!-- Segundo Passo: Troca de Senha Obrigatória -->
+            <div id="changePasswordStep" style="display:none;" class="mt-4">
+                <h5 class="text-warning">Primeiro Acesso - Defina Nova Senha</h5>
+                <p class="small">Sua conta exige a troca da senha inicial. Escolha uma nova senha para continuar.</p>
+                <div class="mb-3">
+                    <label class="form-label" for="novaSenhaLogin">Nova Senha</label>
+                    <input type="password" class="form-control" id="novaSenhaLogin" minlength="6" placeholder="Min. 6 caracteres">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="confirmaNovaSenhaLogin">Confirmar Nova Senha</label>
+                    <input type="password" class="form-control" id="confirmaNovaSenhaLogin" minlength="6" placeholder="Repita a nova senha">
+                </div>
+                <div id="changePassStatus" class="mb-2 small"></div>
+                <div class="d-grid">
+                    <button id="btnConfirmarTroca" class="btn btn-primary">Trocar Senha e Entrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/jquery-1.11.0.min.js"></script>
+    <script src="assets/js/jquery-migrate-1.2.1.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/auth.js"></script> 
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const changeStep = document.getElementById('changePasswordStep');
+        const btnConfirmarTroca = document.getElementById('btnConfirmarTroca');
+        const changePassStatus = document.getElementById('changePassStatus');
+
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const senha = document.getElementById('senha').value;
+            performLogin(email, senha); // Primeiro passo
+        });
+
+        // Escuta evento disparado pelo auth.js quando trocarSenha=true
+        window.addEventListener('requirePasswordChange', (ev) => {
+            // Oculta primeiro form e exibe segundo passo
+            loginForm.style.display = 'none';
+            changeStep.style.display = 'block';
+        });
+
+        btnConfirmarTroca.addEventListener('click', () => {
+            const nova = document.getElementById('novaSenhaLogin').value;
+            const confirma = document.getElementById('confirmaNovaSenhaLogin').value;
+            changePassStatus.textContent = '';
+            if (!nova || nova.length < 6) {
+                changePassStatus.textContent = 'Senha muito curta.';
+                changePassStatus.style.color = 'red';
+                return;
+            }
+            if (nova !== confirma) {
+                changePassStatus.textContent = 'As senhas não coincidem.';
+                changePassStatus.style.color = 'red';
+                return;
+            }
+            if (!window._pendingFirstLogin) {
+                changePassStatus.textContent = 'Fluxo inválido. Recarregue a página.';
+                changePassStatus.style.color = 'red';
+                return;
+            }
+            changePassStatus.textContent = 'Atualizando...';
+            changePassStatus.style.color = '#555';
+            const { login, senha } = window._pendingFirstLogin;
+            performLogin(login, senha, nova); // Segundo passo com novaSenha
+        });
+    </script>
+</body>
+</html>

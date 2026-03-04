@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>SixBikes Bicicletaria</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="apple-touch-icon" href="assets/img/apple-icon.png">
+    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.ico">
+
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/templatemo.css">
+    <link rel="stylesheet" href="assets/css/custom.css">
+
+    <!-- fontes -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;700;900&display=swap">
+    <link rel="stylesheet" href="assets/css/fontawesome.min.css">
+
+</head>
+
+<body>
+<!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-light shadow">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand text-success logo h1 align-self-center" href="index.html">SixBikes Bicicletaria</a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#templatemo_main_nav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="align-self-center collapse navbar-collapse flex-fill d-lg-flex justify-content-lg-between" id="templatemo_main_nav">
+                <div class="flex-fill">
+                    <ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
+                        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
+                        <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="eventos.html">Eventos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
+                    </ul>
+                </div>
+                <div class="navbar align-self-center d-flex">
+                    <a class="nav-icon d-none d-lg-inline" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
+                        <i class="fa fa-fw fa-search text-dark mr-2"></i>
+                    </a>
+                    <a class="nav-icon position-relative text-decoration-none" href="carrinho.html">
+                        <i class="fa fa-fw fa-cart-arrow-down text-dark mr-1"></i>
+                        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">0</span>
+                    </a>
+                    <a class="nav-icon position-relative text-decoration-none" href="login.html">
+                        <i class="fa fa-fw fa-user text-dark mr-3"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+<!-- End Header -->
+
+    <!-- Modal -->
+    <div class="modal fade bg-white" id="templatemo_search" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="w-100 pt-1 mb-5 text-right">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="" method="get" class="modal-content modal-body border-0 p-0">
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="inputModalSearch" name="q" placeholder="Search ...">
+                    <button type="submit" class="input-group-text bg-success text-light">
+                        <i class="fa fa-fw fa-search text-white"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Close Banner -->
+
+    <!-- Start Content -->
+    <div class="container py-5">
+        <div class="row text-center pt-5 pb-3">
+            <div class="col-lg-6 m-auto">
+                <h1 class="h1">Nossos Serviços</h1>
+                <p>
+                    Confira todos os serviços disponíveis para manter sua bike em perfeito estado
+                </p>
+            </div>
+        </div>
+        
+        <div class="row" id="servicosContainer">
+            <!-- Serviços serão carregados dinamicamente aqui -->
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-12">
+                <h2 class="h2">Meus Agendamentos</h2>
+                <div id="meusAgendamentosContainer" class="mt-3"></div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <nav aria-label="Paginação de serviços">
+                <ul id="servicosPagination" class="pagination pagination-lg justify-content-end"></ul>
+            </nav>
+        </div>
+    </div>
+    <!-- End Content -->
+
+    <!-- Footer -->
+    <footer class="bg-dark" id="tempaltemo_footer">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-success border-bottom pb-3 border-light logo">SixBikes Bicicletaria</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li>
+                            <i class="fas fa-map-marker-alt fa-fw"></i>
+                            Endereço
+                        </li>
+                        <li>
+                            <i class="fa fa-phone fa-fw"></i>
+                            <a class="text-decoration-none" href="tel:010-020-0340">(11) 99999-9999</a>
+                        </li>
+                        <li>
+                            <i class="fa fa-envelope fa-fw"></i>
+                            <a class="text-decoration-none" href="mailto:info@company.com">atendimento@sixbikes.com</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-light border-bottom pb-3 border-light">Produtos</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li><a class="text-decoration-none" href="#">Catergoria 1</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 2</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 3</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 4</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 5</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 6</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 7</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-light border-bottom pb-3 border-light">Abas</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li><a class="text-decoration-none" href="index.html">Home</a></li>
+                        <li><a class="text-decoration-none" href="servicos.html">Serviços</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html">Produtos</a></li>
+                        <li><a class="text-decoration-none" href="eventos.html">Eventos</a></li>
+                        <li><a class="text-decoration-none" href="contato.html">Contato</a></li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="row text-light mb-4">
+                <div class="col-12 mb-3">
+                    <div class="w-100 my-3 border-top border-light"></div>
+                </div>
+                <div class="col-auto me-auto">
+                    <ul class="list-inline text-left footer-icons">
+                        <li class="list-inline-item border border-light rounded-circle text-center">
+                            <a class="text-light text-decoration-none" target="_blank" href="http://facebook.com/"><i class="fab fa-facebook-f fa-lg fa-fw"></i></a>
+                        </li>
+                        <li class="list-inline-item border border-light rounded-circle text-center">
+                            <a class="text-light text-decoration-none" target="_blank" href="https://www.instagram.com/"><i class="fab fa-instagram fa-lg fa-fw"></i></a>
+                        </li>
+                        <li class="list-inline-item border border-light rounded-circle text-center">
+                            <a class="text-light text-decoration-none" target="_blank" href="https://twitter.com/"><i class="fab fa-twitter fa-lg fa-fw"></i></a>
+                        </li>
+                        <li class="list-inline-item border border-light rounded-circle text-center">
+                            <a class="text-light text-decoration-none" target="_blank" href="https://www.linkedin.com/"><i class="fab fa-linkedin fa-lg fa-fw"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-100 bg-black py-3">     
+        </div>
+
+    </footer>
+    <!-- Fim Footer -->
+
+    <!-- Start Script -->
+    <script src="assets/js/jquery-1.11.0.min.js"></script>
+    <script src="assets/js/jquery-migrate-1.2.1.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/templatemo.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script src="assets/js/search.js"></script>
+    <!-- End Script -->
+    <script src="assets/js/cart.js"></script>
+    <script>
+        function updateCartCount(){
+            if(window.Cart){
+                const el = document.getElementById('cart-count');
+                if(el) el.textContent = Cart.count();
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCartCount();
+            window.addEventListener('storage', (e) => {
+                if(e.key === 'sixbikes_cart') updateCartCount();
+            });
+        });
+    </script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        const PAGE_SIZE = 9;
+        let allServicos = [];
+        let currentPage = 1;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const container = document.getElementById('servicosContainer');
+
+            function renderCards(page) {
+                container.innerHTML = '';
+                const start = (page - 1) * PAGE_SIZE;
+                const end = start + PAGE_SIZE;
+                const toShow = allServicos.slice(start, end);
+
+                if (toShow.length === 0) {
+                    container.innerHTML = '<div class="col-12 text-center"><p class="text-muted">Nenhum serviço disponível no momento.</p></div>';
+                    return;
+                }
+
+                toShow.forEach(servico => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-4';
+
+                    const valorFmt = parseFloat(servico.valor || 0).toFixed(2);
+                    const imgSrc = servico.foto || './assets/img/feature_prod_01.jpeg';
+                    const nomeEscaped = (servico.nome || '').replace(/"/g, '&quot;');
+                    
+                    col.innerHTML = `
+                        <div class="card mb-4 product-wap rounded-0">
+                            <div class="card rounded-0">
+                                <img class="card-img rounded-0 img-fluid" src="${imgSrc}" alt="${nomeEscaped}">
+                                <div class="card-img-overlay rounded-0 product-overlay d-flex align-items-center justify-content-center">
+                                    <ul class="list-unstyled">
+                                        <li><a class="btn btn-success text-white agendar-servico-btn" href="#" data-id="${servico.idservico}"><i class="far fa-calendar-alt"></i></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <a href="#" class="h3 text-decoration-none">${servico.nome}</a>
+                                <ul class="w-100 list-unstyled d-flex justify-content-between mb-0">
+                                    <li>${servico.duracaoestimada} min</li>
+                                    <li class="text-success">R$ ${valorFmt}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(col);
+                });
+                
+                // Adicionar event listeners aos botões de agendamento
+                document.querySelectorAll('.agendar-servico-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const idservico = btn.dataset.id;
+                        agendarServico(idservico);
+                    });
+                });
+            }
+
+            function renderPagination(page) {
+                const ul = document.getElementById('servicosPagination');
+                ul.innerHTML = '';
+                const totalPages = Math.max(1, Math.ceil(allServicos.length / PAGE_SIZE));
+
+                const createItem = (label, targetPage, disabled = false, active = false) => {
+                    const li = document.createElement('li');
+                    li.className = `page-item${disabled ? ' disabled' : ''}${active ? ' active' : ''}`;
+                    const a = document.createElement('a');
+                    a.className = 'page-link';
+                    a.href = '#';
+                    a.textContent = label;
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (disabled || targetPage === currentPage) return;
+                        currentPage = targetPage;
+                        renderCards(currentPage);
+                        renderPagination(currentPage);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
+                    li.appendChild(a);
+                    return li;
+                };
+
+                // Prev
+                ul.appendChild(createItem('«', Math.max(1, page - 1), page === 1, false));
+
+                // Page numbers
+                for (let p = 1; p <= totalPages; p++) {
+                    ul.appendChild(createItem(String(p), p, false, p === page));
+                }
+
+                // Next
+                ul.appendChild(createItem('»', Math.min(totalPages, page + 1), page === totalPages, false));
+            }
+
+            async function loadServicos() {
+                try {
+                    const response = await fetch(`${window.API_BASE_URL}/servicos/public`);
+                    const data = await response.json();
+
+                    if (!response.ok || !Array.isArray(data)) {
+                        throw new Error('Falha ao carregar serviços.');
+                    }
+                    
+                    allServicos = data;
+                    currentPage = 1;
+                    renderCards(currentPage);
+                    renderPagination(currentPage);
+
+                } catch (error) {
+                    console.error("Erro ao carregar serviços:", error);
+                    document.getElementById('servicosContainer').innerHTML = 
+                        '<div class="col-12 text-center"><p class="text-danger">Não foi possível carregar os serviços.</p></div>';
+                }
+            }
+
+            async function loadMeusAgendamentos() {
+                const container = document.getElementById('meusAgendamentosContainer');
+                const token = localStorage.getItem('userToken');
+                if (!token) {
+                    container.innerHTML = '<p class="text-muted">Faça login para ver seus agendamentos.</p>';
+                    return;
+                }
+                container.innerHTML = '<p class="text-info">Carregando seus agendamentos...</p>';
+                try {
+                    const resp = await fetch(`${window.API_BASE_URL}/agendamentos/meus`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.error || 'Falha ao carregar seus agendamentos.');
+                    // Filtra apenas ABERTO e EM ANDAMENTO
+                    const visiveis = Array.isArray(data) ? data.filter(i => (i.status === 'ABERTO' || i.status === 'EM ANDAMENTO')) : [];
+                    if (!Array.isArray(data) || visiveis.length === 0) {
+                        container.innerHTML = '<p class="text-muted">Você não possui agendamentos.</p>';
+                        return;
+                    }
+                    // Renderizar lista
+                    const list = document.createElement('div');
+                    list.className = 'list-group';
+                    visiveis.forEach(item => {
+                        const dt = item.dataagendada ? new Date(item.dataagendada) : null;
+                        const dtStr = dt ? dt.toLocaleString() : '-';
+                        const elem = document.createElement('a');
+                        elem.href = '#';
+                        elem.className = 'list-group-item list-group-item-action';
+                        elem.innerHTML = `
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">${item.servico_nome || 'Serviço'}</h5>
+                                <small class="text-muted">${item.status}</small>
+                            </div>
+                            <p class="mb-1">Agendado para: ${dtStr}</p>
+                            <small class="text-muted">${item.observacoes || ''}</small>
+                        `;
+                        list.appendChild(elem);
+                    });
+                    container.innerHTML = '';
+                    container.appendChild(list);
+                } catch (e) {
+                    container.innerHTML = `<p class="text-danger">${e.message}</p>`;
+                }
+            }
+
+            function agendarServico(idservico) {
+                // Verificar se está logado
+                const token = localStorage.getItem('userToken');
+                if (!token) {
+                    alert('Você precisa estar logado para agendar um serviço.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                window.location.href = `agendamento.html?id=${encodeURIComponent(idservico)}`;
+            }
+
+            loadServicos();
+            loadMeusAgendamentos();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atendente - Dashboard</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <style>
+        body {
+            background: #f4fdf4;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .sidebar {
+            width: 240px;
+            height: 100vh;
+            background: #7ed957;
+            color: #fff;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding-top: 25px;
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar h3 {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 14px 20px;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 8px;
+            margin: 4px 12px;
+            transition: 0.2s;
+        }
+
+        /* Destaque para link ativo e hover */
+        .sidebar a:hover, .sidebar a.active {
+            background: #6acb4a;
+            transform: translateX(4px);
+        }
+
+        .content {
+            margin-left: 260px;
+            padding: 25px;
+        }
+
+        .card {
+            border-radius: 18px;
+            background: #ffffff;
+            border: none;
+            padding: 18px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+        }
+
+        h2 {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        input.form-control {
+            border-radius: 10px;
+            padding: 10px 14px;
+            border: 1px solid #d7d7d7;
+        }
+
+        table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: #7ed957 !important;
+            color: #fff;
+        }
+
+        .logout-btn {
+            background:#7ed957;
+            margin-top:50px;
+            font-weight:bold;
+            text-align:center;
+        }
+
+        .logout-btn:hover {
+            background:#6acb4a !important;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+
+    <h5 id="userName" class="text-center fw-bold mb-2"></h5>
+
+    <h3 class="text-center mb-4">SixBikes Bicicletaria</h3>
+
+    <a href="#" data-page="dashboard"><i class="fas fa-chart-line me-2"></i> Dashboard</a>
+    <a href="#" data-page="estoque"><i class="fas fa-boxes me-2"></i> Estoque</a>
+    <a href="#" data-page="agendamentos"><i class="fas fa-calendar-alt me-2"></i> Agendamentos</a>
+    <a href="#" data-page="clientes"><i class="fas fa-users me-2"></i> Clientes</a>
+    <a href="#" data-page="reservas"><i class="fas fa-clipboard-list me-2"></i> Reservas</a>
+    <a href="#" data-page="tickets"><i class="fas fa-ticket-alt me-2"></i> Tickets</a>
+
+    <a href="#" class="logout-btn" onclick="logout(); return false;"><i class="fas fa-sign-out-alt me-2"></i> Sair</a>
+</div>
+
+<div class="content">
+    <div id="main-content">
+        <h2 class="text-center mt-5">Carregando...</h2>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="assets/js/auth.js"></script> 
+
+<script>
+/* ======================================================================
+   CONFIGURAÇÃO INICIAL E LÓGICA DE NAVEGAÇÃO
+   ====================================================================== */
+
+// Exibe o nome do usuário logado (valor virá do localStorage após o login)
+if (!localStorage.getItem("usuario")) {
+    localStorage.setItem("usuario", "Fulano");
+}
+document.getElementById("userName").textContent = "Olá, " + localStorage.getItem("usuario");
+
+
+/**
+ * Função principal para carregar o conteúdo de cada página/menu.
+ */
+// CÓDIGO RESTAURADO E COMPLETO PARA A FUNÇÃO loadPage:
+
+function loadPage(page) {
+    const content = document.getElementById('main-content');    
+    
+    // Simulação de carregamento (em um projeto real, esta função faria um fetchAuthenticated)
+    content.innerHTML = `<h2>Carregando ${page}...</h2>`; 
+    
+    // Garante que o link ativo na sidebar é atualizado
+    document.querySelectorAll('.sidebar a').forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.page === page) {
+            link.classList.add('active');
+        }
+    });
+
+    /* ================= DASHBOARD ================== */
+    if (page === 'dashboard') {
+        content.innerHTML = `
+            <h2>Dashboard</h2>
+
+            <div class="row g-3 text-center mb-4">
+                <div class="col-md-4">
+                    <div class="card shadow-sm p-4">
+                        <h5 class="fw-bold">Para Pagamento</h5>
+                        <h1 class="fw-bold" id="countParaPagamento">-</h1>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card shadow-sm p-4">
+                        <h5 class="fw-bold">Tickets Abertos</h5>
+                        <h1 class="fw-bold" id="countTicketsAbertos">-</h1>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card shadow-sm p-4">
+                        <h5 class="fw-bold">Tickets Assumidos</h5>
+                        <h1 class="fw-bold" id="countTicketsAssumidos">-</h1>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+
+                <div class="col-md-7">
+                    <div class="card shadow-sm p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold mb-0">Tickets de Suporte Abertos</h5>
+                            <span class="badge bg-warning" id="badgeAbertos">0</span>
+                        </div>
+                        <table class="table text-center">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Cliente</th>
+                                    <th>Assunto</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashTicketsAbertos"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="card shadow-sm p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold mb-0">Agendamentos Para Pagamento</h5>
+                            <span class="badge bg-info" id="badgeParaPg">0</span>
+                        </div>
+                        <table class="table text-center">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Serviço</th>
+                                    <th>Data</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashAgParaPagamento"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        `;
+
+        (async function loadDashboard(){
+            const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+            try {
+                const [ticketsAbertos, ticketsAssumidos, agParaPgResp] = await Promise.all([
+                    fetchAuthenticated('/api/tickets/abertos', 'GET').catch(() => []),
+                    fetchAuthenticated('/api/tickets/assumidos', 'GET').catch(() => []),
+                    fetchAuthenticated('/api/agendamentos/para-pagamento', 'GET').catch(() => [])
+                ]);
+
+                const abertos = Array.isArray(ticketsAbertos) ? ticketsAbertos : (ticketsAbertos?.data || []);
+                const assumidos = Array.isArray(ticketsAssumidos) ? ticketsAssumidos : (ticketsAssumidos?.data || []);
+                const agList = Array.isArray(agParaPgResp) ? agParaPgResp : (agParaPgResp?.data || agParaPgResp?.agendamentos || []);
+
+                setText('countTicketsAbertos', abertos.length);
+                setText('countTicketsAssumidos', assumidos.length);
+                setText('countParaPagamento', agList.length);
+                setText('badgeAbertos', abertos.length);
+                setText('badgeParaPg', agList.length);
+
+                // Render tickets abertos (máximo 5)
+                const tBody = document.getElementById('dashTicketsAbertos');
+                if (tBody) {
+                    tBody.innerHTML = '';
+                    (abertos.slice(0,5)).forEach(t => {
+                        const tr = document.createElement('tr');
+                        const status = String(t.status||'').toUpperCase();
+                        const badge = status === 'NOVO' ? 'bg-danger' : status === 'ABERTO' ? 'bg-warning' : 'bg-secondary';
+                        tr.innerHTML = `
+                            <td>${t.id}</td>
+                            <td>${t.nome||'-'}</td>
+                            <td>${t.titulo||t.assunto||'-'}</td>
+                            <td><span class="badge ${badge}">${status||'-'}</span></td>
+                        `;
+                        tBody.appendChild(tr);
+                    });
+                    if (abertos.length === 0) tBody.innerHTML = '<tr><td colspan="4" class="text-muted">Nenhum ticket aberto.</td></tr>';
+                }
+
+                // Render agendamentos para pagamento (máximo 5)
+                const aBody = document.getElementById('dashAgParaPagamento');
+                if (aBody) {
+                    aBody.innerHTML = '';
+                    (agList.slice(0,5)).forEach(a => {
+                        const data = a.dataagendada ? new Date(a.dataagendada).toLocaleString('pt-BR') : '-';
+                        const valor = a.valor ? Number(a.valor).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '-';
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${a.cliente_nome||'-'}</td>
+                            <td>${a.servico_nome||'-'}</td>
+                            <td>${data}</td>
+                            <td>${valor}</td>
+                        `;
+                        aBody.appendChild(tr);
+                    });
+                    if (agList.length === 0) aBody.innerHTML = '<tr><td colspan="4" class="text-muted">Nenhum agendamento aguardando pagamento.</td></tr>';
+                }
+            } catch (e) {
+                console.warn('Falha ao carregar dashboard:', e.message);
+            }
+        })();
+    }
+
+    /* ================= ESTOQUE ================== */
+    else if (page === 'estoque') {
+        content.innerHTML = `
+            <h2>Estoque</h2>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <input type="text" id="estoqueSearch" class="form-control" placeholder="Pesquisar...">
+                </div>
+                <div class="col-md-3">
+                    <select id="estoqueFiltro" class="form-select">
+                        <option value="idProduto">ID</option>
+                        <option value="nome">Nome</option>
+                        <option value="descricao">Descrição</option>
+                        <option value="categoria">Categoria</option>
+                        <option value="preco">Preço</option>
+                        <option value="qtd">Qtd</option>
+                    </select>
+                </div>
+                <div class="col-md-3 text-end">
+                    <!-- Sem botões de cadastro/gerenciamento para o atendente -->
+                </div>
+            </div>
+            <div class="card p-0">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Categoria</th>
+                            <th>Preço</th>
+                            <th>Qtd</th>
+                        </tr>
+                    </thead>
+                    <tbody id="estoqueTable"></tbody>
+                </table>
+            </div>
+        `;
+
+        // Estado de seleção apenas para destaque visual (sem gerenciamento)
+        let produtoSelecionado = null;
+
+        function habilitarSelecaoGrid() {
+            const tbody = document.getElementById('estoqueTable');
+            tbody.querySelectorAll('tr').forEach(tr => {
+                tr.style.cursor = 'pointer';
+                tr.addEventListener('click', () => {
+                    tbody.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
+                    tr.classList.add('table-active');
+                    const id = tr.querySelector('[data-col="idProduto"]').textContent.trim();
+                    const nome = tr.querySelector('[data-col="nome"]').textContent.trim();
+                    const descricao = tr.querySelector('[data-col="descricao"]').textContent.trim();
+                    const categoria = tr.querySelector('[data-col="categoria"]').textContent.trim();
+                    const preco = tr.querySelector('[data-col="preco"]').textContent.trim();
+                    const qtd = tr.querySelector('[data-col="qtd"]').textContent.trim();
+                    produtoSelecionado = { id: Number(id), nome, descricao, categoria, preco: Number(preco), qtd: Number(qtd) };
+                });
+            });
+        }
+
+        // Limpa seleção ao clicar fora
+        document.addEventListener('click', (ev) => {
+            const tbody = document.getElementById('estoqueTable');
+            const grid = tbody?.closest('table');
+            const insideGrid = grid && grid.contains(ev.target);
+            if (!insideGrid) {
+                tbody?.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
+                produtoSelecionado = null;
+            }
+        });
+
+        async function carregarCatalogo() {
+            try {
+                const resposta = await fetchAuthenticated('/api/produtos', 'GET');
+                const tbody = document.getElementById('estoqueTable');
+                tbody.innerHTML = '';
+                const lista = Array.isArray(resposta) ? resposta : (resposta?.data || resposta?.produtos || []);
+                lista.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td data-col="idProduto">${p.idproduto ?? p.idProduto ?? ''}</td>
+                        <td data-col="nome">${p.nome ?? ''}</td>
+                        <td data-col="descricao">${p.descricao ?? ''}</td>
+                        <td data-col="categoria">${(p.categoria ?? '').toString().trim() || 'Sem categoria'}</td>
+                        <td data-col="preco">${p.preco ?? ''}</td>
+                        <td data-col="qtd">${p.qtd ?? 0}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                habilitarSelecaoGrid();
+            } catch (e) {
+                const tbody = document.getElementById('estoqueTable');
+                tbody.innerHTML = `<tr><td colspan="6" class="text-danger">Erro ao carregar estoque</td></tr>`;
+            }
+        }
+
+        // Filtro de busca semelhante ao gerencia.html
+        const input = document.getElementById('estoqueSearch');
+        const filtro = document.getElementById('estoqueFiltro');
+        input.addEventListener('keyup', () => {
+            const texto = input.value.toLowerCase().replace(/[^0-9a-z]/gi, '');
+            const coluna = filtro.value;
+            document.querySelectorAll('#estoqueTable tr').forEach(tr => {
+                const cel = tr.querySelector(`[data-col="${coluna}"]`);
+                const val = cel ? (cel.textContent || '').toLowerCase().replace(/[^0-9a-z]/gi,'') : '';
+                tr.style.display = val.includes(texto) ? '' : 'none';
+            });
+        });
+
+        carregarCatalogo();
+    }
+
+    /* ================= AGENDAMENTOS ================== */
+    else if (page === 'agendamentos') {
+        content.innerHTML = `
+            <h2>Agendamentos - Para Pagamento</h2>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <input 
+                        type="text"
+                        id="agendaSearch"
+                        class="form-control"
+                        placeholder="Pesquisar..."
+                    >
+                </div>
+
+                <div class="col-md-3">
+                    <select id="agendaFiltro" class="form-select">
+                        <option value="id">ID</option>
+                        <option value="cpf">CPF</option>
+                        <option value="nome">Nome</option>
+                        <option value="servico">Serviço</option>
+                        <option value="status">Status</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3 text-end">
+                    <button class="btn btn-success w-100" id="recarregarAgendamentos">
+                        🔄 Atualizar
+                    </button>
+                </div>
+            </div>
+
+            <div class="card p-0">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>CPF</th>
+                            <th>Nome</th>
+                            <th>Data Agendada</th>
+                            <th>Serviço</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="agendaTable">
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        async function carregarAgendamentosParaPagamento() {
+            const tbody = document.getElementById('agendaTable');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center">Carregando...</td></tr>';
+            try {
+                const resposta = await fetchAuthenticated('/api/agendamentos/para-pagamento', 'GET');
+                const lista = Array.isArray(resposta) ? resposta : (resposta?.data || resposta?.agendamentos || []);
+                tbody.innerHTML = '';
+                if (lista.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Nenhum agendamento aguardando pagamento.</td></tr>';
+                    return;
+                }
+                lista.forEach(a => {
+                    const tr = document.createElement('tr');
+                    const dataAgendada = a.dataagendada ? new Date(a.dataagendada).toLocaleString('pt-BR') : '-';
+                    const valor = a.valor ? Number(a.valor).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '-';
+                    tr.innerHTML = `
+                        <td data-col="id">${a.id ?? ''}</td>
+                        <td data-col="cpf">${a.cliente_cpf ?? ''}</td>
+                        <td data-col="nome">${a.cliente_nome ?? ''}</td>
+                        <td data-col="data">${dataAgendada}</td>
+                        <td data-col="servico">${a.servico_nome ?? ''}</td>
+                        <td>${valor}</td>
+                        <td data-col="status"><span class="badge bg-warning">${a.status ?? ''}</span></td>
+                        <td class="text-center"><button class="btn btn-sm btn-success" data-pagar="${a.id}">Marcar como Pago</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Handler para botões Marcar como Pago
+                tbody.querySelectorAll('button[data-pagar]').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const id = btn.dataset.pagar;
+                        const metodo = prompt('Informe método de pagamento: PIX, DINHEIRO, CREDITO, DEBITO', 'PIX');
+                        if (!metodo) return;
+                        btn.disabled = true;
+                        try {
+                            await fetchAuthenticated(`/api/agendamentos/${id}/pagar`, 'PUT', { metodoPagamento: metodo });
+                            alert('Agendamento marcado como pago.');
+                            carregarAgendamentosParaPagamento();
+                        } catch (e) {
+                            alert('Erro ao marcar como pago: ' + (e.message || ''));
+                            btn.disabled = false;
+                        }
+                    });
+                });
+
+                // Busca/Filtro
+                const search = document.getElementById('agendaSearch');
+                const filtro = document.getElementById('agendaFiltro');
+                const linhas = tbody.querySelectorAll('tr');
+                if (search && filtro) {
+                    search.addEventListener('keyup', () => {
+                        const texto = search.value.toLowerCase().replace(/[^0-9a-z]/gi, '').trim();
+                        const coluna = filtro.value;
+                        linhas.forEach(tr => {
+                            const celula = tr.querySelector(`[data-col="${coluna}"]`);
+                            const valor = celula?.textContent.toLowerCase().replace(/[^0-9a-z]/gi,'') || '';
+                            tr.style.display = valor.includes(texto) ? '' : 'none';
+                        });
+                    });
+                }
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-danger text-center">Erro ao carregar agendamentos: ${e.message}</td></tr>`;
+            }
+        }
+
+        carregarAgendamentosParaPagamento();
+
+        const btnRecarregar = document.getElementById('recarregarAgendamentos');
+        if (btnRecarregar) {
+            btnRecarregar.addEventListener('click', carregarAgendamentosParaPagamento);
+        }
+    }
+
+        /* ================= TICKETS ================== */
+        else if (page === 'tickets') {
+                content.innerHTML = `
+                        <h2>Tickets</h2>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="fw-bold mb-0">Abertos</h5>
+                                        <span class="badge bg-warning" id="countAbertos">0</span>
+                                    </div>
+                                    <table class="table table-striped mb-0">
+                                        <thead>
+                                            <tr><th>ID</th><th>Nome</th><th>Título</th><th>Ações</th></tr>
+                                        </thead>
+                                        <tbody id="ticketsAbertos"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="fw-bold mb-0">Assumidos</h5>
+                                        <span class="badge bg-info" id="countAssumidos">0</span>
+                                    </div>
+                                    <table class="table table-striped mb-0">
+                                        <thead>
+                                            <tr><th>ID</th><th>Título</th><th>Status</th><th>Ações</th></tr>
+                                        </thead>
+                                        <tbody id="ticketsAssumidos"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Detalhes Ticket -->
+                        <div class="modal fade" id="ticketDetalhesModal" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Detalhes do Ticket</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body" id="ticketDetalhesBody">
+                                        <p><strong>ID:</strong> <span id="detID"></span></p>
+                                        <p><strong>Nome:</strong> <span id="detNome"></span></p>
+                                        <p><strong>Email:</strong> <span id="detEmail"></span></p>
+                                        <p><strong>Título:</strong> <span id="detTitulo"></span></p>
+                                        <p><strong>Mensagem:</strong></p>
+                                        <p id="detMensagem" style="white-space:pre-wrap;"></p>
+                                        <p><strong>Status:</strong> <span id="detStatus"></span></p>
+                                        <p><strong>Data Abertura:</strong> <span id="detData"></span></p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                `;
+
+                async function carregarAbertos(){
+                    try{
+                        const itens = await fetchAuthenticated('/api/tickets/abertos','GET');
+                        const tbody = document.getElementById('ticketsAbertos');
+                        tbody.innerHTML='';
+                        (itens||[]).forEach(t=>{
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${t.id}</td>
+                                <td>${t.nome||'-'}</td>
+                                <td>${t.titulo||'-'}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-info me-1" data-action="detalhes" data-id="${t.id}">Detalhes</button>
+                                    <button class="btn btn-sm btn-success" data-action="assumir" data-id="${t.id}">Assumir</button>
+                                </td>`;
+                            tbody.appendChild(tr);
+                        });
+                        document.getElementById('countAbertos').textContent = (itens||[]).length;
+                        tbody.querySelectorAll('button[data-id]').forEach(btn=>{
+                            btn.addEventListener('click', async ()=>{
+                                const action = btn.dataset.action;
+                                if(action === 'detalhes'){
+                                    await mostrarDetalhes(btn.dataset.id);
+                                } else if(action === 'assumir'){
+                                    btn.disabled = true;
+                                    try{ await fetchAuthenticated(`/api/tickets/${btn.dataset.id}/assumir`, 'PUT'); }
+                                    catch(e){ alert(e.message||'Falha ao assumir ticket'); }
+                                    finally{ btn.disabled=false; await carregarAbertos(); await carregarAssumidos(); }
+                                }
+                            });
+                        });
+                    } catch(e){
+                        document.getElementById('ticketsAbertos').innerHTML = '<tr><td colspan="4" class="text-danger">Erro ao carregar</td></tr>';
+                    }
+                }
+
+                async function carregarAssumidos(){
+                    try{
+                        const itens = await fetchAuthenticated('/api/tickets/assumidos','GET');
+                        const tbody = document.getElementById('ticketsAssumidos');
+                        tbody.innerHTML='';
+                        (itens||[]).forEach(t=>{
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${t.id}</td>
+                                <td>${t.titulo||'-'}</td>
+                                <td><span class="badge bg-info">${t.status}</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-info me-1" data-action="detalhes" data-id="${t.id}">Detalhes</button>
+                                    <button class="btn btn-sm btn-outline-secondary" data-action="fechar" data-id="${t.id}">Fechar</button>
+                                </td>`;
+                            tbody.appendChild(tr);
+                        });
+                        document.getElementById('countAssumidos').textContent = (itens||[]).length;
+                        tbody.querySelectorAll('button[data-id]').forEach(btn=>{
+                            btn.addEventListener('click', async ()=>{
+                                const action = btn.dataset.action;
+                                if(action === 'detalhes'){
+                                    await mostrarDetalhes(btn.dataset.id);
+                                } else if(action === 'fechar'){
+                                    btn.disabled=true;
+                                    try{ await fetchAuthenticated(`/api/tickets/${btn.dataset.id}/fechar`, 'PUT'); }
+                                    catch(e){ alert(e.message||'Falha ao fechar ticket'); }
+                                    finally{ btn.disabled=false; await carregarAssumidos(); }
+                                }
+                            });
+                        });
+                    } catch(e){
+                        document.getElementById('ticketsAssumidos').innerHTML = '<tr><td colspan="4" class="text-danger">Erro ao carregar</td></tr>';
+                    }
+                }
+
+                async function mostrarDetalhes(idTicket){
+                    try{
+                        const ticket = await fetchAuthenticated(`/api/tickets/${idTicket}`, 'GET');
+                        document.getElementById('detID').textContent = ticket.id || '-';
+                        document.getElementById('detNome').textContent = ticket.nome || '-';
+                        document.getElementById('detEmail').textContent = ticket.email || '-';
+                        document.getElementById('detTitulo').textContent = ticket.titulo || '-';
+                        document.getElementById('detMensagem').textContent = ticket.mensagem || '-';
+                        document.getElementById('detStatus').textContent = ticket.status || '-';
+                        const dataAbertura = ticket.dataabertura ? new Date(ticket.dataabertura).toLocaleString('pt-BR') : '-';
+                        document.getElementById('detData').textContent = dataAbertura;
+                        const modal = new bootstrap.Modal(document.getElementById('ticketDetalhesModal'));
+                        modal.show();
+                    } catch(e){
+                        alert(e.message || 'Falha ao carregar detalhes do ticket.');
+                    }
+                }
+
+                carregarAbertos();
+                carregarAssumidos();
+        }
+
+    /* ================= CLIENTES ================== */
+    else if (page === 'clientes') {
+        content.innerHTML = `
+            <h2>Clientes</h2>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <input type="text" id="clienteSearch" class="form-control" placeholder="Pesquisar...">
+                </div>
+                <div class="col-md-3">
+                    <select id="clienteFiltro" class="form-select">
+                        <option value="cpf">CPF</option>
+                        <option value="nome">Nome</option>
+                        <option value="telefone">Telefone</option>
+                        <option value="email">E-mail</option>
+                    </select>
+                </div>
+                <div class="col-md-3 text-end">
+                    <!-- Sem botões de cadastro/gerenciamento para o atendente -->
+                </div>
+            </div>
+            <div class="card p-0">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>CPF</th>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>E-mail</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientesTable"></tbody>
+                </table>
+            </div>
+        `;
+
+        // Estado de seleção apenas para destaque visual (sem gerenciamento)
+        let clienteSelecionado = null;
+
+        function habilitarSelecaoGridClientes() {
+            const tbody = document.getElementById('clientesTable');
+            tbody.querySelectorAll('tr').forEach(tr => {
+                tr.style.cursor = 'pointer';
+                tr.addEventListener('click', () => {
+                    tbody.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
+                    tr.classList.add('table-active');
+                    const cpf = tr.querySelector('[data-col="cpf"]').textContent.trim();
+                    const nome = tr.querySelector('[data-col="nome"]').textContent.trim();
+                    const telefone = tr.querySelector('[data-col="telefone"]').textContent.trim();
+                    const email = tr.querySelector('[data-col="email"]').textContent.trim();
+                    clienteSelecionado = { cpf, nome, telefone, email };
+                });
+            });
+        }
+
+        // Limpa seleção ao clicar fora
+        document.addEventListener('click', (ev) => {
+            const tbody = document.getElementById('clientesTable');
+            const grid = tbody?.closest('table');
+            const insideGrid = grid && grid.contains(ev.target);
+            if (!insideGrid) {
+                tbody?.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
+                clienteSelecionado = null;
+            }
+        });
+
+        async function carregarClientes() {
+            try {
+                const resposta = await fetchAuthenticated('/api/clientes', 'GET');
+                const tbody = document.getElementById('clientesTable');
+                tbody.innerHTML = '';
+                const lista = Array.isArray(resposta) ? resposta : (resposta?.data || resposta?.clientes || []);
+                lista.forEach(c => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td data-col="cpf">${c.cpf ?? ''}</td>
+                        <td data-col="nome">${c.nome ?? ''}</td>
+                        <td data-col="telefone">${c.telefone ?? ''}</td>
+                        <td data-col="email">${c.email ?? ''}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                habilitarSelecaoGridClientes();
+            } catch (e) {
+                const tbody = document.getElementById('clientesTable');
+                tbody.innerHTML = `<tr><td colspan="4" class="text-danger">Erro ao carregar clientes</td></tr>`;
+            }
+        }
+
+        // Filtro de busca semelhante ao estoque
+        const input = document.getElementById('clienteSearch');
+        const filtro = document.getElementById('clienteFiltro');
+        input.addEventListener('keyup', () => {
+            const texto = input.value.toLowerCase().replace(/[^0-9a-z]/gi, '');
+            const coluna = filtro.value;
+            document.querySelectorAll('#clientesTable tr').forEach(tr => {
+                const cel = tr.querySelector(`[data-col="${coluna}"]`);
+                const val = cel ? (cel.textContent || '').toLowerCase().replace(/[^0-9a-z]/gi,'') : '';
+                tr.style.display = val.includes(texto) ? '' : 'none';
+            });
+        });
+
+        carregarClientes();
+    }
+
+    /* ================= RESERVAS ================== */
+    else if (page === 'reservas') {
+        content.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Reservas</h2>
+                <button class="btn btn-success" id="novaReservaBtn"><i class="fas fa-plus"></i> Nova Reserva</button>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <input type="text" id="reservasSearch" class="form-control" placeholder="Pesquisar...">
+                </div>
+                <div class="col-md-3">
+                    <select id="reservasFiltro" class="form-select">
+                        <option value="id">ID</option>
+                        <option value="cliente">Cliente</option>
+                        <option value="data">Data</option>
+                        <option value="statusPagamento">Status Pagamento</option>
+                    </select>
+                </div>
+                <div class="col-md-3 text-end">
+                    <button class="btn btn-outline-secondary" id="refreshReservas">🔄 Atualizar</button>
+                </div>
+            </div>
+            <div class="card p-0">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Data</th>
+                            <th>Total</th>
+                            <th>Status Pagamento</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reservasTable"></tbody>
+                </table>
+            </div>
+
+            <!-- Modal de Gerenciamento de Itens da Reserva -->
+            <div class="modal fade" id="modalReserva" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title">Gerenciar Reserva</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div id="reservaInfo" class="mb-2"></div>
+                                </div>
+                                <!-- Busca de produtos para adicionar itens -->
+                                <div class="col-12">
+                                    <div class="card p-2 mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <input type="text" id="buscaProduto" class="form-control" placeholder="Pesquisar produto por nome...">
+                                            <button class="btn btn-outline-secondary ms-2" id="toggleBuscaProdutos">Ocultar</button>
+                                        </div>
+                                        <div id="listaProdutos" class="list-group mt-2" style="max-height:240px; overflow:auto"></div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Produto</th>
+                                                <th>Qtd</th>
+                                                <th>Valor Unit.</th>
+                                                <th>Subtotal</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="reservaItensTable"></tbody>
+                                    </table>
+                                    <button class="btn btn-sm btn-primary" id="addItemReserva">Adicionar Item (via busca)</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-success" id="salvarItensReserva">Salvar Itens</button>
+                            <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal de Nova Reserva -->
+            <div class="modal fade" id="modalNovaReserva" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title">Nova Reserva - Balcão</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <!-- Busca de Cliente -->
+                                <div class="col-12">
+                                    <h6>1. Selecionar Cliente</h6>
+                                    <div class="input-group mb-2">
+                                        <input type="text" id="buscaCliente" class="form-control" placeholder="Digite nome ou email do cliente...">
+                                        <button class="btn btn-outline-primary" id="btnBuscarCliente">🔍 Buscar</button>
+                                    </div>
+                                    <div id="resultadosCliente" class="list-group mb-3" style="max-height:200px;overflow:auto;"></div>
+                                    <div id="clienteSelecionado" class="alert alert-info d-none">
+                                        <strong>Cliente Selecionado:</strong> <span id="nomeClienteSelecionado"></span>
+                                        <button class="btn btn-sm btn-outline-secondary float-end" id="limparCliente">Trocar</button>
+                                    </div>
+                                </div>
+
+                                <!-- Busca de Produtos -->
+                                <div class="col-12">
+                                    <h6>2. Adicionar Produtos</h6>
+                                    <div class="input-group mb-2">
+                                        <input type="text" id="buscaProdutoNova" class="form-control" placeholder="Digite nome do produto...">
+                                        <button class="btn btn-outline-primary" id="btnBuscarProduto">🔍 Buscar</button>
+                                    </div>
+                                    <div id="resultadosProduto" class="list-group mb-3" style="max-height:200px;overflow:auto;"></div>
+                                </div>
+
+                                <!-- Carrinho -->
+                                <div class="col-12">
+                                    <h6>3. Itens da Reserva</h6>
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Produto</th>
+                                                <th style="width:100px;">Qtd</th>
+                                                <th style="width:150px;">Valor Unit.</th>
+                                                <th style="width:150px;">Subtotal</th>
+                                                <th style="width:80px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itensNovaReserva"></tbody>
+                                        <tfoot>
+                                            <tr class="table-success">
+                                                <td colspan="3" class="text-end"><strong>TOTAL:</strong></td>
+                                                <td><strong id="totalNovaReserva">R$ 0,00</strong></td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-success" id="finalizarNovaReserva" disabled>
+                                <i class="fas fa-check"></i> Finalizar Reserva
+                            </button>
+                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const modalEl = document.getElementById('modalReserva');
+        const modalReserva = new bootstrap.Modal(modalEl);
+        const modalNovaReservaEl = document.getElementById('modalNovaReserva');
+        const modalNovaReserva = new bootstrap.Modal(modalNovaReservaEl);
+        let reservaAtual = null;
+        let novaReservaData = { clienteId: null, clienteNome: '', itens: [] };
+
+        function renderItensModal(itens) {
+            const tbody = document.getElementById('reservaItensTable');
+            tbody.innerHTML = '';
+            itens.forEach((it, idx) => {
+                const subtotal = (Number(it.quantidade)||0) * (Number(it.valorUnitario)||0);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><input class="form-control" value="${it.nomeProduto ?? ''}" placeholder="Produto" data-idx="${idx}" data-field="nomeProduto"></td>
+                    <td style="max-width:100px"><input type="number" min="1" class="form-control" value="${it.quantidade ?? 1}" data-idx="${idx}" data-field="quantidade"></td>
+                    <td style="max-width:140px"><input type="number" step="0.01" min="0" class="form-control" value="${it.valorUnitario ?? 0}" data-idx="${idx}" data-field="valorUnitario"></td>
+                    <td>${subtotal.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
+                    <td class="text-center"><button class="btn btn-sm btn-outline-danger" data-remove="${idx}">Remover</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            tbody.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('input', () => {
+                    const idx = Number(inp.dataset.idx);
+                    const field = inp.dataset.field;
+                    reservaAtual.itens[idx][field] = field === 'quantidade' || field === 'valorUnitario' ? Number(inp.value) : inp.value;
+                    renderItensModal(reservaAtual.itens);
+                });
+            });
+            tbody.querySelectorAll('button[data-remove]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const idx = Number(btn.dataset.remove);
+                    reservaAtual.itens.splice(idx,1);
+                    renderItensModal(reservaAtual.itens);
+                });
+            });
+        }
+
+        // Toggle da área de busca
+        const buscaInput = document.getElementById('buscaProduto');
+        const listaProdutosEl = document.getElementById('listaProdutos');
+        const toggleBuscaBtn = document.getElementById('toggleBuscaProdutos');
+        toggleBuscaBtn.addEventListener('click', () => {
+            const card = toggleBuscaBtn.closest('.card');
+            if (!card) return;
+            const hidden = card.classList.toggle('d-none');
+            toggleBuscaBtn.textContent = hidden ? 'Mostrar' : 'Ocultar';
+        });
+
+        // Busca produtos digitando (com debounce simples)
+        let buscaTimer = null;
+        async function buscarProdutos(term){
+            listaProdutosEl.innerHTML = '';
+            if(!term || term.trim().length < 2) return;
+            try {
+                const res = await fetchAuthenticated('/api/produtos', 'GET');
+                const produtos = Array.isArray(res) ? res : (res?.data || res?.produtos || []);
+                const lower = term.toLowerCase();
+                produtos
+                  .filter(p => String(p.nome||'').toLowerCase().includes(lower))
+                  .slice(0, 20)
+                  .forEach(p => {
+                      const a = document.createElement('a');
+                      a.href = '#';
+                      a.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                      a.innerHTML = `
+                        <span>
+                          <strong>${p.nome}</strong>
+                          <small class="text-muted ms-2">R$ ${(Number(p.preco)||0).toFixed(2)}</small>
+                        </span>
+                        <span class="badge bg-success">Estoque: ${p.quantidadeAtual ?? p.estoque ?? p.qtd ?? '-'}</span>
+                      `;
+                      a.addEventListener('click', (ev) => {
+                          ev.preventDefault();
+                          if(!reservaAtual) return;
+                          const valorUnit = typeof p.preco === 'number' ? p.preco : parseFloat(String(p.preco||'0').replace(',','.'))||0;
+                          reservaAtual.itens.push({ idProduto: p.idProduto ?? p.idproduto ?? p.id, nomeProduto: p.nome, quantidade: 1, valorUnitario: valorUnit });
+                          renderItensModal(reservaAtual.itens);
+                      });
+                      listaProdutosEl.appendChild(a);
+                  });
+            } catch(e){
+                listaProdutosEl.innerHTML = `<div class="text-danger p-2">Erro ao buscar produtos.</div>`;
+            }
+        }
+        buscaInput.addEventListener('input', () => {
+            clearTimeout(buscaTimer);
+            buscaTimer = setTimeout(() => buscarProdutos(buscaInput.value), 250);
+        });
+
+        // Botão Adicionar Item abre/mostra busca
+        document.getElementById('addItemReserva').addEventListener('click', () => {
+            const card = buscaInput.closest('.card');
+            if(card && card.classList.contains('d-none')){ card.classList.remove('d-none'); toggleBuscaBtn.textContent = 'Ocultar'; }
+            buscaInput.focus();
+        });
+
+        document.getElementById('salvarItensReserva').addEventListener('click', async () => {
+            if (!reservaAtual) return;
+            try {
+                const payload = {
+                    itens: reservaAtual.itens.map(it => ({
+                        idProduto: it.idProduto,
+                        quantidade: it.quantidade,
+                        valorUnitario: it.valorUnitario
+                    }))
+                };
+                await fetchAuthenticated(`/api/reservas/${reservaAtual.id}/itens`, 'PUT', payload);
+                alert('Itens da reserva atualizados com sucesso.');
+                modalReserva.hide();
+                carregarReservas();
+            } catch (e) {
+                alert('Erro ao salvar itens da reserva.');
+            }
+        });
+
+        async function carregarReservas() {
+            const tbody = document.getElementById('reservasTable');
+            tbody.innerHTML = '<tr><td colspan="6">Carregando...</td></tr>';
+            try {
+                const resposta = await fetchAuthenticated('/api/reservas/pendentes', 'GET');
+                const lista = Array.isArray(resposta) ? resposta : (resposta?.data || resposta?.reservas || []);
+                tbody.innerHTML = '';
+                lista.forEach(r => {
+                    const tr = document.createElement('tr');
+                    const id = r.idreserva ?? r.idReserva ?? r.id;
+                    const cliente = r.nomecliente ?? r.nomeCliente ?? r.clienteNome ?? r.cliente ?? '';
+                    const total = r.totalreserva ?? r.totalReserva ?? r.total ?? 0;
+                    const totalBRL = (Number(total)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+                    const dataReserva = r.datareserva ?? r.dataReserva;
+                    const statusPg = r.statuspagamento ?? r.statusPagamento ?? 'PENDENTE';
+                    tr.innerHTML = `
+                        <td data-col="id">${id ?? ''}</td>
+                        <td data-col="cliente">${cliente}</td>
+                        <td data-col="data">${dataReserva ? new Date(dataReserva).toLocaleString('pt-BR') : ''}</td>
+                        <td>${totalBRL}</td>
+                        <td data-col="statusPagamento"><span class="badge ${String(statusPg).toUpperCase()==='PENDENTE'?'bg-warning':'bg-success'}">${statusPg ?? ''}</span></td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-primary me-1" data-gerenciar="${id}">Gerenciar</button>
+                            <button class="btn btn-sm btn-success me-1" data-pagar="${id}">Marcar Pago</button>
+                            <button class="btn btn-sm btn-danger" data-cancelar="${id}">Cancelar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Busca/Filtro
+                const search = document.getElementById('reservasSearch');
+                const filtro = document.getElementById('reservasFiltro');
+                const linhas = tbody.querySelectorAll('tr');
+                if (search && filtro) {
+                    search.addEventListener('keyup', () => {
+                        const texto = search.value.toLowerCase().trim();
+                        const coluna = filtro.value;
+                        linhas.forEach(tr => {
+                            const celula = tr.querySelector(`[data-col="${coluna}"]`);
+                            const valor = celula?.textContent.toLowerCase() || '';
+                            tr.style.display = valor.includes(texto) ? '' : 'none';
+                        });
+                    });
+                }
+
+                // Ações
+                tbody.querySelectorAll('button[data-gerenciar]').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const id = btn.dataset.gerenciar;
+                        try {
+                            const det = await fetchAuthenticated(`/api/reservas/${id}`, 'GET');
+                            const data = det?.data || det || {};
+                            const cab = data.reserva || {};
+                            const itens = data.itens || [];
+                            reservaAtual = { id: cab.idReserva ?? cab.idreserva ?? id, itens: itens.map(it => ({
+                                idProduto: it.idProduto ?? it.idproduto,
+                                nomeProduto: it.nomeProduto ?? it.nomeproduto,
+                                quantidade: it.quantidade,
+                                valorUnitario: it.valorUnitario
+                            })) };
+                            document.getElementById('reservaInfo').innerHTML = `Reserva #${reservaAtual.id} - Cliente: ${cab.nomeCliente ?? cab.nomecliente ?? ''}`;
+                            renderItensModal(reservaAtual.itens);
+                            modalReserva.show();
+                        } catch (e) {
+                            alert('Erro ao carregar detalhes da reserva.');
+                        }
+                    });
+                });
+
+                tbody.querySelectorAll('button[data-pagar]').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const id = btn.dataset.pagar;
+                        const metodo = prompt('Informe método de pagamento: PIX, DINHEIRO, CREDITO, DEBITO', 'PIX');
+                        if (!metodo) return;
+                        try {
+                            await fetchAuthenticated(`/api/reservas/${id}/pagar`, 'PUT', { metodoPagamento: metodo });
+                            alert('Reserva marcada como paga.');
+                            carregarReservas();
+                        } catch (e) {
+                            alert('Erro ao marcar reserva como paga.');
+                        }
+                    });
+                });
+
+                tbody.querySelectorAll('button[data-cancelar]').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const id = btn.dataset.cancelar;
+                        if (!confirm('Confirmar cancelamento da reserva?')) return;
+                        try {
+                            await fetchAuthenticated(`/api/reservas/${id}/cancelar`, 'PUT');
+                            alert('Reserva cancelada.');
+                            carregarReservas();
+                        } catch (e) {
+                            alert('Erro ao cancelar reserva.');
+                        }
+                    });
+                });
+
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-danger">Erro ao carregar reservas</td></tr>`;
+            }
+        }
+
+        // Botão Nova Reserva
+        document.getElementById('novaReservaBtn').addEventListener('click', () => {
+            novaReservaData = { clienteId: null, clienteNome: '', itens: [] };
+            document.getElementById('buscaCliente').value = '';
+            document.getElementById('resultadosCliente').innerHTML = '';
+            document.getElementById('clienteSelecionado').classList.add('d-none');
+            document.getElementById('buscaProdutoNova').value = '';
+            document.getElementById('resultadosProduto').innerHTML = '';
+            renderItensNovaReserva();
+            modalNovaReserva.show();
+        });
+
+        document.getElementById('refreshReservas')?.addEventListener('click', carregarReservas);
+
+        // Busca de Cliente
+        const buscarClientes = async () => {
+            const termo = document.getElementById('buscaCliente').value.trim();
+            const resultados = document.getElementById('resultadosCliente');
+            
+            if (termo.length < 2) {
+                resultados.innerHTML = '<div class="list-group-item text-muted">Digite pelo menos 2 caracteres...</div>';
+                return;
+            }
+
+            try {
+                const res = await fetchAuthenticated('/api/clientes', 'GET');
+                const clientes = res?.data || res || [];
+                const matches = clientes.filter(c => {
+                    const nome = (c.nome || '').toLowerCase();
+                    const email = (c.login || c.email || '').toLowerCase();
+                    const termoLower = termo.toLowerCase();
+                    return nome.includes(termoLower) || email.includes(termoLower);
+                });
+
+                if (matches.length === 0) {
+                    resultados.innerHTML = '<div class="list-group-item text-muted">Nenhum cliente encontrado</div>';
+                    return;
+                }
+
+                resultados.innerHTML = matches.map(c => `
+                    <button class="list-group-item list-group-item-action" data-cliente-id="${c.id}" data-cliente-nome="${c.nome}">
+                        <strong>${c.nome}</strong><br>
+                        <small class="text-muted">CPF: ${c.cpf || '-'} | Email: ${c.email || c.login || '-'}</small>
+                    </button>
+                `).join('');
+
+                resultados.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        // Garantir que o ID seja um número
+                        novaReservaData.clienteId = parseInt(btn.dataset.clienteId, 10);
+                        novaReservaData.clienteNome = btn.dataset.clienteNome;
+                        document.getElementById('nomeClienteSelecionado').textContent = btn.dataset.clienteNome;
+                        document.getElementById('clienteSelecionado').classList.remove('d-none');
+                        resultados.innerHTML = '';
+                        document.getElementById('buscaCliente').value = '';
+                        verificarBotaoFinalizar();
+                    });
+                });
+            } catch (err) {
+                resultados.innerHTML = '<div class="list-group-item text-danger">Erro ao buscar clientes</div>';
+            }
+        };
+
+        document.getElementById('btnBuscarCliente').addEventListener('click', buscarClientes);
+        document.getElementById('buscaCliente').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') buscarClientes();
+        });
+
+        document.getElementById('limparCliente').addEventListener('click', () => {
+            novaReservaData.clienteId = null;
+            novaReservaData.clienteNome = '';
+            document.getElementById('clienteSelecionado').classList.add('d-none');
+            document.getElementById('buscaCliente').value = '';
+            verificarBotaoFinalizar();
+        });
+
+        // Busca de Produtos para Nova Reserva
+        const buscarProdutosNovaReserva = async () => {
+            const termo = document.getElementById('buscaProdutoNova').value.trim();
+            const resultados = document.getElementById('resultadosProduto');
+            
+            if (termo.length < 2) {
+                resultados.innerHTML = '<div class="list-group-item text-muted">Digite pelo menos 2 caracteres...</div>';
+                return;
+            }
+
+            try {
+                const res = await fetchAuthenticated('/api/produtos', 'GET');
+                const produtos = res?.data || res || [];
+                
+                const matches = produtos.filter(p => {
+                    const nome = (p.nome || '').toLowerCase();
+                    // Verifica qtd (do backend) ou quantidadeatual
+                    const estoque = parseInt(p.qtd || p.quantidadeatual || 0);
+                    // Mostrar apenas produtos com estoque disponível
+                    return nome.includes(termo.toLowerCase()) && estoque > 0;
+                });
+
+                if (matches.length === 0) {
+                    resultados.innerHTML = '<div class="list-group-item text-muted">Nenhum produto com estoque disponível encontrado</div>';
+                    return;
+                }
+
+                resultados.innerHTML = matches.map(p => {
+                    const estoque = parseInt(p.qtd || p.quantidadeatual || 0);
+                    const estoqueClass = estoque > 10 ? 'text-success' : estoque > 5 ? 'text-warning' : 'text-danger';
+                    return `
+                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" 
+                                data-produto-id="${p.idProduto || p.idproduto}" 
+                                data-produto-nome="${p.nome}" 
+                                data-produto-preco="${p.preco}"
+                                data-produto-estoque="${estoque}">
+                            <div>
+                                <strong>${p.nome}</strong><br>
+                                <small class="${estoqueClass}">Estoque: ${estoque} unidades</small>
+                            </div>
+                            <span class="badge bg-success">R$ ${parseFloat(p.preco || 0).toFixed(2)}</span>
+                        </button>
+                    `;
+                }).join('');
+
+                resultados.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const estoque = parseInt(btn.dataset.produtoEstoque);
+                        const produto = {
+                            idProduto: btn.dataset.produtoId,
+                            nomeProduto: btn.dataset.produtoNome,
+                            valorUnitario: parseFloat(btn.dataset.produtoPreco),
+                            quantidade: 1,
+                            estoqueDisponivel: estoque
+                        };
+                        novaReservaData.itens.push(produto);
+                        renderItensNovaReserva();
+                        resultados.innerHTML = '';
+                        document.getElementById('buscaProdutoNova').value = '';
+                        verificarBotaoFinalizar();
+                    });
+                });
+            } catch (err) {
+                resultados.innerHTML = '<div class="list-group-item text-danger">Erro ao buscar produtos</div>';
+            }
+        };
+
+        document.getElementById('btnBuscarProduto').addEventListener('click', buscarProdutosNovaReserva);
+        document.getElementById('buscaProdutoNova').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') buscarProdutosNovaReserva();
+        });
+
+        // Renderizar itens da nova reserva
+        function renderItensNovaReserva() {
+            const tbody = document.getElementById('itensNovaReserva');
+            tbody.innerHTML = '';
+            
+            let total = 0;
+            novaReservaData.itens.forEach((item, idx) => {
+                const subtotal = item.quantidade * item.valorUnitario;
+                total += subtotal;
+                
+                const maxEstoque = item.estoqueDisponivel || 999;
+                const estoqueInfo = item.estoqueDisponivel ? `<br><small class="text-muted">Máx: ${maxEstoque}</small>` : '';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.nomeProduto}${estoqueInfo}</td>
+                    <td>
+                        <input type="number" min="1" max="${maxEstoque}" class="form-control form-control-sm" 
+                               value="${item.quantidade}" data-idx="${idx}" data-max="${maxEstoque}">
+                    </td>
+                    <td>R$ ${item.valorUnitario.toFixed(2)}</td>
+                    <td>R$ ${subtotal.toFixed(2)}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-danger" data-remover="${idx}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                // Event listener para quantidade
+                const input = tr.querySelector('input');
+                input.addEventListener('input', (e) => {
+                    let novaQtd = parseInt(e.target.value) || 1;
+                    const max = parseInt(e.target.dataset.max);
+                    
+                    // Validar estoque disponível
+                    if (novaQtd > max) {
+                        alert(`Quantidade solicitada (${novaQtd}) excede o estoque disponível (${max})`);
+                        novaQtd = max;
+                        e.target.value = max;
+                    }
+                    
+                    if (novaQtd < 1) {
+                        novaQtd = 1;
+                        e.target.value = 1;
+                    }
+                    
+                    novaReservaData.itens[idx].quantidade = novaQtd;
+                    renderItensNovaReserva();
+                });
+
+                // Event listener para remover
+                tr.querySelector('button[data-remover]').addEventListener('click', () => {
+                    novaReservaData.itens.splice(idx, 1);
+                    renderItensNovaReserva();
+                    verificarBotaoFinalizar();
+                });
+            });
+
+            document.getElementById('totalNovaReserva').textContent = `R$ ${total.toFixed(2)}`;
+        }
+
+        // Verificar se pode finalizar
+        function verificarBotaoFinalizar() {
+            const btn = document.getElementById('finalizarNovaReserva');
+            const podeFinalizar = novaReservaData.clienteId && novaReservaData.itens.length > 0;
+            btn.disabled = !podeFinalizar;
+        }
+
+        // Finalizar Nova Reserva
+        document.getElementById('finalizarNovaReserva').addEventListener('click', async () => {
+            if (!novaReservaData.clienteId || novaReservaData.itens.length === 0) {
+                alert('Selecione um cliente e adicione pelo menos um produto!');
+                return;
+            }
+
+            try {
+                const payload = {
+                    clienteId: parseInt(novaReservaData.clienteId, 10), // Garantir que seja número
+                    itens: novaReservaData.itens.map(item => ({
+                        idProduto: parseInt(item.idProduto, 10),
+                        quantidade: parseInt(item.quantidade, 10),
+                        valorUnitario: parseFloat(item.valorUnitario)
+                    }))
+                };
+
+                const response = await fetchAuthenticated('/api/reservas', 'POST', payload);
+                
+                alert(`Reserva #${response.idReserva} criada com sucesso para o cliente ${novaReservaData.clienteNome}!`);
+                modalNovaReserva.hide();
+                carregarReservas();
+            } catch (err) {
+                alert('Erro ao criar reserva: ' + (err.error || err.message || 'Erro desconhecido'));
+            }
+        });
+
+        carregarReservas();
+    }
+
+    /* ================= VENDAS ================== */
+    else if (page === 'vendas') {
+        content.innerHTML = `
+            <h2>Vendas</h2>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <input 
+                        type="text" 
+                        id="vendasSearch" 
+                        class="form-control" 
+                        placeholder="Pesquisar..."
+                    >
+                </div>
+
+                <div class="col-md-3">
+                    <select id="vendasFiltro" class="form-select">
+                        <option value="id">ID Venda</option>
+                        <option value="cpf">CPF</option>
+                        <option value="cliente">Cliente</option>
+                        <option value="vendedor">Vendedor</option>
+                        <option value="valor">Valor</option>
+                        <option value="data">Data</option>
+                        <option value="pagamento">Método de Pagamento</option>
+                    </select>
+
+                </div>
+
+                <div class="col-md-3 text-end">
+                    <button class="btn btn-success w-100" id="openVendasModal">
+                        💼 Gerenciar Vendas
+                    </button>
+                </div>
+            </div>
+
+            <div class="card p-0">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>CPF</th>
+                            <th>Cliente</th>
+                            <th>Vendedor</th>
+                            <th>Valor</th>
+                            <th>Data</th>
+                            <th>Método de Pagamento</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="vendasTable">
+                        <tr>
+                            <td data-col="id">1</td>
+                            <td data-col="cpf">12345678900</td>
+                            <td data-col="cliente">Carlos Souza</td>
+                            <td data-col="vendedor">João Silva</td>
+                            <td data-col="valor">4500</td>
+                            <td data-col="data">10/02/2025</td>
+                            <td data-col="pagamento">PIX</td>
+                        </tr>
+
+                        <tr>
+                            <td data-col="id">2</td>
+                            <td data-col="cpf">98765432100</td>
+                            <td data-col="cliente">Fernanda Dias</td>
+                            <td data-col="vendedor">Maria Lima</td>
+                            <td data-col="valor">3200</td>
+                            <td data-col="data">12/02/2025</td>
+                            <td data-col="pagamento">Cartão</td>
+                        </tr>
+
+                        <tr>
+                            <td data-col="id">3</td>
+                            <td data-col="cpf">45678912300</td>
+                            <td data-col="cliente">Rodrigo Alves</td>
+                            <td data-col="vendedor">Paulo Costa</td>
+                            <td data-col="valor">5800</td>
+                            <td data-col="data">15/02/2025</td>
+                            <td data-col="pagamento">Dinheiro</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal fade" id="modalVendas" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content shadow-lg" style="border-radius: 18px;">
+                            
+                            <div class="modal-header" style="background:#7ed957; color:white; border-radius: 18px 18px 0 0;">
+                                <h5 class="modal-title fw-bold">💼 Gerenciar Vendas</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <div class="modal-body">
+
+                                <h6 class="fw-bold mb-3">Dados da Venda</h6>
+
+                                <div class="row g-3">
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">ID da Venda</label>
+                                        <input type="text" class="form-control" id="venID">
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">CPF</label>
+                                        <input type="text" class="form-control" id="venCPF">
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Cliente</label>
+                                        <input type="text" class="form-control" id="venCliente">
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Vendedor</label>
+                                        <input type="text" class="form-control" id="venVendedor">
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Valor</label>
+                                        <input type="number" class="form-control" id="venValor">
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Data</label>
+                                        <input type="date" class="form-control" id="venData">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Método de Pagamento</label>
+                                        <select id="venPagamento" class="form-select">
+                                            <option value="PIX">PIX</option>
+                                            <option value="Cartão">Cartão</option>
+                                            <option value="Dinheiro">Dinheiro</option>
+                                            <option value="Transferência">Transferência</option>
+                                        </select>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="modal-footer">
+                                <button class="btn btn-warning px-4">🔍 Pesquisar</button>
+                                <button class="btn btn-success px-4">💾 Salvar</button>
+                                <button class="btn btn-danger px-4">🗑 Excluir</button>
+                                <button class="btn btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+        `;
+        setupTableSearchAndModal('vendas', 'vendasSearch', 'vendasFiltro', 'vendasTable', 'modalVendas', 'openVendasModal');
+    }
+}
+/**
+ * Função utilitária para configurar a busca/filtro e a abertura de modais em páginas com tabelas.
+ * A lógica foi extraída do seu código original para reutilização e clareza.
+ */
+function setupTableSearchAndModal(page, searchId, filterId, tableId, modalId, buttonId) {
+    // Configuração do Modal
+    const modalEl = document.getElementById(modalId);
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        document.getElementById(buttonId).addEventListener("click", () => {
+            modal.show();
+        });
+    }
+
+    // Lógica de Busca / Filtro
+    const search = document.getElementById(searchId);
+    const filtro = document.getElementById(filterId);
+    const linhas = document.querySelectorAll(`#${tableId} tr`);
+
+    if (search && filtro && linhas.length > 0) {
+        search.addEventListener("keyup", () => {
+            // Normaliza o texto (remove pontos e hífens) para busca limpa
+            let texto = search.value.toLowerCase().replace(/[.\\-\\/]/g, "").trim(); 
+            const coluna = filtro.value;
+
+            linhas.forEach(tr => {
+                const celula = tr.querySelector(`[data-col="${coluna}"]`);
+
+                if (celula) {
+                    let valor = celula.textContent.toLowerCase().replace(/[.\\-\\/]/g, "").trim();
+                    tr.style.display = valor.includes(texto) ? "" : "none";
+                }
+            });
+        });
+    }
+}
+
+
+/* ======================================================================
+   INICIALIZAÇÃO DO DOM E EVENT LISTENERS PADRÕES
+   ====================================================================== */
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Inicia o dashboard (padrão ao carregar)
+    loadPage('dashboard');
+
+    // 2. Listener para os links da Sidebar
+    document.querySelectorAll('.sidebar a[data-page]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = e.target.closest('a').dataset.page;
+            
+            // Gerencia o estado 'active' no menu
+            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+            e.target.closest('a').classList.add('active');
+
+            if (page) {
+                loadPage(page);
+            }
+        });
+    });
+    
+    // 3. Verifica se precisa trocar a senha (usa função de auth.js)
+    if(typeof checkAndShowChangePasswordModal !== 'undefined') {
+        checkAndShowChangePasswordModal();
+    }
+});
+</script>
+
+<div class="modal fade" id="modalTrocarSenha" tabindex="-1" aria-labelledby="modalTrocarSenhaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title" id="modalTrocarSenhaLabel">Trocar Senha - Primeiro Acesso</h5>
+      </div>
+      <div class="modal-body">
+        <p>Como este é seu primeiro acesso, por favor escolha uma nova senha para continuar.</p>
+        <div class="mb-3">
+          <label class="form-label">Nova senha</label>
+          <input type="password" id="novaSenha" class="form-control" minlength="6" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Confirme a nova senha</label>
+          <input type="password" id="confirmaSenha" class="form-control" minlength="6" required>
+        </div>
+        <div id="trocaSenhaStatus" class="mt-2"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnTrocarSenha" class="btn btn-primary">Alterar Senha</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

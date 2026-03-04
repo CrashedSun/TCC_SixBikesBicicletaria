@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+	<title>SixBikes Bicicletaria - Carrinho</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+	<link rel="stylesheet" href="assets/css/templatemo.css">
+	<link rel="stylesheet" href="assets/css/custom.css">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;700;900&display=swap">
+	<link rel="stylesheet" href="assets/css/fontawesome.min.css">
+</head>
+
+<body>
+	<nav class="navbar navbar-expand-lg navbar-light shadow">
+		<div class="container d-flex justify-content-between align-items-center">
+			<a class="navbar-brand text-success logo h1 align-self-center" href="index.html">SixBikes Bicicletaria</a>
+			<button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#templatemo_main_nav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="align-self-center collapse navbar-collapse flex-fill d-lg-flex justify-content-lg-between" id="templatemo_main_nav">
+				<div class="flex-fill">
+					<ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
+						<li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+						<li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
+						<li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
+						<li class="nav-item"><a class="nav-link" href="eventos.html">Eventos</a></li>
+						<li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
+					</ul>
+				</div>
+				<div class="navbar align-self-center d-flex">
+					<a class="nav-icon d-none d-lg-inline" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
+						<i class="fa fa-fw fa-search text-dark mr-2"></i>
+					</a>
+					<a class="nav-icon position-relative text-decoration-none" href="carrinho.html">
+						<i class="fa fa-fw fa-cart-arrow-down text-dark mr-1"></i>
+						<span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">0</span>
+					</a>
+					<a class="nav-icon position-relative text-decoration-none" href="login.html">
+						<i class="fa fa-fw fa-user text-dark mr-3"></i>
+					</a>
+				</div>
+			</div>
+		</div>
+	</nav>
+
+	<div class="modal fade bg-white" id="templatemo_search" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="w-100 pt-1 mb-5 text-right">
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form action="" method="get" class="modal-content modal-body border-0 p-0">
+				<div class="input-group mb-2">
+					<input type="text" class="form-control" id="inputModalSearch" name="q" placeholder="Search ...">
+					<button type="submit" class="input-group-text bg-success text-light">
+						<i class="fa fa-fw fa-search text-white"></i>
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<div class="container py-5">
+		<h1 class="h2 mb-4">Carrinho de Compras</h1>
+		<div class="row">
+			<div class="col-lg-8">
+				<div class="table-responsive bg-white shadow-sm rounded">
+					<table class="table align-middle mb-0">
+						<thead class="table-light">
+							<tr>
+								<th style="width:80px;">Item</th>
+								<th>Produto</th>
+								<th style="width:140px;">Preço</th>
+								<th style="width:180px;">Quantidade</th>
+								<th style="width:140px;">Subtotal</th>
+								<th style="width:60px;"></th>
+							</tr>
+						</thead>
+						<tbody id="cart-body">
+							<!-- Linhas do carrinho -->
+						</tbody>
+					</table>
+				</div>
+				<div id="empty-cart" class="alert alert-info mt-3 d-none">
+					Seu carrinho está vazio. <a href="produtos.html" class="alert-link">Continuar comprando</a>.
+				</div>
+			</div>
+			<div class="col-lg-4">
+				<div class="card">
+					<div class="card-body">
+						<h5 class="card-title">Resumo</h5>
+						<div class="d-flex justify-content-between small mb-2">
+							<span>Subtotal</span>
+							<strong id="summary-subtotal">R$ 0,00</strong>
+						</div>
+						<div class="d-flex justify-content-between small mb-2">
+							<span>Frete</span>
+							<strong id="summary-shipping">R$ 0,00</strong>
+						</div>
+						<hr>
+						<div class="d-flex justify-content-between mb-3">
+							<span class="h6 mb-0">Total</span>
+							<strong id="summary-total" class="h5 mb-0">R$ 0,00</strong>
+						</div>
+						<div class="d-grid gap-2">
+							<a href="produtos.html" class="btn btn-outline-success">Continuar Procurando</a>
+							<button id="checkout-btn" class="btn btn-success">Finalizar Reserva</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<footer class="bg-dark" id="tempaltemo_footer">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-4 pt-5">
+					<h2 class="h2 text-success border-bottom pb-3 border-light logo">SixBikes Bicicletaria</h2>
+					<ul class="list-unstyled text-light footer-link-list">
+						<li><i class="fas fa-map-marker-alt fa-fw"></i> Endereço</li>
+						<li><i class="fa fa-phone fa-fw"></i> <a class="text-decoration-none" href="tel:010-020-0340">(11) 99999-9999</a></li>
+						<li><i class="fa fa-envelope fa-fw"></i> <a class="text-decoration-none" href="mailto:atendimento@sixbikes.com">atendimento@sixbikes.com</a></li>
+					</ul>
+				</div>
+				<div class="col-md-4 pt-5">
+					<h2 class="h2 text-light border-bottom pb-3 border-light">Produtos</h2>
+					<ul class="list-unstyled text-light footer-link-list">
+						<li><a class="text-decoration-none" href="#">Categoria 1</a></li>
+						<li><a class="text-decoration-none" href="#">Categoria 2</a></li>
+						<li><a class="text-decoration-none" href="#">Categoria 3</a></li>
+					</ul>
+				</div>
+				<div class="col-md-4 pt-5">
+					<h2 class="h2 text-light border-bottom pb-3 border-light">Abas</h2>
+					<ul class="list-unstyled text-light footer-link-list">
+						<li><a class="text-decoration-none" href="index.html">Home</a></li>
+						<li><a class="text-decoration-none" href="servicos.html">Serviços</a></li>
+						<li><a class="text-decoration-none" href="produtos.html">Produtos</a></li>
+						<li><a class="text-decoration-none" href="eventos.html">Eventos</a></li>
+						<li><a class="text-decoration-none" href="contato.html">Contato</a></li>
+					</ul>
+				</div>
+			</div>
+			<div class="row text-light mb-4">
+				<div class="col-12 mb-3"><div class="w-100 my-3 border-top border-light"></div></div>
+				<div class="col-auto me-auto">
+					<ul class="list-inline text-left footer-icons">
+						<li class="list-inline-item border border-light rounded-circle text-center"><a class="text-light text-decoration-none" target="_blank" href="http://facebook.com/"><i class="fab fa-facebook-f fa-lg fa-fw"></i></a></li>
+						<li class="list-inline-item border border-light rounded-circle text-center"><a class="text-light text-decoration-none" target="_blank" href="https://www.instagram.com/"><i class="fab fa-instagram fa-lg fa-fw"></i></a></li>
+						<li class="list-inline-item border border-light rounded-circle text-center"><a class="text-light text-decoration-none" target="_blank" href="https://twitter.com/"><i class="fab fa-twitter fa-lg fa-fw"></i></a></li>
+						<li class="list-inline-item border border-light rounded-circle text-center"><a class="text-light text-decoration-none" target="_blank" href="https://www.linkedin.com/"><i class="fab fa-linkedin fa-lg fa-fw"></i></a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="w-100 bg-black py-3"></div>
+	</footer>
+
+	<script src="assets/js/jquery-1.11.0.min.js"></script>
+	<script src="assets/js/jquery-migrate-1.2.1.min.js"></script>
+	<script src="assets/js/bootstrap.bundle.min.js"></script>
+	<script src="assets/js/templatemo.js"></script>
+	<script src="assets/js/custom.js"></script>
+	<script src="assets/js/search.js"></script>
+		<script src="assets/js/cart.js"></script>
+	<script>
+	  function renderCart(){
+		const body = document.getElementById('cart-body');
+		const empty = document.getElementById('empty-cart');
+		const countEl = document.getElementById('cart-count');
+		const items = Cart.get();
+		body.innerHTML = '';
+		const hasItems = items.length > 0;
+		empty.classList.toggle('d-none', hasItems);
+		countEl.textContent = Cart.count();
+		items.forEach(it => {
+		  const tr = document.createElement('tr');
+		  tr.innerHTML = `
+			<td><img src="${it.imagemUrl || 'assets/img/category_img_01.webp'}" alt="${(it.nome||'Produto')}" class="img-thumbnail" style="width:64px;height:64px;object-fit:cover"></td>
+			<td>
+			  <a href="shop-single.html?id=${encodeURIComponent(it.id)}" class="text-decoration-none text-dark">${it.nome || 'Produto'}</a>
+			</td>
+			<td class="text-nowrap">${Cart.formatBRL(it.preco)}</td>
+			<td>
+			  <div class="input-group input-group-sm" style="max-width:140px;">
+				<button class="btn btn-outline-success btn-minus" data-id="${it.id}">-</button>
+				<input type="number" class="form-control text-center cart-qty" data-id="${it.id}" value="${it.qty||1}" min="1" ${typeof it.estoque==='number' ? `max="${it.estoque}"` : ''}>
+				<button class="btn btn-outline-success btn-plus" data-id="${it.id}">+</button>
+			  </div>
+			</td>
+			<td class="text-nowrap item-subtotal">${Cart.formatBRL((Number(it.preco)||0) * (Number(it.qty)||0))}</td>
+			<td><button class="btn btn-sm btn-outline-danger btn-remove" data-id="${it.id}"><i class="fas fa-trash"></i></button></td>
+		  `;
+		  body.appendChild(tr);
+		});
+		updateSummary();
+	  }
+	  function updateSummary(){
+		const subtotal = Cart.subtotal();
+		document.getElementById('summary-subtotal').textContent = Cart.formatBRL(subtotal);
+		document.getElementById('summary-shipping').textContent = Cart.formatBRL(0);
+		document.getElementById('summary-total').textContent = Cart.formatBRL(subtotal);
+	  }
+
+	  document.addEventListener('DOMContentLoaded', () => {
+		renderCart();
+		const body = document.getElementById('cart-body');
+		body.addEventListener('click', (e) => {
+		  const minus = e.target.closest('.btn-minus');
+		  const plus = e.target.closest('.btn-plus');
+		  const remove = e.target.closest('.btn-remove');
+		  if(minus){
+			const id = minus.dataset.id;
+			const input = body.querySelector(`input.cart-qty[data-id="${CSS.escape(id)}"]`);
+			const next = Math.max(1, (parseInt(input.value,10)||1) - 1);
+			Cart.updateQty(id, next); renderCart();
+		  } else if(plus){
+			const id = plus.dataset.id;
+			const input = body.querySelector(`input.cart-qty[data-id="${CSS.escape(id)}"]`);
+			const max = input.max ? parseInt(input.max,10) : Infinity;
+			const next = Math.min(max, (parseInt(input.value,10)||1) + 1);
+			Cart.updateQty(id, next); renderCart();
+		  } else if(remove){
+			Cart.remove(remove.dataset.id); renderCart();
+		  }
+		});
+		body.addEventListener('change', (e) => {
+		  const input = e.target.closest('input.cart-qty');
+		  if(input){
+			const id = input.dataset.id;
+			let val = Math.max(1, parseInt(input.value,10)||1);
+			if(input.max) val = Math.min(val, parseInt(input.max,10));
+			Cart.updateQty(id, val); renderCart();
+		  }
+		});
+		document.getElementById('checkout-btn').addEventListener('click', () => {
+		  const items = Cart.get();
+		  if(items.length === 0){
+			alert('Seu carrinho está vazio.');
+			return;
+		  }
+		  const btn = document.getElementById('checkout-btn');
+		  btn.disabled = true; btn.textContent = 'Enviando reserva...';
+		  const payload = {
+			itens: items.map(it => ({
+			  idProduto: it.id,
+			  quantidade: Number(it.qty)||1,
+			  valorUnitario: Number(it.preco)||0
+			}))
+		  };
+		  fetchAuthenticated('/api/reservas', 'POST', payload)
+			.then(() => {
+			  alert('Reserva criada com sucesso!');
+			  Cart.clear();
+			  renderCart();
+			  btn.disabled = false; btn.textContent = 'Finalizar Reserva';
+			})
+			.catch(() => {
+			  alert('Erro ao criar reserva. Verifique sua sessão e tente novamente.');
+			  btn.disabled = false; btn.textContent = 'Finalizar Reserva';
+			});
+		});
+				window.addEventListener('storage', (e) => { if(e.key === 'sixbikes_cart') renderCart(); });
+	  });
+	</script>
+	<script src="assets/js/auth.js"></script>
+</body>
+
+</html>

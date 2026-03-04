@@ -1,0 +1,50 @@
+/projeto_bicicletaria
+├── /public                      # FRONTEND: Interface do Cliente e Estática (RNF005) [cite: 396]
+│   ├── atendente.html           # Painel de Controle (Atendente - Tela 7) [cite: 427]
+│   ├── contato.html             # Página de Contato (Tickets) [cite: 402]
+│   ├── gerencia.html            # Painel de Controle (Gerente/Proprietário - Tela 5) [cite: 409]
+│   ├── index.html               # Página Inicial (Home Screen - Tela 1) [cite: 399]
+│   ├── login.html               # Tela de Login (UC001 - Tela 3) [cite: 404, 178]
+│   ├── mecanico.html            # Painel de Controle (Mecânico - Tela 6) [cite: 420]
+│   ├── produtos.html            # Catálogo de Produtos
+│   ├── produto-unico.html       # Detalhe de Produto (Reserva - UC007) [cite: 184]
+│   ├── registro.html            # Tela de Auto-Registro (Cliente - Tela 4) [cite: 407]
+│   ├── servicos.html            # Lista de Serviços
+│   ├── agendamento.html         # Formulário de Agendamento (UC006) [cite: 183]
+│   └── /assets
+│       └── /js
+│           ├── auth.js          # Lógica de Autenticação/API (Motor da RNF002)
+│           └── ... (Arquivos de bibliotecas: jquery, bootstrap, templatemo)
+│
+├── /server                      # BACKEND: API REST (Node.js/Express)
+│   ├── index.js                 # Ponto de Entrada / Servidor Express (Todas as Rotas)
+│   ├── .env                     # Variáveis de Ambiente e JWT_SECRET
+│   ├── /config                  # Configurações de Recursos
+│   │   └── database.js          # Configuração do PostgreSQL
+│   ├── /controllers             # Recebe requisições HTTP e coordena Services
+│   │   ├── AuthController.js
+│   │   ├── ClienteController.js
+│   │   ├── VendaController.js
+│   │   ├── ProdutoController.js
+│   │   ├── AgendamentoController.js
+│   │   ├── FuncionarioController.js
+│   │   ├── TicketController.js
+│   │   └── RelatorioController.js
+│   ├── /middleware              # Funções de Interceptação
+│   │   └── authMiddleware.js    # Controle de Acesso por Perfil (RNF002)
+│   ├── /models                  # Entidades de Domínio (Baseadas no DDL)
+│   │   ├── UsuarioModel.js      # Modelo Unificado
+│   │   └── ClienteModel.js      # Especialização para Cliente
+│   ├── /repositories            # Camada de Persistência (SQL/PostgreSQL)
+│   │   ├── UsuarioRepository.js
+│   │   └── ClienteRepository.js
+│   └── /services                # Camada de Regras de Negócio (Lógica dos UCs)
+│       ├── AuthService.js
+│       ├── ClienteService.js
+│       ├── VendaService.js
+│       ├── ProdutoService.js
+│       ├── AgendamentoService.js
+│       ├── FuncionarioService.js
+│       └── RelatorioService.js
+│
+└── package.json                 # Dependências do Node.js

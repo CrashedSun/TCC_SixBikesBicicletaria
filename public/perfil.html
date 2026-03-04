@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <title>SixBikes Bicicletaria - Perfil</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/css/templatemo.css">
+  <link rel="stylesheet" href="assets/css/custom.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;700;900&display=swap">
+  <link rel="stylesheet" href="assets/css/fontawesome.min.css">
+  <style>
+    body { background:#f8f9fa; }
+    .profile-wrapper { max-width:900px; margin:60px auto 40px; }
+    .section-box { background:#fff; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.05); padding:25px 30px; margin-bottom:25px; }
+    .section-box h5 { font-weight:600; }
+    .avatar-circle { width:96px; height:96px; border-radius:50%; background:#59ab6e; color:#fff; display:flex; align-items:center; justify-content:center; font-size:38px; font-weight:600; letter-spacing:1px; }
+    .small-label { font-size: .75rem; text-transform: uppercase; letter-spacing:.5px; color:#666; }
+    .btn-success { background:#59ab6e; border-color:#59ab6e; }
+    .btn-success:hover { background:#46915a; border-color:#46915a; }
+    .logout-link { cursor:pointer; }
+    .readonly { background:#e9ecef; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <nav class="navbar navbar-expand-lg navbar-light shadow">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a class="navbar-brand text-success logo h1 align-self-center" href="index.html">SixBikes Bicicletaria</a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#templatemo_main_nav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="align-self-center collapse navbar-collapse flex-fill d-lg-flex justify-content-lg-between" id="templatemo_main_nav">
+        <div class="flex-fill">
+          <ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
+            <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
+            <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
+            <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
+          </ul>
+        </div>
+        <div class="navbar align-self-center d-flex">
+          <a class="nav-icon d-none d-lg-inline" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
+            <i class="fa fa-fw fa-search text-dark mr-2"></i>
+          </a>
+          <a class="nav-icon position-relative text-decoration-none" href="carrinho.html">
+            <i class="fa fa-fw fa-cart-arrow-down text-dark mr-1"></i>
+            <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">0</span>
+          </a>
+          <a id="nav-user-link" class="nav-icon position-relative text-decoration-none" href="login.html">
+            <i class="fa fa-fw fa-user text-dark mr-3"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <!-- End Header -->
+
+  <!-- Modal Search -->
+  <div class="modal fade bg-white" id="templatemo_search" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="w-100 pt-1 mb-5 text-right">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="" method="get" class="modal-content modal-body border-0 p-0">
+        <div class="input-group mb-2">
+          <input type="text" class="form-control" id="inputModalSearch" placeholder="Buscar produtos...">
+          <button type="submit" class="input-group-text bg-success text-light">
+            <i class="fa fa-fw fa-search text-white"></i>
+          </button>
+        </div>
+        <div id="searchResults" class="list-group px-2 pb-2"></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="profile-wrapper">
+    <div class="section-box d-flex align-items-center gap-3 flex-wrap">
+      <div class="avatar-circle" id="avatarCircle">U</div>
+      <div>
+        <h3 id="profileName" class="mb-1">Usuário</h3>
+        <div class="small text-muted" id="profileRole">Perfil: -</div>
+        <div class="small text-muted" id="profileLogin">Login: -</div>
+      </div>
+      <div class="ms-auto">
+        <button id="btnLogout" class="btn btn-outline-danger btn-sm">Sair</button>
+      </div>
+    </div>
+
+    <div class="section-box">
+      <h5 class="mb-3">Dados Básicos</h5>
+      <form id="basicForm" class="row g-3">
+        <div class="col-md-6">
+          <label class="small-label mb-1" for="nome">Nome</label>
+          <input type="text" id="nome" class="form-control" placeholder="Seu nome" required>
+        </div>
+        <div class="col-md-6">
+          <label class="small-label mb-1" for="email">Email</label>
+          <input type="email" id="email" class="form-control readonly" readonly placeholder="email@exemplo.com">
+        </div>
+        <div class="col-md-4">
+          <label class="small-label mb-1" for="cpf">CPF</label>
+          <input type="text" id="cpf" class="form-control" placeholder="000.000.000-00">
+        </div>
+        <div class="col-md-4">
+          <label class="small-label mb-1" for="telefone">Telefone</label>
+          <input type="text" id="telefone" class="form-control" placeholder="(11) 99999-9999">
+        </div>
+        <div class="col-md-4">
+          <label class="small-label mb-1" for="cargo">Cargo</label>
+          <input type="text" id="cargo" class="form-control readonly" readonly placeholder="-">
+        </div>
+        <div class="col-12 text-end mt-2">
+          <button type="submit" class="btn btn-success">Salvar Alterações</button>
+        </div>
+      </form>
+      <div id="basicStatus" class="small mt-2"></div>
+    </div>
+
+    <div class="section-box">
+      <h5 class="mb-3">Segurança</h5>
+      <form id="passwordForm" class="row g-3">
+        <div class="col-md-4">
+          <label class="small-label mb-1" for="senhaAtual">Senha Atual</label>
+          <input type="password" id="senhaAtual" class="form-control" minlength="6" required>
+        </div>
+        <div class="col-md-4">
+          <label class="small-label mb-1" for="novaSenha">Nova Senha</label>
+          <input type="password" id="novaSenha" class="form-control" minlength="6" required>
+        </div>
+        <div class="col-md-4">
+          <label class="small-label mb-1" for="confirmaSenha">Confirmar Nova Senha</label>
+          <input type="password" id="confirmaSenha" class="form-control" minlength="6" required>
+        </div>
+        <div class="col-12 text-end mt-2">
+          <button type="submit" class="btn btn-success">Alterar Senha</button>
+        </div>
+      </form>
+      <div id="passStatus" class="small mt-2"></div>
+    </div>
+
+    <div class="section-box">
+      <h5 class="mb-2">Sessão</h5>
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        <div class="small">Token armazenado no navegador.</div>
+        <button id="btnClearSession" class="btn btn-outline-secondary btn-sm">Limpar Sessão</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer (simplificado) -->
+  <footer class="bg-dark text-light py-4 mt-5">
+    <div class="container text-center small">
+      SixBikes Bicicletaria &copy; 2025
+    </div>
+  </footer>
+
+  <script src="assets/js/jquery-1.11.0.min.js"></script>
+  <script src="assets/js/jquery-migrate-1.2.1.min.js"></script>
+  <script src="assets/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/search.js"></script>
+  <script src="assets/js/cart.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script>
+    function updateCartCount(){
+      if(window.Cart){ const el=document.getElementById('cart-count'); if(el) el.textContent = Cart.count(); }
+    }
+
+    async function loadProfile(){
+      const token = localStorage.getItem('userToken');
+      const perfil = localStorage.getItem('userProfile');
+      if(!token || !perfil){ window.location.href='login.html'; return; }
+      // Ajusta ícone usuário para permanecer na página
+      const navUser = document.getElementById('nav-user-link');
+      if(navUser){ navUser.href='perfil.html'; }
+
+      try {
+        const me = await fetchAuthenticated('/usuarios/me');
+        // Campos disponíveis a partir do AuthController.getUserInfo + possivel ext
+        document.getElementById('profileName').textContent = me.nome || 'Usuário';
+        document.getElementById('profileRole').textContent = 'Perfil: ' + (me.perfil || perfil);
+        document.getElementById('profileLogin').textContent = 'Login: ' + (me.login || '-') + ' · ID: ' + (me.id || '-');
+        document.getElementById('nome').value = me.nome || '';
+        // Preenche direto do backend; email e cargo permanecem somente leitura
+        document.getElementById('email').value = me.email || '';
+        document.getElementById('cpf').value = me.cpf || '';
+        document.getElementById('telefone').value = me.telefone || '';
+        document.getElementById('cargo').value = me.cargo || (me.perfil || perfil);
+        const avatar = document.getElementById('avatarCircle');
+        if(avatar){ avatar.textContent = (me.nome||'U').charAt(0).toUpperCase(); }
+      } catch(e){
+        console.warn('Falha ao carregar perfil:', e.message);
+        // fallback mínimo
+        document.getElementById('profileName').textContent = localStorage.getItem('usuario') || 'Usuário';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateCartCount();
+      window.addEventListener('storage', (e)=>{ if(e.key==='sixbikes_cart') updateCartCount(); });
+      loadProfile();
+      // Logout
+      document.getElementById('btnLogout').addEventListener('click', ()=> logout());
+
+      // Salvar dados básicos no backend: nome, cpf, telefone
+      document.getElementById('basicForm').addEventListener('submit', async (ev)=>{
+        ev.preventDefault();
+        const status = document.getElementById('basicStatus');
+        status.textContent='';
+        const nome = document.getElementById('nome').value.trim();
+        const cpf = document.getElementById('cpf').value.trim();
+        const telefone = document.getElementById('telefone').value.trim();
+        try {
+          const resp = await fetchAuthenticated('/usuarios/me', 'PUT', { nome, cpf, telefone });
+          status.textContent = resp.message || 'Alterações salvas.';
+          status.style.color = 'green';
+          // Atualiza header e local cache básico
+          localStorage.setItem('usuario', nome);
+          if(cpf) localStorage.setItem('usuarioCPF', cpf);
+          if(telefone) localStorage.setItem('usuarioTelefone', telefone);
+          document.getElementById('profileName').textContent = nome || 'Usuário';
+        } catch(e){
+          status.textContent = e.message || 'Falha ao salvar alterações.';
+          status.style.color = 'red';
+        }
+      });
+
+      // Alterar senha via endpoint AuthController.changePassword
+      document.getElementById('passwordForm').addEventListener('submit', async (ev)=>{
+        ev.preventDefault();
+        const status = document.getElementById('passStatus');
+        status.textContent='';
+        const atual = document.getElementById('senhaAtual').value;
+        const nova = document.getElementById('novaSenha').value;
+        const conf = document.getElementById('confirmaSenha').value;
+        if(nova.length < 6){ status.textContent='Nova senha muito curta.'; status.style.color='red'; return; }
+        if(nova !== conf){ status.textContent='Senha e confirmação diferentes.'; status.style.color='red'; return; }
+        try {
+          // Não temos endpoint que valide senha atual; assume token válido e apenas envia nova senha.
+          const resp = await fetchAuthenticated('/senha', 'PUT', { senha: nova });
+          status.textContent = resp.message || 'Senha alterada.';
+          status.style.color = 'green';
+          document.getElementById('senhaAtual').value='';
+          document.getElementById('novaSenha').value='';
+          document.getElementById('confirmaSenha').value='';
+        } catch(e){
+          status.textContent = e.message || 'Falha ao alterar senha.';
+          status.style.color='red';
+        }
+      });
+
+      document.getElementById('btnClearSession').addEventListener('click', ()=>{
+        localStorage.removeItem('usuarioEmail');
+        localStorage.removeItem('usuarioCPF');
+        localStorage.removeItem('usuarioTelefone');
+        localStorage.removeItem('usuarioCargo');
+        document.getElementById('basicStatus').textContent='Sessão parcial limpa.';
+        document.getElementById('basicStatus').style.color='orange';
+      });
+    });
+  </script>
+</body>
+</html>

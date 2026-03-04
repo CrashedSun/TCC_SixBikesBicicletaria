@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventos - SixBikes</title>
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/templatemo.css">
+    <link rel="stylesheet" href="assets/css/custom.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;700;900&display=swap">
+    <link rel="stylesheet" href="assets/css/fontawesome.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light shadow">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand text-success logo h1 align-self-center" href="index.html">SixBikes Bicicletaria</a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#templatemo_main_nav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="align-self-center collapse navbar-collapse flex-fill d-lg-flex justify-content-lg-between" id="templatemo_main_nav">
+                <div class="flex-fill">
+                    <ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
+                        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
+                        <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="eventos.html">Eventos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
+                    </ul>
+                </div>
+                <div class="navbar align-self-center d-flex">
+                    <a class="nav-icon d-none d-lg-inline" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
+                        <i class="fa fa-fw fa-search text-dark mr-2"></i>
+                    </a>
+                    <a class="nav-icon position-relative text-decoration-none" href="carrinho.html">
+                        <i class="fa fa-fw fa-cart-arrow-down text-dark mr-1"></i>
+                        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">0</span>
+                    </a>
+                    <a class="nav-icon position-relative text-decoration-none" href="login.html" id="nav-user-link">
+                        <i class="fa fa-fw fa-user text-dark mr-3"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="modal fade bg-white" id="templatemo_search" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="w-100 pt-1 mb-5 text-right">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form class="modal-content modal-body border-0 p-0">
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" placeholder="Search ...">
+                    <button type="submit" class="input-group-text bg-success text-light"><i class="fa fa-fw fa-search text-white"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <section class="container py-5">
+        <div class="row text-center mb-4">
+            <div class="col-lg-8 m-auto">
+                <h1 class="h1">Eventos</h1>
+                <p>Confira nossos próximos eventos e participe!</p>
+            </div>
+        </div>
+        <div class="row" id="eventosContainer">
+            <!-- Eventos serão carregados aqui -->
+        </div>
+    </section>
+
+    <footer class="bg-dark" id="tempaltemo_footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-success border-bottom pb-3 border-light logo">SixBikes Bicicletaria</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li><i class="fas fa-map-marker-alt fa-fw"></i> Endereço</li>
+                        <li><i class="fa fa-phone fa-fw"></i> <a class="text-decoration-none" href="tel:010-020-0340">(11) 99999-9999</a></li>
+                        <li><i class="fa fa-envelope fa-fw"></i> <a class="text-decoration-none" href="mailto:atendimento@sixbikes.com">atendimento@sixbikes.com</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-light border-bottom pb-3 border-light">Produtos</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li><a class="text-decoration-none" href="#">Categoria 1</a></li>
+                        <li><a class="text-decoration-none" href="#">Categoria 2</a></li>
+                        <li><a class="text-decoration-none" href="#">Categoria 3</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-light border-bottom pb-3 border-light">Abas</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li><a class="text-decoration-none" href="index.html">Home</a></li>
+                        <li><a class="text-decoration-none" href="servicos.html">Serviços</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html">Produtos</a></li>
+                        <li><a class="text-decoration-none" href="eventos.html">Eventos</a></li>
+                        <li><a class="text-decoration-none" href="contato.html">Contato</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row text-light mb-4">
+                <div class="col-12 mb-3"><div class="w-100 my-3 border-top border-light"></div></div>
+                <div class="col-auto me-auto">
+                    <ul class="list-inline text-left footer-icons">
+                        <li class="list-inline-item border border-light rounded-circle text-center"><a class="text-light text-decoration-none" href="#"><i class="fab fa-facebook-f fa-lg fa-fw"></i></a></li>
+                        <li class="list-inline-item border border-light rounded-circle text-center"><a class="text-light text-decoration-none" href="#"><i class="fab fa-instagram fa-lg fa-fw"></i></a></li>
+                        <li class="list-inline-item border border-light rounded-circle text-center"><a class="text-light text-decoration-none" href="#"><i class="fab fa-twitter fa-lg fa-fw"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="w-100 bg-black py-3"></div>
+    </footer>
+
+    <script src="assets/js/jquery-1.11.0.min.js"></script>
+    <script src="assets/js/jquery-migrate-1.2.1.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/templatemo.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script src="assets/js/search.js"></script>
+    <script src="assets/js/cart.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        function updateCartCount(){
+            if(window.Cart){
+                const el = document.getElementById('cart-count');
+                if(el) el.textContent = Cart.count();
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCartCount();
+            window.addEventListener('storage', (e) => { if(e.key === 'sixbikes_cart') updateCartCount(); });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const container = document.getElementById('eventosContainer');
+            container.innerHTML = '<div class="col-12 text-center"><p class="text-info">Carregando eventos...</p></div>';
+            try {
+                const base = window.API_BASE_URL || 'http://localhost:8080/api';
+                const resp = await fetch(base + '/eventos/public');
+                if (resp.status === 404) {
+                    throw new Error('Rota /api/eventos/public não encontrada (404). Reinicie o servidor (npm start) para aplicar a nova rota.');
+                }
+                const contentType = resp.headers.get('content-type') || '';
+                let data;
+                if (contentType.includes('application/json')) {
+                    try { data = await resp.json(); } catch(parseErr){ throw new Error('Formato de resposta inválido (JSON).'); }
+                } else {
+                    const raw = await resp.text();
+                    throw new Error('Resposta inesperada do servidor: ' + raw.slice(0,80));
+                }
+                if(!resp.ok || !Array.isArray(data)) throw new Error('Falha ao carregar eventos.');
+                if(data.length === 0){
+                    container.innerHTML = '<div class="col-12 text-center"><p class="text-muted">Nenhum evento cadastrado.</p></div>';
+                    return;
+                }
+                container.innerHTML = '';
+                const token = localStorage.getItem('userToken');
+                data.forEach(ev => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-4';
+                    const dataStr = ev.data ? new Date(ev.data + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+                    let status = 'Encerrado';
+                    if(!ev.passado){
+                        if((ev.vagasdisponiveis ?? 0) > 0) status = 'Inscrições abertas'; else status = 'Lotado';
+                    }
+                    const podeInscrever = !ev.passado && (ev.vagasdisponiveis ?? 0) > 0;
+                    col.innerHTML = `
+                        <div class="card mb-4 product-wap rounded-0 evento-card">
+                            <div class="card rounded-0">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title"><i class="far fa-calendar-alt me-1"></i> ${ev.nome}</h5>
+                                    <p class="card-text mb-1"><strong>Data:</strong> ${dataStr}</p>
+                                    <p class="card-text mb-1 vagas-text"><strong>Vagas:</strong> <span class="vagas-val">${ev.vagasdisponiveis}</span>/${ev.vagastotal}</p>
+                                    <span class="badge status-badge ${status === 'Inscrições abertas' ? 'bg-success' : (status === 'Lotado' ? 'bg-warning text-dark' : 'bg-secondary')}">${status}</span>
+                                    <div class="mt-auto pt-3 small text-muted">ID: ${ev.idevento}</div>
+                                </div>
+                                <div class="card-img-overlay rounded-0 product-overlay d-flex align-items-center justify-content-center">
+                                    ${podeInscrever ? `<ul class='list-unstyled'>
+                                        <li><a class='btn btn-success text-white evento-inscrever-btn' href='#' data-id='${ev.idevento}' title='Inscrever-se'><i class='fas fa-user-plus'></i></a></li>
+                                    </ul>` : `<ul class='list-unstyled'><li><span class='badge ${status === 'Lotado' ? 'bg-warning text-dark' : 'bg-secondary'}'>${status}</span></li></ul>`}
+                                </div>
+                            </div>
+                        </div>`;
+                    container.appendChild(col);
+                });
+                // Inscrição
+                document.querySelectorAll('.evento-inscrever-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        const id = btn.dataset.id;
+                        const tokenLocal = localStorage.getItem('userToken');
+                        if(!tokenLocal){
+                            alert('Faça login para se inscrever.');
+                            window.location.href = 'login.html';
+                            return;
+                        }
+                        btn.disabled = true;
+                        try {
+                            const resp = await fetch((window.API_BASE_URL||'http://localhost:8080/api') + `/eventos/${id}/inscrever`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${tokenLocal}`, 'Content-Type': 'application/json' }
+                            });
+                            const resposta = await resp.json().catch(()=>({}));
+                            if(!resp.ok){ throw new Error(resposta.error || 'Falha ao inscrever.'); }
+                            alert(resposta.message || 'Inscrição realizada.');
+                            // Atualiza vagas e status visualmente
+                            const card = btn.closest('.product-wap');
+                            const vagasValEl = card.querySelector('.vagas-val');
+                            const badge = card.querySelector('.status-badge');
+                            let vagasRestantes = parseInt(vagasValEl.textContent,10)-1;
+                            if(vagasRestantes < 0) vagasRestantes = 0;
+                            vagasValEl.textContent = vagasRestantes;
+                            if(vagasRestantes === 0){
+                                badge.textContent = 'Lotado';
+                                badge.className = 'badge status-badge bg-warning text-dark';
+                                // Remove botão e mostra estado
+                                const overlay = card.querySelector('.card-img-overlay');
+                                if(overlay){ overlay.innerHTML = `<span class='badge bg-warning text-dark'>Lotado</span>`; }
+                            } else {
+                                // Disable further clicks
+                                btn.innerHTML = '<i class="fas fa-check"></i>';
+                                btn.classList.remove('btn-success');
+                                btn.classList.add('btn-secondary');
+                                btn.title = 'Inscrito';
+                            }
+                        } catch(err){
+                            alert(err.message);
+                            btn.disabled = false;
+                        }
+                    });
+                });
+            } catch(e){
+                console.warn(e);
+                container.innerHTML = '<div class="col-12 text-center"><p class="text-danger">Não foi possível carregar os eventos.</p></div>';
+            }
+        });
+    </script>
+</body>
+</html>

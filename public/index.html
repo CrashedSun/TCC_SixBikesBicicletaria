@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SixBikes Bicicletaria</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="apple-touch-icon" href="assets/img/apple-icon.png">
+    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.ico">
+
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/templatemo.css">
+    <link rel="stylesheet" href="assets/css/custom.css">
+
+    <!-- fontes -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;700;900&display=swap">
+    <link rel="stylesheet" href="assets/css/fontawesome.min.css">
+
+</head>
+
+<body>
+<!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-light shadow">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand text-success logo h1 align-self-center" href="index.html">SixBikes Bicicletaria</a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#templatemo_main_nav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="align-self-center collapse navbar-collapse flex-fill d-lg-flex justify-content-lg-between" id="templatemo_main_nav">
+                <div class="flex-fill">
+                    <ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
+                        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
+                        <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="eventos.html">Eventos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
+                    </ul>
+                </div>
+                <div class="navbar align-self-center d-flex">
+                    <a class="nav-icon d-none d-lg-inline" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
+                        <i class="fa fa-fw fa-search text-dark mr-2"></i>
+                    </a>
+                    <a class="nav-icon position-relative text-decoration-none" href="carrinho.html">
+                        <i class="fa fa-fw fa-cart-arrow-down text-dark mr-1"></i>
+                        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">0</span>
+                    </a>
+                    <a class="nav-icon position-relative text-decoration-none" href="login.html">
+                        <i class="fa fa-fw fa-user text-dark mr-3"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+<!-- End Header -->
+
+<!-- Modal -->
+    <div class="modal fade bg-white" id="templatemo_search" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="w-100 pt-1 mb-5 text-right">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="" method="get" class="modal-content modal-body border-0 p-0">
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="inputModalSearch" name="q" placeholder="Search ...">
+                    <button type="submit" class="input-group-text bg-success text-light">
+                        <i class="fa fa-fw fa-search text-white"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+<!-- Banner -->
+    <div id="template-mo-zay-hero-carousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <div class="container">
+                    <div class="row p-5">
+                        <div class="mx-auto col-md-8 col-lg-6 order-lg-last">
+                            <img class="img-fluid" src="./assets/img/banner_img_01.png" alt="">
+                        </div>
+                        <div class="col-lg-6 mb-0 d-flex align-items-center">
+                            <div class="text-align-left align-self-center">
+                                <h1 class="h1 text-success"><b>SixBikes</b> Bicicletaria</h1>
+                                <h3 class="h2">Agende um servico conosco</h3>
+                                <p>
+                                    Aqui você encontra qualidade.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- End Banner -->
+
+<!-- Serviços -->
+    <section class="bg-light">
+        <div class="container py-5">
+            <div class="row text-center py-3">
+                <div class="col-lg-6 m-auto">
+                    <h1 class="h1">Serviços</h1>
+                    <p>
+                        Conheça nossos serviços para manter sua bike em perfeito estado
+                    </p>
+                </div>
+            </div>
+            <div class="row" id="featured-servicos-row">
+                <!-- Serviços carregados dinamicamente -->
+            </div>
+        </div>
+    </section>
+    <!-- End Serviços -->
+
+    <!-- Produtos -->
+    <section class="container py-5">
+        <div class="row text-center pt-3">
+            <div class="col-lg-6 m-auto">
+                <h1 class="h1">Nossos Produtos</h1>
+                <p>
+                    
+                </p>
+            </div>
+        </div>
+        <div class="row" id="featured-products-row">
+            <!-- Produtos carregados dinamicamente -->
+        </div>
+    </section>
+    <!-- End Produtos -->
+
+    <!-- Sobre nós -->>
+    <section class="bg-success py-5"    >
+        <div class="container">
+            <div class="row align-items-center py-5">
+                <div class="col-md-8 text-white">
+                    <h1>Sobre Nós</h1>
+                    <p>
+                        Somos especializados em facilitar a vida dos ciclistas. No nosso site, você pode agendar serviços para sua bike e reservar produtos como peças e acessórios, para retirá-los prontos na nossa bicicletaria.
+                    </p>
+                    <p>
+                        Com atendimento rápido, serviços de qualidade e a conveniência de compras sem espera, garantimos a melhor experiência para você pedalar com segurança e conforto.
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <img src="assets/img/about-hero.svg" alt="About Hero">
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Fim Sobre nós -->
+
+    <!-- Footer -->
+    <footer class="bg-dark" id="tempaltemo_footer">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-success border-bottom pb-3 border-light logo">SixBikes Bicicletaria</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li>
+                            <i class="fas fa-map-marker-alt fa-fw"></i>
+                            Endereço
+                        </li>
+                        <li>
+                            <i class="fa fa-phone fa-fw"></i>
+                            <a class="text-decoration-none" href="tel:010-020-0340">(11) 99999-9999</a>
+                        </li>
+                        <li>
+                            <i class="fa fa-envelope fa-fw"></i>
+                            <a class="text-decoration-none" href="mailto:atendimento@sixbikes.com">atendimento@sixbikes.com</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-light border-bottom pb-3 border-light">Produtos</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li><a class="text-decoration-none" href="#">Catergoria 1</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 2</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 3</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 4</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 5</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 6</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 7</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-light border-bottom pb-3 border-light">Abas</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li><a class="text-decoration-none" href="index.html">Home</a></li>
+                        <li><a class="text-decoration-none" href="servicos.html">Serviços</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html">Produtos</a></li>
+                        <li><a class="text-decoration-none" href="eventos.html">Eventos</a></li>
+                        <li><a class="text-decoration-none" href="contato.html">Contato</a></li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="row text-light mb-4">
+                <div class="col-12 mb-3">
+                    <div class="w-100 my-3 border-top border-light"></div>
+                </div>
+                <div class="col-auto me-auto">
+                    <ul class="list-inline text-left footer-icons">
+                        <li class="list-inline-item border border-light rounded-circle text-center">
+                            <a class="text-light text-decoration-none" target="_blank" href="http://facebook.com/"><i class="fab fa-facebook-f fa-lg fa-fw"></i></a>
+                        </li>
+                        <li class="list-inline-item border border-light rounded-circle text-center">
+                            <a class="text-light text-decoration-none" target="_blank" href="https://www.instagram.com/"><i class="fab fa-instagram fa-lg fa-fw"></i></a>
+                        </li>
+                        <li class="list-inline-item border border-light rounded-circle text-center">
+                            <a class="text-light text-decoration-none" target="_blank" href="https://twitter.com/"><i class="fab fa-twitter fa-lg fa-fw"></i></a>
+                        </li>
+                        <li class="list-inline-item border border-light rounded-circle text-center">
+                            <a class="text-light text-decoration-none" target="_blank" href="https://www.linkedin.com/"><i class="fab fa-linkedin fa-lg fa-fw"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-100 bg-black py-3">     
+        </div>
+
+    </footer>
+    <!-- Fim Footer -->
+
+    <!-- Start Script -->
+    <script src="assets/js/jquery-1.11.0.min.js"></script>
+    <script src="assets/js/jquery-migrate-1.2.1.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/templatemo.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script src="assets/js/search.js"></script>
+    <!-- End Script -->
+    <script src="assets/js/cart.js"></script>
+    <script>
+        function updateCartCount(){
+            if(window.Cart){
+                const el = document.getElementById('cart-count');
+                if(el) el.textContent = Cart.count();
+            }
+        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            updateCartCount();
+            window.addEventListener('storage', (e) => {
+                if(e.key === 'sixbikes_cart') updateCartCount();
+            });
+
+            // Carrega os 3 primeiros produtos em ordem alfabética
+            try {
+                const base = window.API_BASE_URL || 'http://localhost:8080/api';
+                const resp = await fetch(`${base}/produtos/public`);
+                const data = await resp.json();
+                if (resp.ok && Array.isArray(data.data)) {
+                    const withStock = (data.data || []).filter(p => {
+                        const est = p.qtd ?? p.quantidade ?? p.quantidadeAtual ?? 0;
+                        return (Number(est) || 0) > 0;
+                    });
+                    const sorted = withStock.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+                    const top3 = sorted.slice(0, 3);
+                    const row = document.getElementById('featured-products-row');
+                    top3.forEach(p => {
+                        const col = document.createElement('div');
+                        col.className = 'col-12 col-md-4 p-5 mt-3';
+                        const img = p.imagemUrl || './assets/img/category_img_01.webp';
+                        const id = p.id || p.idProduto || p.idproduto || '';
+                        const link = `shop-single.html?id=${encodeURIComponent(id)}`;
+                        const priceNum = typeof p.preco === 'number' ? p.preco : parseFloat(String(p.preco || '0').replace(',', '.'));
+                        const estoque = p.qtd ?? p.quantidade ?? 0;
+                        col.innerHTML = `
+                            <div class="card mb-4 product-wap rounded-0" style="border:none;">
+                                <div class="card rounded-0">
+                                    <img src="${img}" class="card-img rounded-0 img-fluid" alt="${p.nome || 'Produto'}">
+                                    <div class="card-img-overlay rounded-0 product-overlay d-flex align-items-center justify-content-center">
+                                        <ul class="list-unstyled">
+                                            <li><a class="btn btn-success text-white" href="#"><i class="far fa-heart"></i></a></li>
+                                            <li><a class="btn btn-success text-white mt-2" href="${link}"><i class="far fa-eye"></i></a></li>
+                                            <li><a class="btn btn-success text-white mt-2 add-to-cart-index" href="#" data-id="${id}" data-nome="${(p.nome||'Produto').replace(/"/g,'&quot;')}" data-preco="${priceNum}" data-img="${img}" data-estoque="${estoque}"><i class="fas fa-cart-plus"></i></a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <a href="${link}" class="h5 text-decoration-none text-dark">${p.nome || 'Produto'}</a>
+                                </div>
+                            </div>
+                        `;
+                        row.appendChild(col);
+                    });
+                    // Wire add-to-cart
+                    document.querySelectorAll('.add-to-cart-index').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            if (!window.Cart) {
+                                console.error('Cart module not loaded');
+                                alert('Erro ao carregar o carrinho. Tente recarregar a página.');
+                                return;
+                            }
+                            const id = btn.dataset.id;
+                            const nome = btn.dataset.nome;
+                            const preco = parseFloat(btn.dataset.preco) || 0;
+                            const imagemUrl = btn.dataset.img;
+                            const estoque = parseInt(btn.dataset.estoque, 10) || 0;
+                            
+                            if (estoque <= 0) {
+                                alert('Produto sem estoque disponível.');
+                                return;
+                            }
+                            
+                            window.Cart.add({ id, nome, preco, imagemUrl, estoque }, 1);
+                            updateCartCount();
+                            alert('Adicionado ao carrinho!');
+                        });
+                    });
+                    // Adiciona botão "Ver mais"
+                    const btnCol = document.createElement('p');
+                    btnCol.className = 'text-center';
+                    btnCol.innerHTML = '<a class="btn btn-success" href="produtos.html">Ver mais</a>';
+                    row.appendChild(btnCol);
+                }
+            } catch (e) {
+                console.warn('Falha ao carregar produtos:', e.message);
+            }
+
+            // Carrega os 3 primeiros serviços
+            try {
+                const base = window.API_BASE_URL || 'http://localhost:8080/api';
+                const resp = await fetch(`${base}/servicos/public`);
+                const data = await resp.json();
+                if (resp.ok && Array.isArray(data)) {
+                    const top3 = data.slice(0, 3);
+                    const row = document.getElementById('featured-servicos-row');
+                    top3.forEach(s => {
+                        const col = document.createElement('div');
+                        col.className = 'col-12 col-md-4 mb-4';
+                        const img = s.foto || './assets/img/feature_prod_01.jpeg';
+                        const valorFmt = parseFloat(s.valor || 0).toFixed(2);
+                        const nomeEscaped = (s.nome || '').replace(/"/g, '&quot;');
+                        col.innerHTML = `
+                            <div class="card mb-4 product-wap rounded-0" style="border:none;">
+                                <div class="card rounded-0">
+                                    <img src="${img}" class="card-img rounded-0 img-fluid" alt="${nomeEscaped}">
+                                    <div class="card-img-overlay rounded-0 product-overlay d-flex align-items-center justify-content-center">
+                                        <ul class="list-unstyled">
+                                            <li><a class="btn btn-success text-white agendar-servico-index" href="#" data-id="${s.idservico}"><i class="far fa-calendar-alt"></i></a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <a href="servicos.html" class="h5 text-decoration-none text-dark">${s.nome}</a>
+                                    <ul class="w-100 list-unstyled d-flex justify-content-between mb-0">
+                                        <li>${s.duracaoestimada} min</li>
+                                        <li class="text-success">R$ ${valorFmt}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        `;
+                        row.appendChild(col);
+                    });
+                    // Event listeners para agendamento
+                    document.querySelectorAll('.agendar-servico-index').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const token = localStorage.getItem('userToken');
+                            if (!token) {
+                                alert('Você precisa estar logado para agendar um serviço.');
+                                window.location.href = 'login.html';
+                                return;
+                            }
+                            alert(`Agendamento do serviço ID ${btn.dataset.id} será implementado em breve!`);
+                        });
+                    });
+                    const btnCol = document.createElement('p');
+                    btnCol.className = 'text-center';
+                    btnCol.innerHTML = '<a class="btn btn-success" href="servicos.html">Ver mais</a>';
+                    row.appendChild(btnCol);
+                }
+            } catch (e) {
+                console.warn('Falha ao carregar serviços:', e.message);
+            }
+        });
+    </script>
+    <script src="assets/js/auth.js"></script>
+</body>
+
+</html>

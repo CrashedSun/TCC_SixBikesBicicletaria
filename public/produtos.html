@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>SixBikes Bicicletaria</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Ícones removidos para evitar 404; adicione arquivos em assets/img se necessário -->
+    <!-- <link rel="apple-touch-icon" href="assets/img/apple-icon.png"> -->
+    <!-- <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.ico"> -->
+
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/templatemo.css">
+    <link rel="stylesheet" href="assets/css/custom.css">
+
+    <!-- fontes -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;700;900&display=swap">
+    <link rel="stylesheet" href="assets/css/fontawesome.min.css">
+
+</head>
+
+<body>
+<!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-light shadow">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand text-success logo h1 align-self-center" href="index.html">SixBikes Bicicletaria</a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#templatemo_main_nav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="align-self-center collapse navbar-collapse flex-fill d-lg-flex justify-content-lg-between" id="templatemo_main_nav">
+                <div class="flex-fill">
+                    <ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
+                        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
+                        <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="eventos.html">Eventos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
+                    </ul>
+                </div>
+                <div class="navbar align-self-center d-flex">
+                    <a class="nav-icon d-none d-lg-inline" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
+                        <i class="fa fa-fw fa-search text-dark mr-2"></i>
+                    </a>
+                    <a class="nav-icon position-relative text-decoration-none" href="carrinho.html">
+                        <i class="fa fa-fw fa-cart-arrow-down text-dark mr-1"></i>
+                        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">0</span>
+                    </a>
+                    <a class="nav-icon position-relative text-decoration-none" href="login.html">
+                        <i class="fa fa-fw fa-user text-dark mr-3"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+<!-- End Header -->
+
+    <!-- Modal -->
+    <div class="modal fade bg-white" id="templatemo_search" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="w-100 pt-1 mb-5 text-right">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="" method="get" class="modal-content modal-body border-0 p-0">
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="inputModalSearch" name="q" placeholder="Search ...">
+                    <button type="submit" class="input-group-text bg-success text-light">
+                        <i class="fa fa-fw fa-search text-white"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+    <!-- Start Content -->
+    <div class="container py-5">
+        <div class="row">
+
+            <div class="col-lg-3">
+                <h1 class="h2 pb-4">Categorias</h1>
+                <ul class="list-unstyled templatemo-accordion">
+                    <li class="pb-3">
+                        <a class="collapsed d-flex justify-content-between h3 text-decoration-none" href="#">
+                            Peças
+                            <i class="pull-right fa fa-fw fa-chevron-circle-down mt-1"></i>
+                        </a>
+                        <ul id="collapseThree" class="collapse list-unstyled pl-3">
+                            <li><a class="text-decoration-none" href="#">Pneu</a></li>
+                            <li><a class="text-decoration-none" href="#">Freio</a></li>
+                            <li><a class="text-decoration-none" href="#">Aro</a></li>
+                            <li><a class="text-decoration-none" href="#">Cambio</a></li>
+                            <li><a class="text-decoration-none" href="#">Guidão</a></li>
+                            <li><a class="text-decoration-none" href="#">Mesa</a></li>
+                            <li><a class="text-decoration-none" href="#">Pedevela</a></li>
+                            <li><a class="text-decoration-none" href="#">Catraca</a></li>
+                            <li><a class="text-decoration-none" href="#">Selim</a></li>
+                        </ul>
+                    </li>
+                    <li class="pb-3">
+                        <a class="collapsed d-flex justify-content-between h3 text-decoration-none" href="#">
+                            Acessorios
+                            <i class="pull-right fa fa-fw fa-chevron-circle-down mt-1"></i>
+                        </a>
+                        <ul id="collapseTwo" class="collapse list-unstyled pl-3">
+                            <li><a class="text-decoration-none" href="#">Farol</a></li>
+                            <li><a class="text-decoration-none" href="#">Vista Light</a></li>
+                            <li><a class="text-decoration-none" href="#">Descanso</a></li>
+                            <li><a class="text-decoration-none" href="#">Bar End</a></li>
+                            <li><a class="text-decoration-none" href="#">Bolsa de Quadro</a></li>
+                            <li><a class="text-decoration-none" href="#">Capacete</a></li>
+                            <li><a class="text-decoration-none" href="#">Bagageiro</a></li>
+                            <li><a class="text-decoration-none" href="#">Bomba de Ar</a></li>
+                            <li><a class="text-decoration-none" href="#">Cadeado</a></li>
+                            <li><a class="text-decoration-none" href="#">Kit remendo</a></li>
+                        </ul>
+                    </li>
+
+                </ul>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-inline shop-top-menu pb-3 pt-1">
+                            <li class="list-inline-item">
+                                <a class="h3 text-dark text-decoration-none mr-3" href="#">Todos</a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a class="h3 text-dark text-decoration-none mr-3" href="#">Peças</a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a class="h3 text-dark text-decoration-none" href="#">Acessorios</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6 pb-4">
+                        <div class="d-flex">
+                            <select class="form-control">
+                                <option>Classificar</option>
+                                <option>A a Z</option>
+                                <option>Item</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-4 product-wap rounded-0">
+                            <div class="card rounded-0">
+                                <img class="card-img rounded-0 img-fluid" src="assets/img/category_img_01.webp">
+                                <div class="card-img-overlay rounded-0 product-overlay d-flex align-items-center justify-content-center">
+                                    <ul class="list-unstyled">
+                                        <li><a class="btn btn-success text-white" href="shop-single.html"><i class="far fa-heart"></i></a></li>
+                                        <li><a class="btn btn-success text-white mt-2" href="shop-single.html"><i class="far fa-eye"></i></a></li>
+                                        <li><a class="btn btn-success text-white mt-2" href="shop-single.html"><i class="fas fa-cart-plus"></i></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <a href="shop-single.html" class="h3 text-decoration-none">Pneu</a>
+                                <ul class="w-100 list-unstyled d-flex justify-content-between mb-0">
+                                    <li>16/20/24/26/29</li>
+                                    <li class="pt-2">
+                                        <span class="product-color-dot color-dot-red float-left rounded-circle ml-1"></span>
+                                        <span class="product-color-dot color-dot-blue float-left rounded-circle ml-1"></span>
+                                        <span class="product-color-dot color-dot-black float-left rounded-circle ml-1"></span>
+                                        <span class="product-color-dot color-dot-light float-left rounded-circle ml-1"></span>
+                                        <span class="product-color-dot color-dot-green float-left rounded-circle ml-1"></span>
+                                    </li>
+                                </ul>
+                                <!-- Avaliação removida -->
+                                <p class="text-center mb-0">$250.00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-4 product-wap rounded-0">
+                            <div class="card rounded-0">
+                                <img class="card-img rounded-0 img-fluid" src="assets/img/category_img_01.webp">
+                                <div class="card-img-overlay rounded-0 product-overlay d-flex align-items-center justify-content-center">
+                                    <ul class="list-unstyled">
+                                        <li><a class="btn btn-success text-white" href="shop-single.html"><i class="far fa-heart"></i></a></li>
+                                        <li><a class="btn btn-success text-white mt-2" href="shop-single.html"><i class="far fa-eye"></i></a></li>
+                                        <li><a class="btn btn-success text-white mt-2" href="shop-single.html"><i class="fas fa-cart-plus"></i></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <a href="shop-single.html" class="h3 text-decoration-none">Pneu</a>
+                                <ul class="w-100 list-unstyled d-flex justify-content-between mb-0">
+                                    <li>16/20/24/26/29</li>
+                                    <li class="pt-2">
+                                        <span class="product-color-dot color-dot-red float-left rounded-circle ml-1"></span>
+                                        <span class="product-color-dot color-dot-blue float-left rounded-circle ml-1"></span>
+                                        <span class="product-color-dot color-dot-black float-left rounded-circle ml-1"></span>
+                                        <span class="product-color-dot color-dot-light float-left rounded-circle ml-1"></span>
+                                        <span class="product-color-dot color-dot-green float-left rounded-circle ml-1"></span>
+                                    </li>
+                                </ul>
+                                <!-- Avaliação removida -->
+                                <p class="text-center mb-0">$250.00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-4 product-wap rounded-0">
+                            <div class="card rounded-0">
+                                <img class="card-img rounded-0 img-fluid" src="assets/img/category_img_01.webp">
+                                <div class="card-img-overlay rounded-0 product-overlay d-flex align-items-center justify-content-center">
+                                    <ul class="list-unstyled">
+                                        <li><a class="btn btn-success text-white" href="shop-single.html"><i class="far fa-heart"></i></a></li>
+                                        <li><a class="btn btn-success text-white mt-2" href="shop-single.html"><i class="far fa-eye"></i></a></li>
+                                        <li><a class="btn btn-success text-white mt-2" href="shop-single.html"><i class="fas fa-cart-plus"></i></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <a href="shop-single.html" class="h3 text-decoration-none">Pneu</a>
+                                <ul class="w-100 list-unstyled d-flex justify-content-between mb-0">
+                                    <li>16/20/24/26/29</li>
+                                    <li class="pt-2">
+                                        <span class="product-color-dot color-dot-red float-left rounded-circle ml-1"></span>
+                                        <span class="product-color-dot color-dot-blue float-left rounded-circle ml-1"></span>
+                                        <span class="product-color-dot color-dot-black float-left rounded-circle ml-1"></span>
+                                        <span class="product-color-dot color-dot-light float-left rounded-circle ml-1"></span>
+                                        <span class="product-color-dot color-dot-green float-left rounded-circle ml-1"></span>
+                                    </li>
+                                </ul>
+                                <!-- Avaliação removida -->
+                                <p class="text-center mb-0">$250.00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <nav aria-label="Paginação de produtos">
+                        <ul id="productsPagination" class="pagination pagination-lg justify-content-end"></ul>
+                    </nav>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- End Content -->
+
+    <!-- Start Brands -->
+    <section class="bg-light py-5">
+        <div class="container my-4">
+            <div class="row text-center py-3">
+                <div class="col-lg-6 m-auto">
+                    <h1 class="h1">Nossas marcas</h1>
+                    <p>
+                        Esta são algumas das marcas com quais nós trabalhamos.
+                    </p>
+                </div>
+                <div class="col-lg-9 m-auto tempaltemo-carousel">
+                    <div class="row d-flex flex-row">
+                        <!--Controls-->
+                        <div class="col-1 align-self-center">
+                            <a class="h1" href="#multi-item-example" role="button" data-bs-slide="prev">
+                                <i class="text-light fas fa-chevron-left"></i>
+                            </a>
+                        </div>
+                        <!--End Controls-->
+
+                        <!--Carousel Wrapper-->
+                        <div class="col">
+                            <div class="carousel slide carousel-multi-item pt-2 pt-md-0" id="multi-item-example" data-bs-ride="carousel">
+                                <!--Slides-->
+                                <div class="carousel-inner product-links-wap" role="listbox">
+
+                                    <!--First slide-->
+                                    <div class="carousel-item active">
+                                        <div class="row">
+                                            <div class="col-3 p-md-5">
+                                                <a href="#"><img class="img-fluid brand-img" src="assets/img/banner_img_01.png" alt="Brand Logo"></a>
+                                            </div>
+                                            <div class="col-3 p-md-5">
+                                                <a href="#"><img class="img-fluid brand-img" src="assets/img/banner_img_01.png" alt="Brand Logo"></a>
+                                            </div>
+                                            <div class="col-3 p-md-5">
+                                                <a href="#"><img class="img-fluid brand-img" src="assets/img/banner_img_01.png" alt="Brand Logo"></a>
+                                            </div>
+                                            <div class="col-3 p-md-5">
+                                                <a href="#"><img class="img-fluid brand-img" src="assets/img/banner_img_01.png" alt="Brand Logo"></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--End First slide-->
+
+                                    <!--Second slide-->
+                                    <div class="carousel-item">
+                                        <div class="row">
+                                            <div class="col-3 p-md-5">
+                                                <a href="#"><img class="img-fluid brand-img" src="assets/img/banner_img_01.png" alt="Brand Logo"></a>
+                                            </div>
+                                            <div class="col-3 p-md-5">
+                                                <a href="#"><img class="img-fluid brand-img" src="assets/img/banner_img_01.png" alt="Brand Logo"></a>
+                                            </div>
+                                            <div class="col-3 p-md-5">
+                                                <a href="#"><img class="img-fluid brand-img" src="assets/img/banner_img_01.png" alt="Brand Logo"></a>
+                                            </div>
+                                            <div class="col-3 p-md-5">
+                                                <a href="#"><img class="img-fluid brand-img" src="assets/img/banner_img_01.png" alt="Brand Logo"></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--End Second slide-->
+
+                                    <!--Third slide-->
+                                    <div class="carousel-item">
+                                        <div class="row">
+                                            <div class="col-3 p-md-5">
+                                                <a href="#"><img class="img-fluid brand-img" src="assets/img/banner_img_01.png" alt="Brand Logo"></a>
+                                            </div>
+                                            <div class="col-3 p-md-5">
+                                                <a href="#"><img class="img-fluid brand-img" src="assets/img/banner_img_01.png" alt="Brand Logo"></a>
+                                            </div>
+                                            <div class="col-3 p-md-5">
+                                                <a href="#"><img class="img-fluid brand-img" src="assets/img/banner_img_01.png" alt="Brand Logo"></a>
+                                            </div>
+                                            <div class="col-3 p-md-5">
+                                                <a href="#"><img class="img-fluid brand-img" src="assets/img/banner_img_01.png" alt="Brand Logo"></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--End Third slide-->
+
+                                </div>
+                                <!--End Slides-->
+                            </div>
+                        </div>
+                        <!--End Carousel Wrapper-->
+
+                        <!--Controls-->
+                        <div class="col-1 align-self-center">
+                            <a class="h1" href="#multi-item-example" role="button" data-bs-slide="next">
+                                <i class="text-light fas fa-chevron-right"></i>
+                            </a>
+                        </div>
+                        <!--End Controls-->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!--End Brands-->
+
+    <!-- Footer -->
+    <footer class="bg-dark" id="tempaltemo_footer">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-success border-bottom pb-3 border-light logo">SixBikes Bicicletaria</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li>
+                            <i class="fas fa-map-marker-alt fa-fw"></i>
+                            Endereço
+                        </li>
+                        <li>
+                            <i class="fa fa-phone fa-fw"></i>
+                            <a class="text-decoration-none" href="tel:010-020-0340">(11) 99999-9999</a>
+                        </li>
+                        <li>
+                            <i class="fa fa-envelope fa-fw"></i>
+                            <a class="text-decoration-none" href="mailto:atendimento@sixbikes.com">atendimento@sixbikes.com</a>
+
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-light border-bottom pb-3 border-light">Produtos</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li><a class="text-decoration-none" href="#">Catergoria 1</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 2</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 3</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 4</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 5</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 6</a></li>
+                        <li><a class="text-decoration-none" href="#">Catergoria 7</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-light border-bottom pb-3 border-light">Abas</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li><a class="text-decoration-none" href="index.html">Home</a></li>
+                        <li><a class="text-decoration-none" href="servicos.html">Serviços</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html">Produtos</a></li>
+                        <li><a class="text-decoration-none" href="contato.html">Contato</a></li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="row text-light mb-4">
+                <div class="col-12 mb-3">
+                    <div class="w-100 my-3 border-top border-light"></div>
+                </div>
+                <div class="col-auto me-auto">
+                    <ul class="list-inline text-left footer-icons">
+                        <li class="list-inline-item border border-light rounded-circle text-center">
+                            <a class="text-light text-decoration-none" target="_blank" href="http://facebook.com/"><i class="fab fa-facebook-f fa-lg fa-fw"></i></a>
+                        </li>
+                        <li class="list-inline-item border border-light rounded-circle text-center">
+                            <a class="text-light text-decoration-none" target="_blank" href="https://www.instagram.com/"><i class="fab fa-instagram fa-lg fa-fw"></i></a>
+                        </li>
+                        <li class="list-inline-item border border-light rounded-circle text-center">
+                            <a class="text-light text-decoration-none" target="_blank" href="https://twitter.com/"><i class="fab fa-twitter fa-lg fa-fw"></i></a>
+                        </li>
+                        <li class="list-inline-item border border-light rounded-circle text-center">
+                            <a class="text-light text-decoration-none" target="_blank" href="https://www.linkedin.com/"><i class="fab fa-linkedin fa-lg fa-fw"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-100 bg-black py-3">     
+        </div>
+
+    </footer>
+    <!-- Fim Footer -->
+
+    <!-- Start Script -->
+    <script src="assets/js/jquery-1.11.0.min.js"></script>
+    <script src="assets/js/jquery-migrate-1.2.1.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/templatemo.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script src="assets/js/search.js"></script>
+    <!-- End Script -->
+
+    <template id="product-card-template">
+        <div class="col-md-4">
+            <div class="card mb-4 product-wap rounded-0">
+                <div class="card rounded-0">
+                    <img class="card-img rounded-0 img-fluid product-img" src="assets/img/category_img_01.webp">
+                    <div class="card-img-overlay rounded-0 product-overlay d-flex align-items-center justify-content-center">
+                        <ul class="list-unstyled">
+                            <li><a class="btn btn-success text-white" href="#"><i class="far fa-heart"></i></a></li>
+                            <li><a class="btn btn-success text-white mt-2 product-link" href="shop-single.html?id="><i class="far fa-eye"></i></a></li>
+                            <li><a class="btn btn-success text-white mt-2" href="#"><i class="fas fa-cart-plus"></i></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <a href="shop-single.html?id=" class="h3 text-decoration-none product-name">Nome do Produto</a>
+                    <ul class="w-100 list-unstyled d-flex justify-content-between mb-0">
+                        <li class="text-success product-stock">Em Estoque: 10</li>
+                        <li class="pt-2"></li>
+                    </ul>
+                    <!-- Avaliação removida -->
+                    <p class="text-center mb-0 product-price">$0.00</p>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <script src="assets/js/jquery-1.11.0.min.js"></script>
+    <script src="assets/js/jquery-migrate-1.2.1.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/templatemo.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script src="assets/js/cart.js"></script>
+    <script src="assets/js/auth.js"></script> <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            function updateCartCount(){
+                if(window.Cart){
+                    const el = document.getElementById('cart-count');
+                    if(el) el.textContent = Cart.count();
+                }
+            }
+            const template = document.getElementById('product-card-template');
+            const PAGE_SIZE = 20;
+            let allProducts = [];
+            let currentPage = 1;
+            let productRow = null;
+
+            // Localiza o container de cards dentro da coluna principal (col-lg-9)
+            const col9 = document.querySelector('.col-lg-9');
+            if (col9) {
+                const rows = col9.querySelectorAll(':scope > .row');
+                // A segunda .row dentro de .col-lg-9 contém os cards
+                productRow = rows[1] || null;
+            }
+
+            function renderCards(page = 1) {
+                if (!productRow) return;
+                productRow.innerHTML = '';
+                const start = (page - 1) * PAGE_SIZE;
+                const end = start + PAGE_SIZE;
+                const slice = allProducts.slice(start, end);
+                slice.forEach(product => {
+                    const id = product.id ?? product.idproduto ?? product.idProduto ?? product.id_produto ?? '';
+                    let priceNum = typeof product.preco === 'number' ? product.preco : parseFloat(String(product.preco || '0').replace(',', '.'));
+                    if (Number.isNaN(priceNum)) priceNum = 0;
+                    const priceFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(priceNum);
+                    const estoque = product.qtd ?? product.quantidade ?? product.quantidadeAtual ?? 0;
+                    const imageUrl = product.imagemUrl || 'assets/img/category_img_01.webp';
+                    const card = template.content.cloneNode(true);
+                    card.querySelector('.product-name').textContent = product.nome ?? `Produto ${id}`;
+                    card.querySelector('.product-stock').textContent = `Em Estoque: ${estoque}`;
+                    card.querySelector('.product-price').textContent = priceFmt;
+                    const imgEl = card.querySelector('.product-img');
+                    if (imgEl) imgEl.setAttribute('src', imageUrl);
+                    const links = card.querySelectorAll('.product-link, .product-name');
+                    links.forEach(link => {
+                        const href = link.getAttribute('href') + id;
+                        link.setAttribute('href', href);
+                    });
+                    // Botão adicionar ao carrinho
+                    const cartIcon = card.querySelector('.fas.fa-cart-plus');
+                    if (cartIcon) {
+                        const cartBtn = cartIcon.closest('a');
+                        if (cartBtn) {
+                            cartBtn.href = '#';
+                            cartBtn.classList.add('add-to-cart');
+                            cartBtn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                if (window.Cart) {
+                                    window.Cart.add({ id, nome: product.nome, preco: priceNum, imagemUrl: imageUrl, estoque });
+                                    updateCartCount();
+                                    alert('Adicionado ao carrinho!');
+                                }
+                            });
+                        }
+                    }
+                    productRow.appendChild(card);
+                });
+            }
+
+            function renderPagination(page = 1) {
+                const ul = document.getElementById('productsPagination');
+                if (!ul) return;
+                ul.innerHTML = '';
+                const totalPages = Math.max(1, Math.ceil(allProducts.length / PAGE_SIZE));
+
+                const createItem = (label, targetPage, disabled = false, active = false) => {
+                    const li = document.createElement('li');
+                    li.className = `page-item${disabled ? ' disabled' : ''}${active ? ' active' : ''}`;
+                    const a = document.createElement('a');
+                    a.className = 'page-link';
+                    a.href = '#';
+                    a.textContent = label;
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (disabled || targetPage === currentPage) return;
+                        currentPage = targetPage;
+                        renderCards(currentPage);
+                        renderPagination(currentPage);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
+                    li.appendChild(a);
+                    return li;
+                };
+
+                // Prev
+                ul.appendChild(createItem('«', Math.max(1, page - 1), page === 1, false));
+
+                // Page numbers (simple full range; can be optimized if needed)
+                for (let p = 1; p <= totalPages; p++) {
+                    ul.appendChild(createItem(String(p), p, false, p === page));
+                }
+
+                // Next
+                ul.appendChild(createItem('»', Math.min(totalPages, page + 1), page === totalPages, false));
+            }
+
+            async function loadProducts() {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/produtos/public`);
+                    const data = await response.json();
+
+                    if (!response.ok || !Array.isArray(data.data)) {
+                        throw new Error(data.message || 'Falha ao carregar produtos.');
+                    }
+                    // Filtra produtos com estoque > 0
+                    allProducts = (data.data || []).filter(p => {
+                        const est = p.qtd ?? p.quantidade ?? p.quantidadeAtual ?? 0;
+                        return (Number(est) || 0) > 0;
+                    });
+                    currentPage = 1;
+                    renderCards(currentPage);
+                    renderPagination(currentPage);
+
+                } catch (error) {
+                    console.error("Erro ao carregar produtos:", error);
+                    alert('Não foi possível carregar o catálogo: ' + error.message);
+                }
+            }
+
+            loadProducts();
+            updateCartCount();
+            window.addEventListener('storage', (e) => { if(e.key === 'sixbikes_cart') updateCartCount(); });
+        });
+    </script>
+</body>
+
+</html>

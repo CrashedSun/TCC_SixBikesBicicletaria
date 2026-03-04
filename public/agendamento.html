@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Agendamento de Serviço - SixBikes</title>
+    <link rel="apple-touch-icon" href="assets/img/apple-icon.png">
+    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.ico">
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/templatemo.css">
+    <link rel="stylesheet" href="assets/css/custom.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;700;900&display=swap">
+    <link rel="stylesheet" href="assets/css/fontawesome.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light shadow">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand text-success logo h1 align-self-center" href="index.html">SixBikes Bicicletaria</a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#templatemo_main_nav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="align-self-center collapse navbar-collapse flex-fill d-lg-flex justify-content-lg-between" id="templatemo_main_nav">
+                <div class="flex-fill">
+                    <ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
+                        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
+                        <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
+                    </ul>
+                </div>
+                <div class="navbar align-self-center d-flex">
+                    <a class="nav-icon position-relative text-decoration-none" href="login.html">
+                        <i class="fa fa-fw fa-user text-dark mr-3"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row text-center pt-5 pb-3">
+            <div class="col-lg-8 m-auto">
+                <h1 class="h1">Agende seu Serviço</h1>
+                <p>Selecione um serviço e informe a melhor data para você. É rápido e fácil!</p>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card p-4">
+                    <form id="formAgendamento">
+                        <div class="mb-3">
+                            <label class="form-label">Serviço</label>
+                            <select id="campoServico" class="form-control" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Data desejada</label>
+                            <input type="date" id="campoData" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Horário</label>
+                            <select id="campoHora" class="form-control" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Observações (opcional)</label>
+                            <textarea id="campoObs" class="form-control" rows="3" placeholder="Detalhe o problema, ruídos, ajustes desejados..."></textarea>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">Solicitar Agendamento</button>
+                            <a href="servicos.html" class="btn btn-outline-secondary">Voltar</a>
+                        </div>
+                        <div id="agendamentoStatus" class="mt-3"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark" id="tempaltemo_footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-success border-bottom pb-3 border-light logo">SixBikes Bicicletaria</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li><i class="fas fa-map-marker-alt fa-fw"></i> Endereço</li>
+                        <li><i class="fa fa-phone fa-fw"></i> <a class="text-decoration-none" href="tel:010-020-0340">(11) 99999-9999</a></li>
+                        <li><i class="fa fa-envelope fa-fw"></i> <a class="text-decoration-none" href="mailto:atendimento@sixbikes.com">atendimento@sixbikes.com</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-light border-bottom pb-3 border-light">Produtos</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li><a class="text-decoration-none" href="#">Categoria 1</a></li>
+                        <li><a class="text-decoration-none" href="#">Categoria 2</a></li>
+                        <li><a class="text-decoration-none" href="#">Categoria 3</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 pt-5">
+                    <h2 class="h2 text-light border-bottom pb-3 border-light">Abas</h2>
+                    <ul class="list-unstyled text-light footer-link-list">
+                        <li><a class="text-decoration-none" href="index.html">Home</a></li>
+                        <li><a class="text-decoration-none" href="servicos.html">Serviços</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html">Produtos</a></li>
+                        <li><a class="text-decoration-none" href="contato.html">Contato</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="w-100 bg-black py-3"></div>
+        </div>
+    </footer>
+
+    <script src="assets/js/jquery-1.11.0.min.js"></script>
+    <script src="assets/js/jquery-migrate-1.2.1.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/templatemo.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        const API_BASE = window.API_BASE_URL || 'http://localhost:8080/api';
+
+        function getQueryParam(name) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(name);
+        }
+
+        function ensureLoggedIn() {
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                alert('Você precisa estar logado para agendar um serviço.');
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        async function carregarServicos() {
+            const select = document.getElementById('campoServico');
+            select.innerHTML = '<option value="">Carregando...</option>';
+            try {
+                const resp = await fetch(`${API_BASE}/servicos/public`);
+                const data = await resp.json();
+                if (!resp.ok || !Array.isArray(data)) throw new Error('Falha ao carregar serviços');
+                select.innerHTML = '';
+                data.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.idservico;
+                    opt.textContent = `${s.nome} — ${s.duracaoestimada} min`;
+                    select.appendChild(opt);
+                });
+                // Pré-seleciona se veio na query string
+                const preId = getQueryParam('id');
+                if (preId) select.value = preId;
+            } catch (e) {
+                select.innerHTML = '<option value="">Não foi possível carregar os serviços</option>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!ensureLoggedIn()) return;
+            carregarServicos();
+
+            // Define o mínimo do campo de data para hoje e popula horários
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const minDate = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+            const campoData = document.getElementById('campoData');
+            const campoHora = document.getElementById('campoHora');
+            if (campoData) campoData.min = minDate;
+            // Popula horários padrão (ex.: 09:00 às 18:00 a cada 30min)
+            const horarios = [];
+            for (let h = 9; h <= 18; h++) {
+                for (let m of [0, 30]) {
+                    horarios.push(`${pad(h)}:${pad(m)}`);
+                }
+            }
+            campoHora.innerHTML = '<option value="">Selecione...</option>' + horarios.map(h => `<option value="${h}">${h}</option>`).join('');
+
+            const form = document.getElementById('formAgendamento');
+            const statusEl = document.getElementById('agendamentoStatus');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                statusEl.className = 'mt-2 text-info';
+                statusEl.textContent = 'Enviando solicitação...';
+                const idservico = document.getElementById('campoServico').value;
+                const dataStr = document.getElementById('campoData').value;
+                const horaStr = document.getElementById('campoHora').value;
+                const observacoes = document.getElementById('campoObs').value.trim();
+                if (!idservico || !dataStr || !horaStr) {
+                    statusEl.className = 'mt-2 text-danger';
+                    statusEl.textContent = 'Preencha serviço, data e horário.';
+                    return;
+                }
+                // Monta ISO de data+hora e valida
+                const agendada = new Date(`${dataStr}T${horaStr}:00`);
+                const agora = new Date();
+                if (isNaN(agendada.getTime())) {
+                    statusEl.className = 'mt-2 text-danger';
+                    statusEl.textContent = 'Data inválida.';
+                    return;
+                }
+                if (agendada.getTime() < agora.getTime()) {
+                    statusEl.className = 'mt-2 text-danger';
+                    statusEl.textContent = 'Escolha uma data e hora iguais ou posteriores ao momento atual.';
+                    return;
+                }
+                try {
+                    const resp = await fetch(`${API_BASE}/agendamentos/solicitar`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('userToken') || ''}`
+                        },
+                        body: JSON.stringify({ idservico, dataAgendada: agendada.toISOString(), observacoes })
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.message || 'Falha ao solicitar agendamento');
+                    statusEl.className = 'mt-2 text-success';
+                    statusEl.textContent = 'Agendamento solicitado com sucesso!';
+                    form.reset();
+                } catch (error) {
+                    statusEl.className = 'mt-2 text-danger';
+                    statusEl.textContent = error.message;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

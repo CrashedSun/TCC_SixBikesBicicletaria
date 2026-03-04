@@ -1,0 +1,215 @@
+=================================================================================
+Separação Frontend/Backend
+=================================================================================
+
+Objetivo: Backend serve apenas JSON; frontend é hospedado como estático.
+Ações:
+ - Remover o serving estático do backend: retirar app.use(express.static('public')) de index.js.
+ - Frontend: publicar a pasta public em servidor estático (Nginx, Apache, S3+CloudFront, Vercel).
+ - Configurar a base de API no frontend: definir window.API_BASE_URL = 'https://api.seu-dominio.com/api/v1' e revisar fetchAuthenticated() para usar HTTPS.
+ - Diferenciar ambientes: variável API_BASE_URL por ambiente (dev, staging, prod).
+Resultado: O backend vira um serviço de dados (API REST), e o frontend apenas consome as APIs via HTTPS.
+
+=================================================================================
+
+Modularizar Rotas + Versionamento
+
+Objetivo: Organização e evolução sem quebrar clientes.
+Ações:
+ - Criar server/routes/ e mover rotas de index.js para arquivos específicos (ex.: auth.routes.js, produtos.routes.js etc.).
+ - Em index.js, montar routers com prefixo /api/v1 (ex.: app.use('/api/v1/auth', authRouter)).
+ - Criar convenção de nomes e estrutura: recursos no plural, verbos via HTTP method.
+Resultado: Facilita a manutenção e abre caminho para /api/v2 no futuro sem impacto imediato nos apps existentes.
+
+=================================================================================
+
+Padronizar Respostas e Erros
+
+Objetivo: Consistência para web e mobile.
+Ações:
+ - Middleware de sucesso: sempre retornar { success: true, data, message, timestamp }.
+ - Handler global de erros: capturar exceções e retornar { success: false, error: { code, message }, timestamp } com status HTTP correto (400/401/403/404/500).
+ - Tabela de códigos de erro (AUTH_INVALID, PAYLOAD_INVALID, NOT_FOUND, RATE_LIMITED, etc.).
+Resultado: Clientes tratam respostas de forma uniforme e previsível; logs ficam mais claros.
+
+=================================================================================
+
+JWT + Refresh Tokens
+
+Objetivo: Sessões seguras e renováveis sem re-login constante.
+Ações:
+ - Access token curto (15–30 min) assinado com JWT_SECRET.
+ - Refresh token longo (7–30 dias) com lista de revogação (em tabela no DB ou store de sessão).
+ - Endpoints:
+    - POST /api/v1/auth/login → emite access+refresh.
+    - POST /api/v1/auth/refresh → valida refresh e emite novo access.
+    - POST /api/v1/auth/logout → revoga refresh.
+
+ - Armazenamento:
+    - Web: refresh token em cookie httpOnly, secure, SameSite=Strict.
+    - Mobile: refresh token em Secure Storage (Keychain/Keystore).
+    - Resultado: Reduz janela de ataque; melhora UX; permite invalidar sessões de forma controlada.
+
+=================================================================================
+
+CORS Restrito
+
+Objetivo: Permitir só origens autorizadas.
+Ações:
+ - Configurar cors({ origin: [lista], methods: [...], allowedHeaders: ['Content-Type','Authorization'], credentials: true }).
+ - Lista inclui domínios web (prod/staging/dev), localhost dev e esquemas móveis (capacitor://localhost, ionic://localhost).
+Resultado: Bloqueia acessos indevidos e reduz superfícies de ataque.
+
+=================================================================================
+
+HTTPS/TLS + HSTS
+
+Objetivo: Criptografar e exigir HTTPS.
+Ações:
+ - Nginx como reverse proxy com certificados (Let’s Encrypt/ACME).
+ - Redirecionar HTTP→HTTPS (código 301).
+ - Habilitar HSTS (ex.: max-age=31536000; includeSubDomains; preload).
+Resultado: Tráfego seguro e compatível com requisitos iOS/Android.
+
+=================================================================================
+
+Assinatura de Dados (Data Signing)
+
+Objetivo: Garantir integridade e autenticidade além do HTTPS.
+Modelos:
+ - HMAC (simétrico): rápido e simples. Cliente e servidor compartilham segredo. Cabeçalhos:
+    - X-Client-Id, X-Nonce, X-Timestamp, X-Signature.
+    - Assinatura: HMAC_SHA256(secret, method + path + body + nonce + timestamp).
+
+ - Ed25519 (assimétrico): robusto e auditável. Servidor assina respostas; cliente valida com chave pública. Opcionalmente cliente assina requisições sensíveis.
+    - Resposta inclui: X-Server-Signature, X-Server-Timestamp, X-Request-Id.
+    - Assinatura sobre: statusCode + timestamp + body.
+Ações:
+ - Requisições sensíveis (login, pagamento, alterar senha, movimentação de estoque) exigem:
+    - Nonce único (armazenado/validado server-side por janela de tempo).
+    - Timestamp dentro de tolerância (ex.: ±300s).
+    - Verificação de assinatura antes de processar payload.
+
+ - Respostas:
+    - Servidor assina payload e metadados; cliente valida antes de usar.
+
+ - Rotação de chaves:
+    - HMAC: rotação periódica do segredo, versão do segredo em header.
+    - Ed25519: versão da chave pública embedada nos apps; rotação com versão de API/cliente.
+Resultado: Mitiga manipulação de payloads e ataques de replay; aumenta confiança de ponta a ponta.
+
+=================================================================================
+
+Headers de Segurança (Helmet)
+
+Objetivo: Endurecer superfície de ataque.
+Ações:
+ - helmet() com CSP (lists de allowed origins para scripts/imagens/css), X-Content-Type-Options: nosniff, X-Frame-Options: DENY, Referrer-Policy: no-referrer, Permissions-Policy (limitar sensibilidade).
+Resultado: Protege contra XSS, clickjacking e sniffing.
+
+
+=================================================================================
+
+Rate Limiting
+
+Objetivo: Prevenir abuso.
+Ações:
+ - Limitador global (ex.: 100 req/15min/IP).
+ - Limitador reforçado para /auth/login (ex.: 5 req/min/IP).
+Resposta consistente (429) com mensagem clara e Retry-After.
+Resultado: Proteção contra força-bruta e sobrecarga.
+
+=================================================================================
+
+Validação de Payloads
+
+Objetivo: Rejeitar dados inválidos cedo.
+Ações:
+ - express-validator/joi com schemas por endpoint.
+ - Erros retornam lista de validações falhas com campos e mensagens.
+Resultado: Qualidade de dados alta; menos erros no serviço.
+
+=================================================================================
+
+Paginação e Filtros
+
+Objetivo: Eficiência em listas grandes (mobile).
+Ações:
+ - Parâmetros page, limit, e filtros por campo.
+ - Resposta inclui metadados { currentPage, totalPages, totalItems, itemsPerPage }.
+Resultado: Menor consumo de dados e melhor UX.
+
+=================================================================================
+
+OpenAPI/Swagger
+
+Objetivo: Integração sem ambiguidades.
+Ações:
+ - Documentar todos endpoints, schemas, auth, erros, data signing e cabeçalhos.
+ - Servir em /api-docs com swagger-ui-express.
+Resultado: Equipes web/mobile integram rapidamente e com menos bugs.
+
+=================================================================================
+
+Observabilidade e Logs
+
+Objetivo: Auditoria e troubleshooting.
+Ações:
+ - winston/pino com request-id (correlação), níveis (info/warn/error), JSON.
+ - Audit log de ações sensíveis (login, senha, bloqueios, pagamentos, movimentações).
+ - Log de verificação de data signing (nonce/timestamp inválidos).
+Resultado: Rastreabilidade, segurança operacional e investigação eficaz.
+
+=================================================================================
+
+Healthcheck
+
+Objetivo: Monitoramento e readiness.
+Ações:
+ - GET /api/health: { status, database: 'connected', version, timestamp }.
+ - Retornar 503 quando DB indisponível; integrar com orquestradores (K8s).
+Resultado: Deploys confiáveis e alertas mais cedo.
+
+=================================================================================
+
+CI/CD + Ambientes
+
+Objetivo: Entregas previsíveis.
+Ações:
+ - Pipelines separados: build/test/deploy do backend e build/deploy do frontend.
+ - .env por ambiente; segredos via store segura (Vault/Secrets Manager).
+ - Testes automatizados: unit (services/repos), integração (API), segurança (lint/config).
+Resultado: Releases consistentes e rápidas.
+
+=================================================================================
+
+Variáveis de Ambiente (sugestão)
+
+API_VERSION=v1
+CORS_ORIGINS=https://web.com,https://app.com,http://localhost:8080,capacitor://localhost
+JWT_ACCESS_TOKEN_EXPIRY=15m
+JWT_REFRESH_TOKEN_EXPIRY=7d
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+HSTS_MAX_AGE=31536000
+SIGNING_ALG=hmac ou SIGNING_ALG=ed25519
+HMAC: SIGNING_SECRET=<segredo-hmac> e SIGNING_SECRET_VERSION=1
+Ed25519: SIGNING_PUBLIC_KEY=<chave-publica>, SIGNING_PRIVATE_KEY=<chave-privada>, SIGNING_KEY_VERSION=1
+HTTPS_CERT_PATH=/etc/ssl/certs/cert.pem
+HTTPS_KEY_PATH=/etc/ssl/private/key.pem
+
+=================================================================================
+
+Ordem Sugerida de Execução
+
+1: Modularização + versionamento.
+2: CORS, Helmet, rate limiting.
+3: Respostas padronizadas + tratamento global de erros.
+4: JWT + refresh + logout (revogação).
+5: Data signing (HMAC/Ed25519) com nonce/timestamp; validar em endpoints sensíveis.
+6: Validação de payloads + paginação.
+7: Healthcheck + Swagger/OpenAPI.
+8: Remover estático do backend; Nginx com HTTPS/HSTS.
+9: Logs/auditoria + CI/CD.
+
+=================================================================================

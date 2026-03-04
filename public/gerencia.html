@@ -1,0 +1,2144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerente - Dashboard</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        /* Estilos base do projeto (sidebar verde) */
+        body {
+            background: #f4fdf4;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .sidebar {
+            width: 240px;
+            height: 100vh;
+            background: #7ed957;
+            color: #fff;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding-top: 25px;
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar h3 {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .sidebar a {
+            display: block;
+            padding: 14px 20px;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 8px;
+            margin: 4px 10px;
+            transition: background 0.3s;
+        }
+        .sidebar a:hover, .sidebar a.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .main-content {
+            margin-left: 240px;
+            padding: 25px;
+            width: calc(100% - 240px);
+        }
+
+        /* Estilos para o Grid de Funcionários (NOVO REQUISITO) */
+        .scrollable-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .scrollable-table-container table {
+            margin-bottom: 0;
+        }
+        .table-hover tbody tr:hover {
+            cursor: pointer;
+            background-color: #f0fff0 !important;
+        }
+        .table-active-select {
+            background-color: #d1e7dd !important; /* Selecionado */
+            border-left: 5px solid #7ed957; 
+        }
+        .table-danger-custom {
+            background-color: #f8d7da !important; /* Bloqueado */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar text-center">
+        <h5 id="userName" class="text-center fw-bold mb-2"></h5>
+        <h3 class="mb-5">Gerência SixBikes Bicicletaria</h3>
+        <nav class="nav flex-column">
+            <a href="#" class="nav-link active" data-page="dashboard"><i class="fas fa-home me-2"></i> Dashboard</a>
+            <a href="#" class="nav-link" data-page="estoque"><i class="fas fa-warehouse me-2"></i> Gerenciar Estoque</a>
+            <a href="#" class="nav-link" data-page="servicos"><i class="fas fa-tools me-2"></i> Catálogo de Serviços</a>
+            <a href="#" class="nav-link" data-page="clientes"><i class="fas fa-users me-2"></i> Clientes</a>
+            
+            <a href="#" class="nav-link" data-page="relatorios"><i class="fas fa-chart-line me-2"></i> Relatórios</a>
+            <a href="#" class="nav-link" data-page="funcionarios"><i class="fas fa-users-cog me-2"></i> Gerenciar Funcionários</a>
+            <a href="#" class="nav-link" data-page="eventos"><i class="fas fa-calendar-alt me-2"></i> Eventos</a>
+            <a href="#" class="nav-link" id="logoutButton"><i class="fas fa-sign-out-alt me-2"></i> Sair</a>
+        </nav>
+    </div>
+
+    <div class="main-content" id="main-content">
+        <h2 class="text-center mt-5">Carregando...</h2>
+    </div>
+
+    <div class="modal fade" id="modalFuncionarios" tabindex="-1" aria-labelledby="modalFuncionariosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content shadow-lg" style="border-radius: 18px;">
+                
+                <div class="modal-header" style="background:#7ed957; color:white; border-radius: 18px 18px 0 0;">
+                    <h5 class="modal-title fw-bold" id="modalFuncionariosLabel">🧑‍🔧 Cadastrar Novo Funcionário (UC009)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <input type="hidden" id="funcIdEdit">
+
+                <form id="cadastroFuncionarioForm">
+                    <div class="modal-body">
+                        <h6 class="fw-bold mb-3">Dados Pessoais</h6>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nome</label>
+                                <input type="text" class="form-control" id="funcNome" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">E-mail (Login)</label>
+                                <input type="email" class="form-control" id="funcLogin" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Matrícula</label>
+                                <input type="text" class="form-control" id="funcMatricula" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Senha Inicial</label>
+                                <input type="password" class="form-control" id="funcSenha" required>
+                            </div>
+                        </div>
+                        
+                        <h6 class="fw-bold mb-3 mt-4">Nível de Acesso (RF010 / RNF002)</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Cargo/Permissão</label>
+                                <select id="funcPerfil" class="form-select" required>
+                                    <option value="ATENDENTE">Atendente</option>
+                                    <option value="MECANICO">Mecânico</option>
+                                    <option value="GERENTE">Gerente</option>
+                                    <option value="PROPRIETARIO">Proprietário</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p id="modalStatus" class="mt-3"></p>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success px-4" id="btnSalvarFunc">💾 Cadastrar</button>
+                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/auth.js"></script> 
+
+    <!-- Modal de Troca de Senha Obrigatória (Primeiro Acesso) -->
+    <div class="modal fade" id="modalTrocarSenha" tabindex="-1" aria-labelledby="modalTrocarSenhaLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-warning">
+            <h5 class="modal-title" id="modalTrocarSenhaLabel">Trocar Senha - Primeiro Acesso</h5>
+          </div>
+          <div class="modal-body">
+            <p>Como este é seu primeiro acesso, por favor escolha uma nova senha para continuar.</p>
+            <div class="mb-3">
+              <label class="form-label">Nova senha</label>
+              <input type="password" id="novaSenha" class="form-control" minlength="6" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Confirme a nova senha</label>
+              <input type="password" id="confirmaSenha" class="form-control" minlength="6" required>
+            </div>
+            <div id="trocaSenhaStatus" class="mt-2"></div>
+          </div>
+          <div class="modal-footer">
+            <button id="btnTrocarSenha" class="btn btn-primary">Alterar Senha</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    // Exibe o nome do usuário logado na sidebar (salvo em localStorage.usuario)
+    if (!localStorage.getItem("usuario")) {
+        localStorage.setItem("usuario", "Fulano");
+    }
+    const userNameEl = document.getElementById('userName');
+    if (userNameEl) {
+        userNameEl.textContent = 'Olá, ' + localStorage.getItem('usuario');
+    }
+        let selectedUserId = null;
+        
+        // Usa `fetchAuthenticated` definido em `assets/js/auth.js` para chamadas reais ao backend.
+        // Removido mock embutido para permitir integração com o servidor.
+
+        /**
+         * Envia uma requisição ao backend para bloquear/desbloquear o acesso de um usuário.
+         */
+        async function blockUser(userId) {
+            if (!userId) {
+                alert("Por favor, selecione um funcionário na lista antes de continuar.");
+                return;
+            }
+                
+
+            const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+            const isCurrentlyBlocked = row.classList.contains('table-danger-custom');
+            const action = isCurrentlyBlocked ? "DESBLOQUEAR" : "BLOQUEAR";
+
+            if (!confirm(`Tem certeza que deseja ${action} o acesso do usuário ID ${userId}?`)) {
+                return;
+            }
+
+                try {
+                // isCurrentlyBlocked === true means ativo === false in DB, so desired new ativo should be the inverse of blocked state
+                // desired isActive = isCurrentlyBlocked ? true (unblock) : false (block)
+                await fetchAuthenticated(`/funcionarios/${userId}/bloquear`, 'PUT', { isActive: isCurrentlyBlocked });
+                
+                alert(`Acesso do usuário ID ${userId} foi ${action.toLowerCase()} com sucesso.`);
+                loadPage('funcionarios'); // Recarrega a lista para refletir a mudança
+            } catch (error) {
+                alert("Falha ao processar solicitação: " + (error.error || error.message || error));
+            }
+        }
+        
+        /**
+         * Função principal para carregar o conteúdo de cada página/menu.
+         */
+        async function loadPage(page) {
+            const content = document.getElementById('main-content');
+            content.innerHTML = `<h2 class="text-center mt-5">Carregando ${page}...</h2>`;
+            
+            // Ativa o link correto na sidebar
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.page === page) {
+                    link.classList.add('active');
+                }
+            });
+
+            /* ================= DASHBOARD ================== */
+            if (page === 'dashboard') {
+                // Dashboard Gerencial dinâmico (Agendamentos e Reservas de Hoje)
+                let activeCount = 0;
+                let agHoje = [];
+                let resHoje = [];
+                let paraPagamentoLista = [];
+                try {
+                    const funcs = await fetchAuthenticated('/funcionarios', 'GET');
+                    if (Array.isArray(funcs)) activeCount = funcs.filter(f => f.ativo).length;
+                } catch (e) { console.warn('Falha funcs:', e); }
+                try {
+                    agHoje = await fetchAuthenticated('/agendamentos/hoje', 'GET');
+                } catch (e) { console.warn('Falha agendamentos hoje:', e); }
+                try {
+                    paraPagamentoLista = await fetchAuthenticated('/agendamentos/para-pagamento', 'GET');
+                } catch (e) { console.warn('Falha para-pagamento:', e); }
+                try {
+                    resHoje = await fetchAuthenticated('/reservas/hoje', 'GET');
+                } catch (e) { console.warn('Falha reservas hoje:', e); }
+
+                const kpiAgHoje = agHoje.length;
+                const kpiResHoje = resHoje.length;
+                const kpiParaPagamento = Array.isArray(paraPagamentoLista) ? paraPagamentoLista.length : 0;
+
+                content.innerHTML = `
+                    <h1 class="mb-4">📊 Dashboard do Gerente/Proprietário</h1>
+                    <div class="row g-4">
+                        <div class="col-md-6 col-lg-4"><div class="p-3 bg-white shadow-sm rounded border-start border-success border-4"><h5 class="text-success">Agend. Hoje</h5><p class="fs-4 fw-bold">${kpiAgHoje}</p></div></div>
+                        <div class="col-md-6 col-lg-4"><div class="p-3 bg-white shadow-sm rounded border-start border-primary border-4"><h5 class="text-primary">Reservas Hoje</h5><p class="fs-4 fw-bold">${kpiResHoje}</p></div></div>
+                        <div class="col-md-6 col-lg-4"><div class="p-3 bg-white shadow-sm rounded border-start border-warning border-4"><h5 class="text-warning">Para Pagamento</h5><p class="fs-4 fw-bold">${kpiParaPagamento}</p></div></div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-5">
+                        <h3 class="mb-0">📅 Agendamentos de Hoje</h3>
+                        <button class="btn btn-outline-success" id="refreshDashboardBtn">🔄 Atualizar</button>
+                    </div>
+                    <div class="card p-0 mt-3">
+                        <table class="table table-striped mb-0" id="agHojeTable">
+                            <thead>
+                                <tr><th>ID</th><th>Cliente</th><th>CPF</th><th>Serviço</th><th>Data Agendada</th><th>Status</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <h3 class="mt-5 mb-3">🛒 Reservas de Hoje</h3>
+                    <div class="card p-0">
+                        <table class="table table-striped mb-0" id="resHojeTable">
+                            <thead>
+                                <tr><th>ID</th><th>Cliente</th><th>Data Reserva</th><th>Total (R$)</th><th>Status</th><th>Status Pgto</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                `;
+
+                function renderAgHoje() {
+                    const tbody = document.querySelector('#agHojeTable tbody');
+                    tbody.innerHTML = '';
+                    (agHoje || []).forEach(a => {
+                        const tr = document.createElement('tr');
+                        const dataFmt = a.dataagendada ? String(a.dataagendada).split('T')[0] : '';
+                        tr.innerHTML = `<td>${a.id}</td><td>${a.cliente_nome||''}</td><td>${a.cliente_cpf||''}</td><td>${a.servico_nome||''}</td><td>${dataFmt}</td><td>${a.status}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                }
+                function renderResHoje() {
+                    const tbody = document.querySelector('#resHojeTable tbody');
+                    tbody.innerHTML = '';
+                    (resHoje || []).forEach(r => {
+                        const dataFmt = r.datareserva ? String(r.datareserva).split('T')[0] : '';
+                        const totalFmt = parseFloat(r.totalreserva || r.totalReserva || 0).toFixed(2);
+                        tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${r.idreserva||r.idReserva}</td><td>${r.nomecliente||r.nomeCliente||''}</td><td>${dataFmt}</td><td>${totalFmt}</td><td>${r.status}</td><td>${r.statuspagamento||r.statusPagamento}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                }
+                renderAgHoje();
+                renderResHoje();
+                document.getElementById('refreshDashboardBtn').addEventListener('click', () => loadPage('dashboard'));
+            }
+
+
+            /* ================= GERENCIAR FUNCIONÁRIOS (UC009 - COMPLETO) ================== */
+            else if (page === 'funcionarios') {
+                content.innerHTML = `<h2>Gerenciar Funcionários</h2><p>Buscando lista de funcionários...</p>`;
+                selectedUserId = null; 
+
+                try {
+                    const funcionarios = await fetchAuthenticated('/funcionarios', 'GET'); 
+                    
+                    let tableRows = funcionarios.map(f => `
+                        <tr data-user-id="${f.id}" class="clickable-row ${f.ativo ? '' : 'table-danger-custom'}">
+                            <td data-col="id">${f.id}</td>
+                            <td data-col="nome">${f.nome}</td>
+                            <td data-col="login">${f.login}</td>
+                            <td data-col="cargo">${f.tipoPerfil}</td>
+                            <td data-col="status">${f.ativo ? 'Ativo' : 'BLOQUEADO'}</td>
+                        </tr>
+                    `).join('');
+
+                    content.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2>Gerenciar Funcionários</h2>
+                            <button id="openFuncionariosModal" class="btn btn-success px-4" data-bs-toggle="modal" data-bs-target="#modalFuncionarios">
+                                <i class="fas fa-plus"></i> Novo Funcionário
+                            </button>
+                        </div>
+                        <!-- Barra de busca acima do grid, igual Estoque -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <input type="text" id="funcSearch" class="form-control" placeholder="Pesquisar...">
+                            </div>
+                            <div class="col-md-3">
+                                <select id="funcFiltro" class="form-select">
+                                    <option value="id">ID</option>
+                                    <option value="nome">Nome</option>
+                                    <option value="login">Login</option>
+                                    <option value="cargo">Cargo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <button id="blockButton" class="btn btn-warning px-4" onclick="blockUser(selectedUserId)" disabled>
+                                    <i class="fas fa-lock"></i> Bloquear Acesso
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="scrollable-table-container shadow-sm">
+                            <table id="funcionariosTable" class="table table-hover table-striped align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>Login</th>
+                                        <th>Cargo</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                            </table>
+                        </div>
+
+                    `;
+
+                    // Lógica de Seleção de Linha
+                    document.querySelectorAll('#funcionariosTable tbody tr').forEach(row => {
+                        row.addEventListener('click', () => {
+                            document.querySelectorAll('#funcionariosTable tbody tr').forEach(r => r.classList.remove('table-active-select'));
+                            row.classList.add('table-active-select');
+                            
+                            selectedUserId = row.dataset.userId;
+                            
+                        });
+                        
+                        // Double-click to edit
+                        row.addEventListener('dblclick', async () => {
+                            const userId = row.dataset.userId;
+                            try {
+                                const func = await fetchAuthenticated(`/funcionarios/${userId}`, 'GET');
+                                document.getElementById('funcIdEdit').value = func.id;
+                                document.getElementById('funcNome').value = func.nome || '';
+                                document.getElementById('funcLogin').value = func.login || '';
+                                document.getElementById('funcMatricula').value = func.matricula || '';
+                                document.getElementById('funcSenha').value = '';
+                                document.getElementById('funcSenha').removeAttribute('required');
+                                document.getElementById('funcPerfil').value = func.tipoPerfil || 'ATENDENTE';
+                                document.getElementById('modalFuncionariosLabel').textContent = '✏️ Editar Funcionário';
+                                document.getElementById('btnSalvarFunc').textContent = '💾 Salvar Alterações';
+                                const modal = new bootstrap.Modal(document.getElementById('modalFuncionarios'));
+                                modal.show();
+                            } catch(e){
+                                alert('Erro ao carregar dados: ' + e.message);
+                            }
+                        });
+                    });
+                    
+                    // Reset modal on open for new employee
+                    document.getElementById('openFuncionariosModal').addEventListener('click', () => {
+                        document.getElementById('funcIdEdit').value = '';
+                        document.getElementById('cadastroFuncionarioForm').reset();
+                        document.getElementById('funcSenha').setAttribute('required', 'required');
+                        document.getElementById('modalFuncionariosLabel').textContent = '🧑‍🔧 Cadastrar Novo Funcionário (UC009)';
+                        document.getElementById('btnSalvarFunc').textContent = '💾 Cadastrar';
+                    });
+                    
+                    // Continue existing click logic
+                    document.querySelectorAll('#funcionariosTable tbody tr').forEach(row => {
+                        row.addEventListener('click', () => {
+                            selectedUserId = row.dataset.userId;
+                            const blockBtn = document.getElementById('blockButton');
+                            blockBtn.disabled = false;
+                            
+                            const isBlocked = row.classList.contains('table-danger-custom');
+                            blockBtn.innerHTML = `<i class="fas ${isBlocked ? 'fa-unlock' : 'fa-lock'}"></i> ${isBlocked ? 'Desbloquear Acesso' : 'Bloquear Acesso'}`;
+                        });
+                    });
+
+                    // Filtro igual Estoque
+                    const funcInput = document.getElementById('funcSearch');
+                    const funcFiltro = document.getElementById('funcFiltro');
+                    funcInput.addEventListener('keyup', () => {
+                        const texto = funcInput.value.toLowerCase().replace(/[^0-9a-z]/gi, '');
+                        const coluna = funcFiltro.value;
+                        document.querySelectorAll('#funcionariosTable tbody tr').forEach(tr => {
+                            let val = '';
+                            if (coluna === 'id') {
+                                val = (tr.querySelector('td:nth-child(1)')?.textContent || '').toLowerCase();
+                            } else if (coluna === 'nome') {
+                                val = (tr.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
+                            } else if (coluna === 'login') {
+                                val = (tr.querySelector('td:nth-child(3)')?.textContent || '').toLowerCase();
+                            } else if (coluna === 'cargo') {
+                                val = (tr.querySelector('td:nth-child(4)')?.textContent || '').toLowerCase();
+                            }
+                            val = val.replace(/[^0-9a-z]/gi,'');
+                            tr.style.display = val.includes(texto) ? '' : 'none';
+                        });
+                    });
+
+                    // Lógica de Filtro/Busca (Adaptado para o Novo HTML)
+                    const search = document.getElementById("funcSearch");
+                    const filtro = document.getElementById("funcFiltro");
+                    const linhas = document.querySelectorAll("#funcionariosTable tbody tr");
+
+                    const applyFilter = () => {
+                        let texto = search.value.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
+                        const coluna = filtro.value;
+
+                        linhas.forEach(tr => {
+                            const celula = tr.querySelector(`[data-col="${coluna}"]`);
+                            if (celula) {
+                                let valor = celula.textContent.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                tr.style.display = valor.includes(texto) ? "" : "none";
+                            }
+                        });
+                    };
+                    search.addEventListener("keyup", applyFilter);
+                    filtro.addEventListener("change", applyFilter);
+
+
+                } catch (error) {
+                    content.innerHTML = `<h2>Funcionários</h2><div class="alert alert-danger">Falha ao carregar lista de funcionários: ${error.message}</div>`;
+                }
+            }
+            
+            /* ================= OUTRAS PÁGINAS (Simulação) ================== */
+                else if (page === 'estoque') {
+                    content.innerHTML = `
+                        <h2>Estoque</h2>
+                        <div class="row mb-3">
+                            <div class="col-md-6"><input type="text" id="estoqueSearch" class="form-control" placeholder="Pesquisar..."></div>
+                            <div class="col-md-3"><select id="estoqueFiltro" class="form-select">
+                                <option value="idProduto">ID</option>
+                                <option value="nome">Nome</option>
+                                <option value="descricao">Descrição</option>
+                                <option value="categoria">Categoria</option>
+                                <option value="preco">Preço</option>
+                                <option value="qtd">Qtd</option>
+                            </select></div>
+                            <div class="col-md-3 text-end">
+                                <button class="btn btn-primary w-100 mb-2" id="openCadastroModal">✨ Novo Produto</button>
+                                <button class="btn btn-success w-100" id="openEstoqueModal">📦 Gerenciar Estoque</button>
+                            </div>
+                        </div>
+                        <div class="card p-0">
+                            <table class="table table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Categoria</th>
+                                        <th>Preço</th>
+                                        <th>Qtd</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="estoqueTable"></tbody>
+                            </table>
+                        </div>
+                        <!-- MODAL GERENCIAR ESTOQUE -->
+                        <div class="modal fade" id="modalEstoque" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content" style="border-radius: 15px;">
+                                    <div class="modal-header" style="background:#7ed957; color:white;">
+                                        <h5 class="modal-title">Gerenciar Estoque</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <h6 class="fw-bold">Dados do Produto</h6>
+                                        <div class="mb-2">
+                                            <label class="form-label">ID (SKU)</label>
+                                            <input type="text" class="form-control" id="estoqueSku" disabled>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Nome do Produto</label>
+                                            <input type="text" class="form-control" id="estoqueNome">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Descrição</label>
+                                            <textarea class="form-control" id="estoqueDescricao"></textarea>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Preço (R$)</label>
+                                            <input type="number" step="0.01" class="form-control" id="estoquePreco">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Categoria</label>
+                                            <select class="form-select" id="estoqueCategoria" disabled>
+                                                <option value="">Carregando categorias...</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Quantidade</label>
+                                            <input type="number" class="form-control" id="estoqueQuantidade">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-warning" id="estoquePesquisar">Pesquisar</button>
+                                        <button class="btn btn-success" id="estoqueSalvar">Salvar</button>
+                                        <button class="btn btn-danger" id="estoqueExcluir">Excluir</button>
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- MODAL CADASTRO DE PRODUTO -->
+                        <div class="modal fade" id="modalCadastroProduto" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content" style="border-radius: 15px;">
+                                    <div class="modal-header" style="background:#7ed957; color:white;">
+                                        <h5 class="modal-title fw-bold">✨ Cadastrar Novo Produto (UC002)</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form id="formCadastroProduto">
+                                        <div class="modal-body">
+                                            <h6><strong>Dados Básicos do Produto</strong></h6>
+                                            
+                                            <div class="mb-2">
+                                                <label class="form-label">Nome do Produto</label>
+                                                <input type="text" class="form-control" id="cadNome" required>
+                                            </div>
+                                            
+                                            <div class="mb-2">
+                                                <label class="form-label">Descrição</label>
+                                                <textarea class="form-control" id="cadDescricao"></textarea>
+                                            </div>
+
+                                            <div class="mb-2">
+                                                <label class="form-label">Imagem do Produto</label>
+                                                <input type="file" class="form-control" id="cadImagem" accept="image/*">
+                                                <div class="form-text">Opcional. A imagem será salva em assets/img com nome único.</div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-6 mb-2">
+                                                    <label class="form-label">Preço de Venda (R$)</label>
+                                                    <input type="number" step="0.01" class="form-control" id="cadPreco" required>
+                                                </div>
+
+                                                <div class="col-md-6 mb-2">
+                                                    <label class="form-label">Categoria</label>
+                                                    <select class="form-select" id="catDropdown" required>
+                                                        </select>
+                                                </div>
+                                            </div>
+
+                                            <h6 class="fw-bold mt-3 mb-2">Estoque Inicial</h6>
+                                            <div class="mb-2">
+                                                <label class="form-label">Quantidade Inicial</label>
+                                                <input type="number" class="form-control" id="cadQtdInicial" value="0" required>
+                                            </div>
+
+                                            <div id="cadastroStatus" class="mt-3"></div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-success px-4">💾 Salvar Produto</button>
+                                            <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    async function populateCategories(targetSelectId = 'catDropdown') {
+                        const catDropdown = document.getElementById(targetSelectId);
+                        catDropdown.innerHTML = ''; // Limpa as opções anteriores
+                        catDropdown.disabled = true;
+
+                        try {
+                            // Chamada ao novo endpoint
+                            const categorias = await fetchAuthenticated('/api/produtos/categorias', 'GET');
+
+                            if (categorias.length > 0) {
+                                categorias.forEach(cat => {
+                                    const option = document.createElement('option');
+                                    option.value = (cat.idCategoria ?? cat.idcategoria); // Usa o ID como valor (backend retorna idcategoria)
+                                    option.textContent = cat.nome;
+                                    catDropdown.appendChild(option);
+                                });
+                                catDropdown.disabled = false;
+                            } else {
+                                catDropdown.innerHTML = '<option value="">Nenhuma categoria encontrada</option>';
+                            }
+
+                        } catch (error) {
+                            console.error("Falha ao carregar categorias:", error);
+                            catDropdown.innerHTML = '<option value="">Erro ao carregar</option>';
+                        }
+                    }
+
+                    // 1. Inicializa o Modal de Cadastro e preenche as categorias
+                    const modalCadastro = new bootstrap.Modal(document.getElementById("modalCadastroProduto"));
+                    const openCadastroBtn = document.getElementById("openCadastroModal");
+                    if (openCadastroBtn) {
+                        openCadastroBtn.addEventListener("click", () => {
+                            populateCategories('catDropdown'); // Chama a função para popular o dropdown do cadastro
+                            modalCadastro.show();
+                        });
+                    }
+
+
+                    // 2. Lógica de submissão do formulário (IMPORTANTE: Envia o ID da Categoria)
+                    document.getElementById('formCadastroProduto')?.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const statusEl = document.getElementById('cadastroStatus');
+                        statusEl.textContent = 'Enviando dados...';
+                        statusEl.className = 'mt-3 text-info fw-bold';
+                        
+                        const catDropdown = document.getElementById('catDropdown');
+
+                        const dadosBase = {
+                            nome: document.getElementById('cadNome').value,
+                            descricao: document.getElementById('cadDescricao').value,
+                            preco: parseFloat(document.getElementById('cadPreco').value),
+                            quantidadeInicial: parseInt(document.getElementById('cadQtdInicial').value),
+                            idCategoria: parseInt(catDropdown.value) // ENVIANDO O ID CORRETO
+                        };
+                        
+                        if (!dadosBase.idCategoria) {
+                            statusEl.textContent = 'Erro: Selecione uma categoria válida.';
+                            statusEl.className = 'mt-3 text-danger fw-bold';
+                            return;
+                        }
+
+                        try {
+                            // Trata imagem (opcional) convertendo para base64 para envio via JSON
+                            const fileInput = document.getElementById('cadImagem');
+                            let payload = { ...dadosBase };
+                            const file = fileInput?.files?.[0] || null;
+                            if (file) {
+                                const toBase64 = (f) => new Promise((resolve, reject) => {
+                                    const reader = new FileReader();
+                                    reader.onload = () => resolve(reader.result);
+                                    reader.onerror = reject;
+                                    reader.readAsDataURL(f);
+                                });
+                                const dataUrl = await toBase64(file);
+                                payload.imagemBase64 = String(dataUrl);
+                                payload.imagemNome = file.name;
+                            }
+
+                            // CHAMADA POST /api/produtos (UC002)
+                            await fetchAuthenticated('/api/produtos', 'POST', payload);
+                            
+                            statusEl.className = 'mt-3 text-success fw-bold';
+                            statusEl.textContent = `Produto "${dadosBase.nome}" cadastrado com sucesso!`;
+                            e.target.reset(); 
+                            setTimeout(() => loadPage('estoque'), 1500); 
+
+                        } catch (error) {
+                            statusEl.className = 'mt-3 text-danger fw-bold';
+                            statusEl.textContent = 'Erro ao cadastrar: ' + (error.error || error.message || error);
+                        }
+                    });
+
+                    // Abrir modal
+                    const modalEstoque = new bootstrap.Modal(document.getElementById("modalEstoque"));
+
+                    // Estado: produto selecionado no grid
+                    let produtoSelecionado = null;
+
+                    // Permite selecionar uma linha do grid e guarda os dados
+                    function habilitarSelecaoGrid() {
+                        const tbody = document.getElementById('estoqueTable');
+                        tbody.querySelectorAll('tr').forEach(tr => {
+                            tr.style.cursor = 'pointer';
+                            tr.addEventListener('click', () => {
+                                // limpar seleção anterior
+                                tbody.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
+                                tr.classList.add('table-active');
+                                const id = tr.querySelector('[data-col="idProduto"]').textContent.trim();
+                                const nome = tr.querySelector('[data-col="nome"]').textContent.trim();
+                                const descricao = tr.querySelector('[data-col="descricao"]').textContent.trim();
+                                const categoria = tr.querySelector('[data-col="categoria"]').textContent.trim();
+                                const preco = tr.querySelector('[data-col="preco"]').textContent.trim();
+                                const qtd = tr.querySelector('[data-col="qtd"]').textContent.trim();
+                                produtoSelecionado = { id: Number(id), nome, descricao, categoria, preco: Number(preco), qtd: Number(qtd) };
+                            });
+                        });
+                    }
+
+                    // Remover seleção ao clicar fora do grid
+                    document.addEventListener('click', (ev) => {
+                        const tbody = document.getElementById('estoqueTable');
+                        const grid = tbody?.closest('table');
+                        const modalEl = document.getElementById('modalEstoque');
+                        const isInsideGrid = grid && (grid.contains(ev.target));
+                        const isInsideModal = modalEl && modalEl.contains(ev.target);
+                        if (!isInsideGrid && !isInsideModal) {
+                            tbody?.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
+                            produtoSelecionado = null;
+                        }
+                    });
+
+                    // Abrir modal somente se houver seleção e preencher campos
+                    document.getElementById("openEstoqueModal").addEventListener("click", async () => {
+                        if (!produtoSelecionado) {
+                            alert('Selecione um item do estoque antes de gerenciar.');
+                            return;
+                        }
+                        
+                        // Guarda cópia local para evitar que seja resetado durante operação assíncrona
+                        const produto = { ...produtoSelecionado };
+                        
+                        try {
+                            // Preenche campos do modal
+                            document.getElementById('estoqueSku').value = produto.id || '';
+                            document.getElementById('estoqueNome').value = produto.nome || '';
+                            document.getElementById('estoqueDescricao').value = produto.descricao || '';
+                            document.getElementById('estoquePreco').value = produto.preco || '';
+                            
+                            // Carrega categorias e seleciona a atual
+                            const catSelect = document.getElementById('estoqueCategoria');
+                            await populateCategories('estoqueCategoria');
+                            
+                            // Tenta pré-selecionar pela categoria do grid
+                            if (produto.categoria) {
+                                const currentCatName = produto.categoria.toString().trim().toLowerCase();
+                                const opts = Array.from(catSelect.options);
+                                const match = opts.find(o => o.textContent.toLowerCase() === currentCatName);
+                                if (match) { catSelect.value = match.value; }
+                            }
+                            
+                            document.getElementById('estoqueQuantidade').value = produto.qtd || 0;
+                            
+                            // Persistir dados no botão para uso no salvar
+                            const btnSalvarLocal = document.getElementById('estoqueSalvar');
+                            btnSalvarLocal.dataset.idProduto = String(produto.id || '');
+                            btnSalvarLocal.dataset.qtdAtual = String(produto.qtd || '0');
+                            
+                            modalEstoque.show();
+                        } catch (error) {
+                            console.error('Erro ao abrir modal de estoque:', error);
+                            alert('Erro ao carregar dados do produto.');
+                        }
+                    });
+
+                    // Renderizar grid via API existente
+                    async function carregarCatalogo() {
+                        try {
+                            const resposta = await fetchAuthenticated('/api/produtos', 'GET');
+                            const tbody = document.getElementById('estoqueTable');
+                            tbody.innerHTML = '';
+
+                            // Normaliza diferentes formatos de resposta (array direto, {data: []}, {produtos: []})
+                            const lista = Array.isArray(resposta)
+                                ? resposta
+                                : (resposta?.data || resposta?.produtos || []);
+
+                            lista.forEach(p => {
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `
+                                    <td data-col="idProduto">${p.idproduto ?? p.idProduto ?? ''}</td>
+                                    <td data-col="nome">${p.nome ?? ''}</td>
+                                    <td data-col="descricao">${p.descricao ?? ''}</td>
+                                    <td data-col="categoria">${(p.categoria ?? '').toString().trim() || 'Sem categoria'}</td>
+                                    <td data-col="preco">${p.preco ?? ''}</td>
+                                    <td data-col="qtd">${p.qtd ?? 0}</td>
+                                `;
+                                tbody.appendChild(tr);
+                            });
+                            habilitarSelecaoGrid();
+                        } catch (err) {
+                            console.error('Falha ao carregar estoque:', err);
+                            const tbody = document.getElementById('estoqueTable');
+                            tbody.innerHTML = `<tr><td colspan="6" class="text-danger">Erro ao carregar estoque</td></tr>`;
+                        }
+                    }
+
+                    // Filtro
+                    const input = document.getElementById('estoqueSearch');
+                    const filtro = document.getElementById('estoqueFiltro');
+                    input.addEventListener('keyup', () => {
+                        let texto = input.value.toLowerCase().replace(/[^0-9a-z]/gi, '');
+                        const coluna = filtro.value;
+                        document.querySelectorAll('#estoqueTable tr').forEach(tr => {
+                            const cel = tr.querySelector(`[data-col="${coluna}"]`);
+                            const val = cel ? (cel.textContent || '').toLowerCase().replace(/[^0-9a-z]/gi,'') : '';
+                            tr.style.display = val.includes(texto) ? '' : 'none';
+                        });
+                    });
+
+                    carregarCatalogo();
+
+                    // Salvar alterações no modal usando endpoint UC003 movimentar estoque
+                    const btnSalvar = document.getElementById('estoqueSalvar');
+                    btnSalvar?.addEventListener('click', async () => {
+                        try {
+                            // Recupera dados do botão (fallback se produtoSelecionado estiver indisponível)
+                            const idFromBtn = Number(btnSalvar.dataset.idProduto || 0);
+                            const atualFromBtn = Number(btnSalvar.dataset.qtdAtual || 0);
+                            const id = (produtoSelecionado?.id ?? idFromBtn);
+                            const atual = Number((produtoSelecionado?.qtd ?? atualFromBtn) || 0);
+                            if (!id || id <= 0) {
+                                alert('Nenhum produto selecionado.');
+                                return;
+                            }
+                            // Coleta dados do formulário
+                            const nome = document.getElementById('estoqueNome').value;
+                            const descricao = document.getElementById('estoqueDescricao').value;
+                            const preco = Number(document.getElementById('estoquePreco').value || 0);
+                            const idCategoria = Number(document.getElementById('estoqueCategoria').value || 0);
+                            const novaQtd = Number(document.getElementById('estoqueQuantidade').value || 0);
+
+                            // 1) Atualiza dados básicos do produto
+                            await fetchAuthenticated(`/api/produtos/${id}`, 'PUT', { nome, descricao, preco, idCategoria });
+
+                            // 2) Atualiza estoque (se houve mudança de quantidade)
+                            const delta = novaQtd - atual;
+                            if (delta === 0) {
+                                // Sem alteração no estoque, apenas fecha após atualizar dados
+                                await carregarCatalogo();
+                                modalEstoque.hide();
+                                return;
+                            }
+                            const tipo = delta > 0 ? 'entrada' : 'saida';
+                            const qtd = Math.abs(delta);
+                            await fetchAuthenticated('/api/estoque/movimentar', 'PUT', { id, tipo, qtd });
+                            // Atualiza UI e fecha modal
+                            await carregarCatalogo();
+                            modalEstoque.hide();
+                        } catch (e) {
+                            alert('Erro ao salvar alterações: ' + (e.message || e));
+                        }
+                    });
+
+                    // (Dentro da função loadPage)
+                    // ... conteúdo HTML do estoque ...
+
+                    // --- LÓGICA DO NOVO BOTÃO DE CADASTRO (UC002) ---
+                    // Já inicializado acima: openCadastroModal chama populateCategories() e mostra o modal
+                    // Mantemos APENAS o handler que envia idCategoria corretamente.
+
+                }
+                else if (page === 'servicos') {
+                        content.innerHTML = `
+                                <h2>Catálogo de Serviços</h2>
+                                <div class="row mb-3">
+                                        <div class="col-md-6"><input type="text" id="servSearch" class="form-control" placeholder="Pesquisar..."></div>
+                                        <div class="col-md-3">
+                                                <select id="servFiltro" class="form-select">
+                                                        <option value="idservico">ID</option>
+                                                        <option value="nome">Nome</option>
+                                                        <option value="duracaoestimada">Duração</option>
+                                                </select>
+                                        </div>
+                                        <div class="col-md-3 text-end">
+                                                <div class="d-grid gap-2">
+                                                    <button class="btn btn-primary w-100" id="openServicoModal">✨ Novo Serviço</button>
+                                                    <button class="btn btn-warning w-100" id="editServicoBtn" disabled>✏️ Editar Serviço</button>
+                                                </div>
+                                        </div>
+                                </div>
+                                <div class="card p-0">
+                                        <table class="table table-striped mb-0" id="servicosTable">
+                                                <thead><tr><th>ID</th><th>Nome</th><th>Duração (min)</th><th>Valor (R$)</th><th>Foto</th></tr></thead>
+                                                <tbody></tbody>
+                                        </table>
+                                </div>
+                                <div class="modal fade" id="modalServico" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content" style="border-radius:15px;">
+                                            <div class="modal-header" style="background:#7ed957; color:white;">
+                                                <h5 class="modal-title" id="modalServicoLabel">✨ Cadastrar Serviço</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form id="formServico">
+                                                <div class="modal-body">
+                                                    <input type="hidden" id="servIdEdit">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Nome do Serviço</label>
+                                                        <input type="text" class="form-control" id="servNome" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Duração Estimada (minutos)</label>
+                                                        <input type="number" min="1" class="form-control" id="servDuracao" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Valor (R$)</label>
+                                                        <input type="number" step="0.01" min="0" class="form-control" id="servValor" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Foto (opcional)</label>
+                                                        <input type="file" class="form-control" id="servFoto" accept="image/*">
+                                                    </div>
+                                                    <div id="servStatus" class="mt-2"></div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="submit" class="btn btn-success" id="servSubmitBtn">💾 Salvar Serviço</button>
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                        `;
+
+                        let servicoSelecionadoId = null;
+                        const modalServico = new bootstrap.Modal(document.getElementById('modalServico'));
+                        document.getElementById('openServicoModal').addEventListener('click', () => {
+                                document.getElementById('formServico').reset();
+                                document.getElementById('servIdEdit').value = '';
+                                document.getElementById('servStatus').textContent = '';
+                                document.getElementById('modalServicoLabel').textContent = '✨ Cadastrar Serviço';
+                                document.getElementById('servSubmitBtn').textContent = '💾 Salvar Serviço';
+                                modalServico.show();
+                        });
+
+                        async function carregarServicos() {
+                                try {
+                                        const lista = await fetchAuthenticated('/api/servicos', 'GET');
+                                        const tbody = document.querySelector('#servicosTable tbody');
+                                        tbody.innerHTML = '';
+                                        (lista || []).forEach(s => {
+                                                const tr = document.createElement('tr');
+                                                tr.style.cursor = 'pointer';
+                                                const img = s.foto ? `<img src="${s.foto}" alt="foto" style="height:40px;object-fit:cover;border-radius:4px;">` : '<span class="text-muted">—</span>';
+                                                const valorFmt = parseFloat(s.valor || 0).toFixed(2);
+                                                tr.innerHTML = `<td data-col="idservico">${s.idservico}</td><td data-col="nome">${s.nome}</td><td data-col="duracaoestimada">${s.duracaoestimada}</td><td data-col="valor">${valorFmt}</td><td>${img}</td>`;
+                                                tr.addEventListener('click', () => {
+                                                    // limpar seleção anterior
+                                                    tbody.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
+                                                    tr.classList.add('table-active');
+                                                    servicoSelecionadoId = s.idservico;
+                                                    document.getElementById('editServicoBtn').disabled = false;
+                                                });
+                                                tbody.appendChild(tr);
+                                        });
+                                } catch(e) {
+                                        const tbody = document.querySelector('#servicosTable tbody');
+                                        tbody.innerHTML = `<tr><td colspan="4" class="text-danger">Erro ao carregar serviços</td></tr>`;
+                                }
+                        }
+
+                        carregarServicos();
+
+                        // Botão editar
+                        document.getElementById('editServicoBtn').addEventListener('click', async () => {
+                            if (!servicoSelecionadoId) { return; }
+                            try {
+                                const dados = await fetchAuthenticated(`/api/servicos/${servicoSelecionadoId}`, 'GET');
+                                if (!dados || !dados.idservico) throw new Error('Serviço não encontrado');
+                                document.getElementById('servIdEdit').value = dados.idservico;
+                                document.getElementById('servNome').value = dados.nome || '';
+                                document.getElementById('servDuracao').value = dados.duracaoestimada || '';
+                                document.getElementById('servValor').value = parseFloat(dados.valor || 0).toFixed(2);
+                                document.getElementById('servFoto').value = '';
+                                document.getElementById('servStatus').textContent = '';
+                                document.getElementById('modalServicoLabel').textContent = '✏️ Editar Serviço';
+                                document.getElementById('servSubmitBtn').textContent = '💾 Salvar Alterações';
+                                modalServico.show();
+                            } catch (e) {
+                                alert('Erro ao carregar serviço para edição: ' + (e.message || e));
+                            }
+                        });
+
+                        document.getElementById('formServico').addEventListener('submit', async (e) => {
+                                e.preventDefault();
+                                const statusEl = document.getElementById('servStatus');
+                                statusEl.textContent = 'Enviando...';
+                                statusEl.className = 'mt-2 text-info';
+                                const nome = document.getElementById('servNome').value.trim();
+                                const duracao = document.getElementById('servDuracao').value;
+                                const valor = document.getElementById('servValor').value;
+                                const file = document.getElementById('servFoto').files[0];
+                                let fotoBase64 = null;
+                                if (file) {
+                                        fotoBase64 = await new Promise((resolve, reject) => {
+                                                const r = new FileReader();
+                                                r.onload = () => resolve(r.result);
+                                                r.onerror = reject;
+                                                r.readAsDataURL(file);
+                                        });
+                                }
+                                const editId = document.getElementById('servIdEdit').value;
+                                try {
+                                        if (editId) {
+                                            await fetchAuthenticated(`/api/servicos/${editId}`, 'PUT', { nome, duracaoestimada: duracao, valor, fotoBase64 });
+                                            statusEl.textContent = 'Serviço atualizado com sucesso!';
+                                        } else {
+                                            await fetchAuthenticated('/api/servicos', 'POST', { nome, duracaoestimada: duracao, valor, fotoBase64 });
+                                            statusEl.textContent = 'Serviço cadastrado com sucesso!';
+                                        }
+                                        statusEl.className = 'mt-2 text-success fw-bold';
+                                        carregarServicos();
+                                        servicoSelecionadoId = null;
+                                        document.getElementById('editServicoBtn').disabled = true;
+                                        setTimeout(() => modalServico.hide(), 800);
+                                } catch(err) {
+                                        statusEl.textContent = 'Erro: ' + (err.error || err.message || err);
+                                        statusEl.className = 'mt-2 text-danger fw-bold';
+                                }
+                        });
+
+                        // Filtro
+                        const servInput = document.getElementById('servSearch');
+                        const servFiltro = document.getElementById('servFiltro');
+                        servInput.addEventListener('keyup', () => {
+                                const texto = servInput.value.toLowerCase().replace(/[^0-9a-z]/gi, '');
+                                const coluna = servFiltro.value;
+                                document.querySelectorAll('#servicosTable tbody tr').forEach(tr => {
+                                        const cel = tr.querySelector(`[data-col="${coluna}"]`);
+                                        const val = cel ? (cel.textContent || '').toLowerCase().replace(/[^0-9a-z]/gi,'') : '';
+                                        tr.style.display = val.includes(texto) ? '' : 'none';
+                                });
+                        });
+                }
+                else if (page === 'agendamentos') {
+                    content.innerHTML = `
+                        <h2>Agendamentos</h2>
+                        <!-- Barra de busca -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <input type="text" id="agendaSearch" class="form-control" placeholder="Pesquisar...">
+                            </div>
+                            <div class="col-md-3">
+                                <select id="agendaFiltro" class="form-select">
+                                    <option value="id">ID</option>
+                                    <option value="cpf">CPF</option>
+                                    <option value="nome">Nome</option>
+                                    <option value="servico">Serviço</option>
+                                    <option value="status">Status</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <button class="btn btn-success w-100" id="openAgendaModal">📅 Gerenciar Agendamentos</button>
+                            </div>
+                        </div>
+                        <!-- Tabela -->
+                        <div class="card p-0">
+                            <table class="table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>CPF</th>
+                                        <th>Nome</th>
+                                        <th>Data</th>
+                                        <th>Serviço</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="agendaTable">
+                                    <tr>
+                                        <td data-col="id">1</td>
+                                        <td data-col="cpf">12345678900</td>
+                                        <td data-col="nome">João Silva</td>
+                                        <td data-col="data">2025-11-20</td>
+                                        <td data-col="servico">Revisão</td>
+                                        <td data-col="status">Pendente</td>
+                                    </tr>
+                                    <tr>
+                                        <td data-col="id">2</td>
+                                        <td data-col="cpf">98765432100</td>
+                                        <td data-col="nome">Maria Santos</td>
+                                        <td data-col="data">2025-11-21</td>
+                                        <td data-col="servico">Troca de Peças</td>
+                                        <td data-col="status">Confirmado</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- MODAL GERENCIAMENTO -->
+                        <div class="modal fade" id="modalAgenda" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content" style="border-radius: 15px;">
+                                    <div class="modal-header" style="background:#7ed957; color:white;">
+                                        <h5 class="modal-title">Gerenciar Agendamento</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <h6><strong>Dados do Agendamento</strong></h6>
+                                        <div class="mb-2">
+                                            <label class="form-label">ID</label>
+                                            <input type="text" class="form-control">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">CPF</label>
+                                            <input type="text" class="form-control">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Nome</label>
+                                            <input type="text" class="form-control">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Data</label>
+                                            <input type="date" class="form-control">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Serviço</label>
+                                            <input type="text" class="form-control">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Status</label>
+                                            <select class="form-select">
+                                                <option>Pendente</option>
+                                                <option>Confirmado</option>
+                                                <option>Completo</option>
+                                                <option>Cancelado</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-warning">Pesquisar</button>
+                                        <button class="btn btn-success">Salvar</button>
+                                        <button class="btn btn-danger">Excluir</button>
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    // Abrir modal
+                    const modalAgenda = new bootstrap.Modal(document.getElementById("modalAgenda"));
+                    document.getElementById("openAgendaModal").addEventListener("click", () => {
+                        modalAgenda.show();
+                    });
+                    // Filtro de busca
+                    const agendaInput = document.getElementById("agendaSearch");
+                    const agendaFiltro = document.getElementById("agendaFiltro");
+                    const agendaLinhas = document.querySelectorAll("#agendaTable tr");
+                    agendaInput.addEventListener("keyup", () => {
+                        let texto = agendaInput.value.toLowerCase().replace(/[^0-9a-z]/gi, '');
+                        const coluna = agendaFiltro.value;
+                        agendaLinhas.forEach(tr => {
+                            const celula = tr.querySelector(`[data-col="${coluna}"]`);
+                            if (!celula) {
+                                tr.style.display = "none";
+                                return;
+                            }
+                            let conteudo = celula.textContent.toLowerCase();
+                            let normalizado = conteudo.replace(/[^0-9a-z]/gi, '');
+                            tr.style.display = normalizado.includes(texto) ? "" : "none";
+                        });
+                    });
+                }
+                else if (page === 'clientes') {
+                    content.innerHTML = `
+                        <h2>Clientes</h2>
+                        <p>Carregando clientes...</p>
+                    `;
+
+                    (async () => {
+                        try {
+                            const resposta = await fetchAuthenticated('/api/clientes', 'GET');
+                            const clientes = Array.isArray(resposta) ? resposta : (resposta?.data || resposta?.clientes || []);
+                            
+                            content.innerHTML = `
+                                <h2>Clientes</h2>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <input type="text" id="clienteSearch" class="form-control" placeholder="Pesquisar...">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select id="clienteFiltro" class="form-select">
+                                            <option value="id">ID</option>
+                                            <option value="cpf">CPF</option>
+                                            <option value="nome">Nome</option>
+                                            <option value="telefone">Telefone</option>
+                                            <option value="email">E-mail</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        <button class="btn btn-success w-100" id="openClientesModal">👥 Gerenciar Clientes</button>
+                                    </div>
+                                </div>
+
+                                <div class="card p-0">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>CPF</th>
+                                                <th>Nome</th>
+                                                <th>Telefone</th>
+                                                <th>E-mail</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="clientesTable"></tbody>
+                                    </table>
+                                </div>
+
+                        <!-- MODAL -->
+                        <div class="modal fade" id="modalClientes" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content shadow-lg" style="border-radius: 18px;">
+                                    <div class="modal-header" style="background:#7ed957; color:white; border-radius: 18px 18px 0 0;">
+                                        <h5 class="modal-title fw-bold">👥 Gerenciar Clientes</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <h6 class="fw-bold mb-3">Dados do Cliente</h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">ID</label>
+                                                <input type="text" class="form-control" id="cliID" disabled>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">CPF</label>
+                                                <input type="text" class="form-control" id="cliCPF">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Nome</label>
+                                                <input type="text" class="form-control" id="cliNome">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Telefone</label>
+                                                <input type="text" class="form-control" id="cliTelefone">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">E-mail</label>
+                                                <input type="email" class="form-control" id="cliEmail" disabled>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-success px-4" id="cliSalvar">💾 Salvar</button>
+                                        <button class="btn btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                            const tbody = document.getElementById('clientesTable');
+                            clientes.forEach(c => {
+                                const tr = document.createElement('tr');
+                                tr.style.cursor = 'pointer';
+                                tr.innerHTML = `
+                                    <td data-col="id">${c.id || ''}</td>
+                                    <td data-col="cpf">${c.cpf || ''}</td>
+                                    <td data-col="nome">${c.nome || ''}</td>
+                                    <td data-col="telefone">${c.telefone || ''}</td>
+                                    <td data-col="email">${c.email || ''}</td>
+                                `;
+                                tbody.appendChild(tr);
+                            });
+
+                            let clienteSelecionado = null;
+
+                            // Row selection
+                            tbody.querySelectorAll('tr').forEach(tr => {
+                                tr.addEventListener('click', () => {
+                                    tbody.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
+                                    tr.classList.add('table-active');
+                                    clienteSelecionado = {
+                                        id: tr.querySelector('[data-col="id"]').textContent.trim(),
+                                        cpf: tr.querySelector('[data-col="cpf"]').textContent.trim(),
+                                        nome: tr.querySelector('[data-col="nome"]').textContent.trim(),
+                                        telefone: tr.querySelector('[data-col="telefone"]').textContent.trim(),
+                                        email: tr.querySelector('[data-col="email"]').textContent.trim()
+                                    };
+                                });
+                            });
+
+                            // Clear selection on outside click
+                            document.addEventListener('click', (ev) => {
+                                const table = tbody?.closest('table');
+                                const modalEl = document.getElementById('modalClientes');
+                                if (!table?.contains(ev.target) && !modalEl?.contains(ev.target)) {
+                                    tbody?.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
+                                    clienteSelecionado = null;
+                                }
+                            });
+
+                            const modal = new bootstrap.Modal(document.getElementById("modalClientes"));
+                            const btnSalvar = document.getElementById('cliSalvar');
+                            
+                            document.getElementById("openClientesModal").addEventListener("click", () => {
+                                if (!clienteSelecionado) {
+                                    alert('Selecione um cliente antes de gerenciar.');
+                                    return;
+                                }
+                                // Populate modal
+                                document.getElementById('cliID').value = clienteSelecionado.id || '';
+                                document.getElementById('cliCPF').value = clienteSelecionado.cpf || '';
+                                document.getElementById('cliNome').value = clienteSelecionado.nome || '';
+                                document.getElementById('cliTelefone').value = clienteSelecionado.telefone || '';
+                                document.getElementById('cliEmail').value = clienteSelecionado.email || '';
+                                // Store in button dataset
+                                btnSalvar.dataset.clienteId = clienteSelecionado.id || '';
+                                modal.show();
+                            });
+
+                            // Save handler
+                            btnSalvar?.addEventListener('click', async () => {
+                                const id = btnSalvar.dataset.clienteId || (clienteSelecionado?.id);
+                                if (!id) {
+                                    alert('Nenhum cliente selecionado.');
+                                    return;
+                                }
+                                try {
+                                    const dados = {
+                                        nome: document.getElementById('cliNome').value,
+                                        cpf: document.getElementById('cliCPF').value,
+                                        telefone: document.getElementById('cliTelefone').value
+                                    };
+                                    await fetchAuthenticated(`/api/clientes/${id}`, 'PUT', dados);
+                                    alert('Cliente atualizado com sucesso!');
+                                    modal.hide();
+                                    loadPage('clientes');
+                                } catch (e) {
+                                    alert('Erro ao atualizar cliente: ' + (e.message || e));
+                                }
+                            });
+
+                            const searchCli = document.getElementById("clienteSearch");
+                            const filtroCli = document.getElementById("clienteFiltro");
+
+                            searchCli.addEventListener("keyup", () => {
+                                let texto = searchCli.value.toLowerCase().replace(/[.\-]/g, "");
+                                const coluna = filtroCli.value;
+
+                                document.querySelectorAll("#clientesTable tr").forEach(tr => {
+                                    const celula = tr.querySelector(`[data-col="${coluna}"]`);
+                                    if (celula) {
+                                        let valor = celula.textContent.toLowerCase().replace(/[.\-]/g, "");
+                                        tr.style.display = valor.includes(texto) ? "" : "none";
+                                    }
+                                });
+                            });
+                        } catch (e) {
+                            content.innerHTML = `<h2>Clientes</h2><p class="text-danger">Erro ao carregar clientes: ${e.message}</p>`;
+                        }
+                    })();
+                }
+                    
+                else if (page === 'relatorios') {
+                    content.innerHTML = `
+                        <h1 class="mb-4">📈 Relatórios (UC005)</h1>
+                        <div class="card p-4 shadow-sm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Tipo de Relatório</label>
+                                    <select id="tipoRelatorio" class="form-select">
+                                        <option value="financeiro">📊 Relatório Financeiro</option>
+                                        <option value="vendas">💰 Relatório de Vendas</option>
+                                        <option value="servicos">🔧 Relatório de Serviços</option>
+                                        <option value="estoque">📦 Relatório de Estoque</option>
+                                        <option value="eventos">🎉 Relatório de Eventos</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Formato de Exportação</label>
+                                    <select id="formatoRelatorio" class="form-select">
+                                        <option value="pdf">📄 PDF</option>
+                                        <option value="csv">📊 CSV (Excel)</option>
+                                        <option value="json">🔗 JSON</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Data Início</label>
+                                    <input type="date" id="dataInicio" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Data Fim</label>
+                                    <input type="date" id="dataFim" class="form-control">
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-success btn-lg w-100" id="gerarRelatorioBtn">
+                                        <i class="fas fa-file-download"></i> Gerar Relatório
+                                    </button>
+                                </div>
+                                <div class="col-12">
+                                    <div id="relatorioStatus" class="mt-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-4 p-4 shadow-sm" id="relatorioResultado" style="display:none;">
+                            <h4 class="mb-3">📋 Resultado do Relatório</h4>
+                            <div id="relatorioConteudo"></div>
+                        </div>
+                    `;
+
+                    // Definir data padrão (últimos 30 dias)
+                    const hoje = new Date();
+                    const trintaDiasAtras = new Date();
+                    trintaDiasAtras.setDate(hoje.getDate() - 30);
+                    document.getElementById('dataInicio').value = trintaDiasAtras.toISOString().split('T')[0];
+                    document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
+
+                    document.getElementById('gerarRelatorioBtn').addEventListener('click', async () => {
+                        const tipo = document.getElementById('tipoRelatorio').value;
+                        const formato = document.getElementById('formatoRelatorio').value;
+                        const dataInicio = document.getElementById('dataInicio').value;
+                        const dataFim = document.getElementById('dataFim').value;
+                        const statusEl = document.getElementById('relatorioStatus');
+                        const resultadoDiv = document.getElementById('relatorioResultado');
+                        const conteudoDiv = document.getElementById('relatorioConteudo');
+
+                        if (!dataInicio || !dataFim) {
+                            statusEl.innerHTML = '<div class="alert alert-warning">Por favor, selecione o período.</div>';
+                            return;
+                        }
+
+                        statusEl.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Gerando relatório...</div>';
+                        resultadoDiv.style.display = 'none';
+
+                        try {
+                            let dados;
+                            const params = new URLSearchParams({ dataInicio, dataFim });
+
+                            if (tipo === 'financeiro') {
+                                dados = await fetchAuthenticated(`/relatorios/financeiro?${params}`, 'GET');
+                            } else if (tipo === 'vendas') {
+                                dados = await fetchAuthenticated(`/relatorios/vendas?${params}`, 'GET');
+                            } else if (tipo === 'servicos') {
+                                dados = await fetchAuthenticated(`/relatorios/servicos?${params}`, 'GET');
+                            } else if (tipo === 'estoque') {
+                                dados = await fetchAuthenticated('/relatorios/estoque', 'GET');
+                            } else if (tipo === 'eventos') {
+                                dados = await fetchAuthenticated(`/relatorios/eventos?${params}`, 'GET');
+                            }
+
+                            statusEl.innerHTML = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Relatório gerado com sucesso!</div>';
+                            resultadoDiv.style.display = 'block';
+
+                            // Renderizar conteúdo baseado no formato
+                            if (formato === 'json') {
+                                conteudoDiv.innerHTML = `
+                                    <div class="mb-3">
+                                        <button class="btn btn-sm btn-outline-secondary" id="copyJsonBtn">
+                                            <i class="fas fa-copy"></i> Copiar JSON
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary" id="downloadJsonBtn">
+                                            <i class="fas fa-download"></i> Baixar JSON
+                                        </button>
+                                    </div>
+                                    <pre class="bg-light p-3 rounded" style="max-height:400px;overflow:auto;">${JSON.stringify(dados, null, 2)}</pre>
+                                `;
+                                document.getElementById('copyJsonBtn').addEventListener('click', () => {
+                                    navigator.clipboard.writeText(JSON.stringify(dados, null, 2));
+                                    alert('JSON copiado para a área de transferência!');
+                                });
+                                document.getElementById('downloadJsonBtn').addEventListener('click', () => {
+                                    const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `relatorio_${tipo}_${dataInicio}_${dataFim}.json`;
+                                    a.click();
+                                });
+                            } else if (formato === 'csv') {
+                                let csv = '';
+                                if (tipo === 'vendas') {
+                                    csv = 'ID,Data,Cliente,Atendente,Método Pagamento,Valor Total\n';
+                                    dados.data.forEach(v => {
+                                        csv += `${v.idreserva},"${v.datareserva}","${v.cliente || '-'}","${v.atendente || '-'}","${v.metodopagamento || '-'}",${v.valortotal}\n`;
+                                    });
+                                } else if (tipo === 'servicos') {
+                                    csv = 'ID,Serviço,Cliente,Mecânico,Status,Data\n';
+                                    dados.data.forEach(a => {
+                                        csv += `${a.id},"${a.nomeservico || '-'}","${a.nomecliente || '-'}","${a.nomemecanico || '-'}","${a.status}","${a.datacriacao}"\n`;
+                                    });
+                                } else if (tipo === 'estoque') {
+                                    csv = 'ID,Nome,Categoria,Preço,Estoque\n';
+                                    dados.data.forEach(p => {
+                                        csv += `${p.idproduto},"${p.nome}","${p.categoria || '-'}",${p.preco},${p.quantidadeatual || 0}\n`;
+                                    });
+                                } else if (tipo === 'eventos') {
+                                    csv = 'ID,Nome,Data,Vagas Totais,Vagas Disponíveis,Inscritos\n';
+                                    dados.data.forEach(e => {
+                                        csv += `${e.idevento},"${e.nome}","${e.data}",${e.vagastotal},${e.vagasdisponiveis},${e.totalinscritos || 0}\n`;
+                                    });
+                                } else if (tipo === 'financeiro') {
+                                    csv = 'Tipo,ID,Data,Descrição,Valor\n';
+                                    if (dados.vendas && dados.vendas.dados) {
+                                        dados.vendas.dados.forEach(v => {
+                                            csv += `"Venda",${v.idreserva},"${v.datareserva}","${v.cliente || '-'}",${v.valortotal}\n`;
+                                        });
+                                    }
+                                    if (dados.servicos && dados.servicos.dados) {
+                                        dados.servicos.dados.forEach(s => {
+                                            csv += `"Serviço",${s.id},"${s.datacriacao}","${s.nomeservico || '-'}",${s.valor}\n`;
+                                        });
+                                    }
+                                }
+                                conteudoDiv.innerHTML = `
+                                    <div class="mb-3">
+                                        <button class="btn btn-primary" id="downloadCsvBtn">
+                                            <i class="fas fa-file-csv"></i> Baixar CSV
+                                        </button>
+                                    </div>
+                                    <pre class="bg-light p-3 rounded" style="max-height:400px;overflow:auto;">${csv}</pre>
+                                `;
+                                document.getElementById('downloadCsvBtn').addEventListener('click', () => {
+                                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `relatorio_${tipo}_${dataInicio}_${dataFim}.csv`;
+                                    a.click();
+                                });
+                            } else if (formato === 'pdf') {
+                                let dadosParaTabela = dados.data;
+                                let resumoHTML = '';
+                                
+                                if (tipo === 'financeiro') {
+                                    resumoHTML = `
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <div class="card bg-light p-3">
+                                                    <h6>Vendas</h6>
+                                                    <p class="mb-0"><strong>R$ ${dados.resumo.totalVendas.toFixed(2)}</strong></p>
+                                                    <small>${dados.vendas.quantidade} registros</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card bg-light p-3">
+                                                    <h6>Serviços</h6>
+                                                    <p class="mb-0"><strong>R$ ${dados.resumo.totalServicos.toFixed(2)}</strong></p>
+                                                    <small>${dados.servicos.pagos} pagos de ${dados.servicos.quantidade}</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card bg-success text-white p-3">
+                                                    <h6>Total Geral</h6>
+                                                    <p class="mb-0"><strong>R$ ${dados.resumo.totalGeral.toFixed(2)}</strong></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <h5>Vendas</h5>
+                                        ${renderTabelaRelatorio('vendas', dados.vendas.dados)}
+                                        <h5 class="mt-4">Serviços</h5>
+                                        ${renderTabelaRelatorio('servicos', dados.servicos.dados)}
+                                    `;
+                                } else {
+                                    resumoHTML = `
+                                        <p><strong>Total de registros:</strong> ${dados.registros || 0}</p>
+                                        ${tipo === 'vendas' ? `<p><strong>Valor Total:</strong> R$ ${dados.total.toFixed(2)}</p>` : ''}
+                                        ${tipo === 'servicos' ? `<p><strong>Serviços Concluídos:</strong> ${dados.concluidos} de ${dados.registros}</p><p><strong>Total Pago:</strong> R$ ${dados.totalPagos.toFixed(2)}</p>` : ''}
+                                        ${tipo === 'estoque' ? `<p><strong>Total Itens:</strong> ${dados.totalItens || 0}</p><p><strong>Valor do Estoque:</strong> R$ ${dados.valorEstoque.toFixed(2)}</p>` : ''}
+                                        ${tipo === 'eventos' ? `<p><strong>Total de Inscritos:</strong> ${dados.totalInscritos || 0}</p>` : ''}
+                                        <hr>
+                                        ${renderTabelaRelatorio(tipo, dados.data)}
+                                    `;
+                                }
+                                
+                                conteudoDiv.innerHTML = `
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle"></i> 
+                                        <strong>Relatório Gerado!</strong> Visualize os dados abaixo ou clique no botão para baixar o PDF.
+                                    </div>
+                                    <button class="btn btn-danger mb-3" id="gerarPdfBtn">
+                                        <i class="fas fa-file-pdf"></i> Gerar e Baixar PDF
+                                    </button>
+                                    <div id="dadosRelatorio">
+                                        <h3>Relatório de ${dados.tipo || tipo}</h3>
+                                        <p><strong>Período:</strong> ${dataInicio} a ${dataFim}</p>
+                                        ${resumoHTML}
+                                    </div>
+                                `;
+                                
+                                document.getElementById('gerarPdfBtn').addEventListener('click', () => {
+                                    gerarPDF(tipo, dados, dataInicio, dataFim);
+                                });
+                            }
+                        } catch (err) {
+                            statusEl.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Erro: ${err.error || err.message || 'Falha ao gerar relatório'}</div>`;
+                        }
+                    });
+
+                    function renderTabelaRelatorio(tipo, data) {
+                        if (!data || data.length === 0) return '<p class="text-muted">Nenhum registro encontrado.</p>';
+                        
+                        let html = '<table class="table table-striped table-bordered"><thead><tr>';
+                        
+                        if (tipo === 'vendas') {
+                            html += '<th>ID</th><th>Data</th><th>Cliente</th><th>Atendente</th><th>Método</th><th>Valor</th></tr></thead><tbody>';
+                            data.forEach(v => {
+                                const dataFormatada = v.datareserva ? new Date(v.datareserva).toLocaleDateString('pt-BR') : '-';
+                                html += `<tr><td>${v.idreserva}</td><td>${dataFormatada}</td><td>${v.cliente || '-'}</td><td>${v.atendente || '-'}</td><td>${v.metodopagamento || '-'}</td><td>R$ ${parseFloat(v.valortotal || 0).toFixed(2)}</td></tr>`;
+                            });
+                        } else if (tipo === 'servicos') {
+                            html += '<th>ID</th><th>Serviço</th><th>Cliente</th><th>Mecânico</th><th>Status</th><th>Data</th></tr></thead><tbody>';
+                            data.forEach(a => {
+                                const dataFormatada = a.datacriacao ? new Date(a.datacriacao).toLocaleDateString('pt-BR') : '-';
+                                html += `<tr><td>${a.id}</td><td>${a.nomeservico || '-'}</td><td>${a.nomecliente || '-'}</td><td>${a.nomemecanico || '-'}</td><td>${a.status}</td><td>${dataFormatada}</td></tr>`;
+                            });
+                        } else if (tipo === 'estoque') {
+                            html += '<th>ID</th><th>Produto</th><th>Categoria</th><th>Preço</th><th>Estoque</th></tr></thead><tbody>';
+                            data.forEach(p => {
+                                html += `<tr><td>${p.idproduto}</td><td>${p.nome}</td><td>${p.categoria || '-'}</td><td>R$ ${parseFloat(p.preco || 0).toFixed(2)}</td><td>${p.quantidadeatual || 0}</td></tr>`;
+                            });
+                        } else if (tipo === 'eventos') {
+                            html += '<th>ID</th><th>Nome</th><th>Data</th><th>Vagas Totais</th><th>Vagas Disponíveis</th><th>Inscritos</th></tr></thead><tbody>';
+                            data.forEach(e => {
+                                const dataFormatada = e.data ? new Date(e.data).toLocaleDateString('pt-BR') : '-';
+                                html += `<tr><td>${e.idevento}</td><td>${e.nome}</td><td>${dataFormatada}</td><td>${e.vagastotal}</td><td>${e.vagasdisponiveis}</td><td>${e.totalinscritos || 0}</td></tr>`;
+                            });
+                        }
+                        
+                        html += '</tbody></table>';
+                        return html;
+                    }
+
+                    function gerarPDF(tipo, dados, dataInicio, dataFim) {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+                        
+                        // Cabeçalho
+                        doc.setFontSize(18);
+                        doc.setFont(undefined, 'bold');
+                        doc.text('Six Bikes - Sistema de Gestão', 105, 15, { align: 'center' });
+                        
+                        doc.setFontSize(14);
+                        const tipoTitulo = {
+                            'vendas': 'Relatório de Vendas',
+                            'servicos': 'Relatório de Serviços',
+                            'estoque': 'Relatório de Estoque',
+                            'eventos': 'Relatório de Eventos',
+                            'financeiro': 'Relatório Financeiro'
+                        };
+                        doc.text(tipoTitulo[tipo] || 'Relatório', 105, 25, { align: 'center' });
+                        
+                        doc.setFontSize(10);
+                        doc.setFont(undefined, 'normal');
+                        doc.text(`Período: ${dataInicio} a ${dataFim}`, 105, 32, { align: 'center' });
+                        doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 105, 37, { align: 'center' });
+                        
+                        let startY = 45;
+                        
+                        if (tipo === 'financeiro') {
+                            // Resumo Financeiro
+                            doc.setFontSize(11);
+                            doc.setFont(undefined, 'bold');
+                            doc.text('RESUMO FINANCEIRO', 14, startY);
+                            startY += 7;
+                            
+                            doc.setFont(undefined, 'normal');
+                            doc.text(`Total em Vendas: R$ ${dados.resumo.totalVendas.toFixed(2)}`, 14, startY);
+                            doc.text(`(${dados.vendas.quantidade} registros)`, 70, startY);
+                            startY += 6;
+                            
+                            doc.text(`Total em Serviços: R$ ${dados.resumo.totalServicos.toFixed(2)}`, 14, startY);
+                            doc.text(`(${dados.servicos.pagos} pagos de ${dados.servicos.quantidade})`, 70, startY);
+                            startY += 6;
+                            
+                            doc.setFont(undefined, 'bold');
+                            doc.text(`TOTAL GERAL: R$ ${dados.resumo.totalGeral.toFixed(2)}`, 14, startY);
+                            startY += 10;
+                            
+                            // Tabela de Vendas
+                            doc.setFont(undefined, 'bold');
+                            doc.text('VENDAS', 14, startY);
+                            startY += 5;
+                            
+                            if (dados.vendas.dados && dados.vendas.dados.length > 0) {
+                                doc.autoTable({
+                                    startY: startY,
+                                    head: [['ID', 'Data', 'Cliente', 'Atendente', 'Método', 'Valor']],
+                                    body: dados.vendas.dados.map(v => [
+                                        v.idreserva,
+                                        v.datareserva ? new Date(v.datareserva).toLocaleDateString('pt-BR') : '-',
+                                        v.cliente || '-',
+                                        v.atendente || '-',
+                                        v.metodopagamento || '-',
+                                        `R$ ${parseFloat(v.valortotal || 0).toFixed(2)}`
+                                    ]),
+                                    theme: 'striped',
+                                    headStyles: { fillColor: [126, 217, 87] },
+                                    styles: { fontSize: 8 }
+                                });
+                                startY = doc.lastAutoTable.finalY + 10;
+                            }
+                            
+                            // Tabela de Serviços
+                            if (startY > 250) {
+                                doc.addPage();
+                                startY = 20;
+                            }
+                            
+                            doc.setFont(undefined, 'bold');
+                            doc.text('SERVIÇOS', 14, startY);
+                            startY += 5;
+                            
+                            if (dados.servicos.dados && dados.servicos.dados.length > 0) {
+                                doc.autoTable({
+                                    startY: startY,
+                                    head: [['ID', 'Serviço', 'Cliente', 'Mecânico', 'Status', 'Data']],
+                                    body: dados.servicos.dados.map(s => [
+                                        s.id,
+                                        s.nomeservico || '-',
+                                        s.nomecliente || '-',
+                                        s.nomemecanico || '-',
+                                        s.status,
+                                        s.datacriacao ? new Date(s.datacriacao).toLocaleDateString('pt-BR') : '-'
+                                    ]),
+                                    theme: 'striped',
+                                    headStyles: { fillColor: [126, 217, 87] },
+                                    styles: { fontSize: 8 }
+                                });
+                            }
+                        } else {
+                            // Resumo para outros tipos
+                            if (dados.registros !== undefined) {
+                                doc.setFontSize(10);
+                                doc.text(`Total de registros: ${dados.registros}`, 14, startY);
+                                startY += 6;
+                            }
+                            
+                            if (tipo === 'vendas' && dados.total !== undefined) {
+                                doc.setFont(undefined, 'bold');
+                                doc.text(`Valor Total: R$ ${dados.total.toFixed(2)}`, 14, startY);
+                                startY += 10;
+                            } else if (tipo === 'servicos') {
+                                doc.text(`Serviços Concluídos: ${dados.concluidos} de ${dados.registros}`, 14, startY);
+                                startY += 6;
+                                doc.setFont(undefined, 'bold');
+                                doc.text(`Total Pago: R$ ${dados.totalPagos.toFixed(2)}`, 14, startY);
+                                startY += 10;
+                            } else if (tipo === 'estoque') {
+                                doc.text(`Total de Itens: ${dados.totalItens || 0}`, 14, startY);
+                                startY += 6;
+                                doc.setFont(undefined, 'bold');
+                                doc.text(`Valor do Estoque: R$ ${dados.valorEstoque.toFixed(2)}`, 14, startY);
+                                startY += 10;
+                            } else if (tipo === 'eventos') {
+                                doc.setFont(undefined, 'bold');
+                                doc.text(`Total de Inscritos: ${dados.totalInscritos || 0}`, 14, startY);
+                                startY += 10;
+                            } else {
+                                startY += 5;
+                            }
+                            
+                            // Tabela única
+                            if (dados.data && dados.data.length > 0) {
+                                let columns = [];
+                                let rows = [];
+                                
+                                if (tipo === 'vendas') {
+                                    columns = ['ID', 'Data', 'Cliente', 'Atendente', 'Método', 'Valor'];
+                                    rows = dados.data.map(v => [
+                                        v.idreserva,
+                                        v.datareserva ? new Date(v.datareserva).toLocaleDateString('pt-BR') : '-',
+                                        v.cliente || '-',
+                                        v.atendente || '-',
+                                        v.metodopagamento || '-',
+                                        `R$ ${parseFloat(v.valortotal || 0).toFixed(2)}`
+                                    ]);
+                                } else if (tipo === 'servicos') {
+                                    columns = ['ID', 'Serviço', 'Cliente', 'Mecânico', 'Status', 'Data'];
+                                    rows = dados.data.map(s => [
+                                        s.id,
+                                        s.nomeservico || '-',
+                                        s.nomecliente || '-',
+                                        s.nomemecanico || '-',
+                                        s.status,
+                                        s.datacriacao ? new Date(s.datacriacao).toLocaleDateString('pt-BR') : '-'
+                                    ]);
+                                } else if (tipo === 'estoque') {
+                                    columns = ['ID', 'Produto', 'Categoria', 'Preço', 'Estoque'];
+                                    rows = dados.data.map(p => [
+                                        p.idproduto,
+                                        p.nome,
+                                        p.categoria || '-',
+                                        `R$ ${parseFloat(p.preco || 0).toFixed(2)}`,
+                                        p.quantidadeatual || 0
+                                    ]);
+                                } else if (tipo === 'eventos') {
+                                    columns = ['ID', 'Nome', 'Data', 'Vagas Totais', 'Vagas Disp.', 'Inscritos'];
+                                    rows = dados.data.map(e => [
+                                        e.idevento,
+                                        e.nome,
+                                        e.data ? new Date(e.data).toLocaleDateString('pt-BR') : '-',
+                                        e.vagastotal,
+                                        e.vagasdisponiveis,
+                                        e.totalinscritos || 0
+                                    ]);
+                                }
+                                
+                                doc.autoTable({
+                                    startY: startY,
+                                    head: [columns],
+                                    body: rows,
+                                    theme: 'striped',
+                                    headStyles: { fillColor: [126, 217, 87] },
+                                    styles: { fontSize: 9 }
+                                });
+                            }
+                        }
+                        
+                        // Rodapé
+                        const pageCount = doc.internal.getNumberOfPages();
+                        for (let i = 1; i <= pageCount; i++) {
+                            doc.setPage(i);
+                            doc.setFontSize(8);
+                            doc.setFont(undefined, 'normal');
+                            doc.text(`Página ${i} de ${pageCount}`, 105, 290, { align: 'center' });
+                        }
+                        
+                        // Salvar PDF
+                        const nomeArquivo = `relatorio_${tipo}_${dataInicio}_${dataFim}.pdf`;
+                        doc.save(nomeArquivo);
+                    }
+                }
+                    else if (page === 'eventos') {
+                        content.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2>Eventos</h2>
+                                <div>
+                                    <button class="btn btn-info me-2" id="verInscritosBtn" disabled><i class="fas fa-users"></i> Ver Inscritos</button>
+                                    <button class="btn btn-success" id="openEventoModal"><i class="fas fa-plus"></i> Novo Evento</button>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6"><input type="text" id="eventoSearch" class="form-control" placeholder="Pesquisar..."></div>
+                                <div class="col-md-3"><select id="eventoFiltro" class="form-select">
+                                    <option value="nome">Nome</option>
+                                    <option value="data">Data</option>
+                                </select></div>
+                                <div class="col-md-3 text-end"><button class="btn btn-outline-secondary" id="refreshEventosBtn">🔄 Atualizar</button></div>
+                            </div>
+                            <div class="card p-0">
+                                <table class="table table-striped mb-0" id="eventosTable">
+                                    <thead><tr><th>ID</th><th>Nome</th><th>Data</th><th>Vagas (Disp/Total)</th><th>Status</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                            <div class="modal fade" id="modalEvento" tabindex="-1">
+                              <div class="modal-dialog">
+                                <div class="modal-content" style="border-radius:15px;">
+                                  <div class="modal-header" style="background:#7ed957;color:white;">
+                                     <h5 class="modal-title">Cadastrar Evento</h5>
+                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                  </div>
+                                  <form id="formEvento">
+                                    <div class="modal-body">
+                                      <div class="mb-3">
+                                        <label class="form-label">Nome</label>
+                                        <input type="text" id="evtNome" class="form-control" required>
+                                      </div>
+                                      <div class="mb-3">
+                                        <label class="form-label">Data</label>
+                                        <input type="date" id="evtData" class="form-control" required>
+                                      </div>
+                                      <div class="mb-3">
+                                        <label class="form-label">Vagas Totais</label>
+                                        <input type="number" min="1" id="evtVagas" class="form-control" required>
+                                      </div>
+                                      <div id="evtStatus" class="mt-2"></div>
+                                    </div>
+                                    <div class="modal-footer">
+                                      <button type="submit" class="btn btn-success">💾 Salvar</button>
+                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                    </div>
+                                  </form>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="modal fade" id="modalInscritos" tabindex="-1">
+                              <div class="modal-dialog modal-lg">
+                                <div class="modal-content" style="border-radius:15px;">
+                                  <div class="modal-header" style="background:#7ed957;color:white;">
+                                     <h5 class="modal-title" id="inscritosModalTitle">Inscritos no Evento</h5>
+                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                  </div>
+                                  <div class="modal-body">
+                                    <div id="inscritosLoader" class="text-center"><p class="text-info">Carregando...</p></div>
+                                    <div id="inscritosContent" style="display:none;">
+                                      <table class="table table-striped">
+                                        <thead><tr><th>ID</th><th>Nome</th><th>Email</th><th>Data Inscrição</th></tr></thead>
+                                        <tbody id="inscritosTableBody"></tbody>
+                                      </table>
+                                      <p id="inscritosEmpty" class="text-muted" style="display:none;">Nenhum inscrito ainda.</p>
+                                    </div>
+                                  </div>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                        `;
+                        const modalEvento = new bootstrap.Modal(document.getElementById('modalEvento'));
+                        const modalInscritos = new bootstrap.Modal(document.getElementById('modalInscritos'));
+                        let selectedEventoId = null;
+
+                        async function carregarEventos() {
+                            try {
+                                const lista = await fetchAuthenticated('/eventos','GET');
+                                const tbody = document.querySelector('#eventosTable tbody');
+                                tbody.innerHTML = '';
+                                (lista||[]).forEach(ev => {
+                                    let status;
+                                    if (ev.hoje) status = 'Hoje';
+                                    else if (ev.passado) status = 'Passado';
+                                    else status = 'Futuro';
+                                    const tr = document.createElement('tr');
+                                    tr.dataset.eventoId = ev.idevento;
+                                    tr.innerHTML = `<td>${ev.idevento}</td><td data-col="nome">${ev.nome}</td><td data-col="data">${ev.data}</td><td>${ev.vagasdisponiveis}/${ev.vagastotal}</td><td>${status}</td>`;
+                                    tr.style.cursor = 'pointer';
+                                    tr.addEventListener('click', () => {
+                                        document.querySelectorAll('#eventosTable tbody tr').forEach(r => r.classList.remove('table-active'));
+                                        tr.classList.add('table-active');
+                                        selectedEventoId = ev.idevento;
+                                        document.getElementById('verInscritosBtn').disabled = false;
+                                    });
+                                    tbody.appendChild(tr);
+                                });
+                            } catch(e){
+                                const tbody = document.querySelector('#eventosTable tbody');
+                                tbody.innerHTML = `<tr><td colspan="5" class="text-danger">Erro ao carregar eventos</td></tr>`;
+                            }
+                        }
+
+                        document.getElementById('openEventoModal').addEventListener('click', () => {
+                            document.getElementById('formEvento').reset();
+                            document.getElementById('evtStatus').textContent='';
+                            const hojeISO = new Date().toISOString().split('T')[0];
+                            const dataInput = document.getElementById('evtData');
+                            if (dataInput) {
+                                dataInput.setAttribute('min', hojeISO);
+                                if (!dataInput.value || dataInput.value < hojeISO) {
+                                    dataInput.value = hojeISO;
+                                }
+                            }
+                            modalEvento.show();
+                        });
+                        document.getElementById('refreshEventosBtn').addEventListener('click', carregarEventos);
+
+                        document.getElementById('verInscritosBtn').addEventListener('click', async () => {
+                            if (!selectedEventoId) return;
+                            const loader = document.getElementById('inscritosLoader');
+                            const content = document.getElementById('inscritosContent');
+                            const tbody = document.getElementById('inscritosTableBody');
+                            const empty = document.getElementById('inscritosEmpty');
+                            loader.style.display = 'block';
+                            content.style.display = 'none';
+                            modalInscritos.show();
+                            try {
+                                const inscritos = await fetchAuthenticated(`/eventos/${selectedEventoId}/inscritos`, 'GET');
+                                loader.style.display = 'none';
+                                content.style.display = 'block';
+                                tbody.innerHTML = '';
+                                if (!inscritos || inscritos.length === 0) {
+                                    empty.style.display = 'block';
+                                    tbody.closest('table').style.display = 'none';
+                                } else {
+                                    empty.style.display = 'none';
+                                    tbody.closest('table').style.display = 'table';
+                                    inscritos.forEach(ins => {
+                                        const dataInscricao = ins.datainscricao ? new Date(ins.datainscricao).toLocaleDateString('pt-BR') : '-';
+                                        const tr = document.createElement('tr');
+                                        tr.innerHTML = `<td>${ins.id}</td><td>${ins.nome}</td><td>${ins.email}</td><td>${dataInscricao}</td>`;
+                                        tbody.appendChild(tr);
+                                    });
+                                }
+                            } catch (e) {
+                                loader.style.display = 'none';
+                                content.style.display = 'block';
+                                tbody.innerHTML = `<tr><td colspan="4" class="text-danger">Erro: ${e.message}</td></tr>`;
+                            }
+                        });
+
+                        document.getElementById('openEventoModal').addEventListener('click', () => {
+                            document.getElementById('formEvento').reset();
+                            document.getElementById('evtStatus').textContent='';
+                            const hojeISO = new Date().toISOString().split('T')[0];
+                            const dataInput = document.getElementById('evtData');
+                            if (dataInput) {
+                                dataInput.setAttribute('min', hojeISO);
+                                if (!dataInput.value || dataInput.value < hojeISO) {
+                                    dataInput.value = hojeISO;
+                                }
+                            }
+                            modalEvento.show();
+                        });
+
+                        document.getElementById('formEvento').addEventListener('submit', async (e) => {
+                            e.preventDefault();
+                            const statusEl = document.getElementById('evtStatus');
+                            statusEl.textContent='Enviando...';
+                            statusEl.className='text-info';
+                            const payload = {
+                                nome: document.getElementById('evtNome').value.trim(),
+                                data: document.getElementById('evtData').value,
+                                vagasTotal: document.getElementById('evtVagas').value
+                            };
+                            try {
+                                await fetchAuthenticated('/eventos','POST', payload);
+                                statusEl.textContent='Evento criado!';
+                                statusEl.className='text-success fw-bold';
+                                carregarEventos();
+                                setTimeout(()=>modalEvento.hide(),800);
+                            } catch(err){
+                                statusEl.textContent='Erro: '+(err.error||err.message||err);
+                                statusEl.className='text-danger fw-bold';
+                            }
+                        });
+
+                        // Filtro simples
+                        const searchEv = document.getElementById('eventoSearch');
+                        const filtroEv = document.getElementById('eventoFiltro');
+                        searchEv.addEventListener('keyup', () => {
+                            const termo = searchEv.value.toLowerCase();
+                            document.querySelectorAll('#eventosTable tbody tr').forEach(tr => {
+                                const col = filtroEv.value;
+                                const cel = tr.querySelector(`[data-col="${col}"]`);
+                                const val = cel ? cel.textContent.toLowerCase() : '';
+                                tr.style.display = val.includes(termo) ? '' : 'none';
+                            });
+                        });
+
+                        carregarEventos();
+                    }
+            }
+        
+
+        // --- Inicialização e Listeners (DOM) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. Inicializa o Dashboard
+            loadPage('dashboard');
+
+            // 2. Listener para os links da Sidebar
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = e.target.closest('a').dataset.page;
+                    if (page) { loadPage(page); }
+                });
+            });
+
+            // 3. Listener para o Cadastro de Funcionário (Modal)
+            const modalFuncionarios = new bootstrap.Modal(document.getElementById("modalFuncionarios"));
+            
+            const form = document.getElementById('cadastroFuncionarioForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const statusEl = document.getElementById('modalStatus');
+                    statusEl.textContent = 'Enviando dados...';
+                    statusEl.className = 'mt-3 text-info fw-bold';
+
+                    const idEdit = document.getElementById('funcIdEdit').value;
+                    const dados = {
+                        nome: document.getElementById('funcNome').value,
+                        login: document.getElementById('funcLogin').value,
+                        matricula: document.getElementById('funcMatricula').value,
+                        tipoPerfil: document.getElementById('funcPerfil').value
+                    };
+                    const senha = document.getElementById('funcSenha').value;
+                    if(senha) dados.senha = senha;
+
+                    try {
+                        if(idEdit){
+                            // UPDATE
+                            await fetchAuthenticated(`/funcionarios/${idEdit}`, 'PUT', dados);
+                            statusEl.textContent = `Funcionário ${dados.nome} atualizado com sucesso!`;
+                        } else {
+                            // CREATE
+                            await fetchAuthenticated('/funcionarios', 'POST', dados);
+                            statusEl.textContent = `Sucesso! Funcionário ${dados.nome} cadastrado.`;
+                        }
+                        statusEl.className = 'mt-3 text-success fw-bold';
+                        form.reset();
+                        
+                        loadPage('funcionarios'); 
+
+                    } catch (error) {
+                        statusEl.className = 'mt-3 text-danger fw-bold';
+                        statusEl.textContent = 'Erro no Cadastro: ' + (error.error || error.message || error);
+                    }
+                });
+            }
+
+            // 4. Logout
+            document.getElementById('logoutButton').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'login.html';
+            });
+        });
+    </script>
+</body>
+</html>
