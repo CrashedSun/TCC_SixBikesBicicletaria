@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node server/index.js"
+    "start:backend": "node server/index.js",
+    "start:frontend": "node public/server.js",
+    "dev:backend": "node node_modules/nodemon/bin/nodemon.js server/index.js",
+    "dev:frontend": "node node_modules/nodemon/bin/nodemon.js public/server.js"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +22,9 @@
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "nodemon": "^3.1.11",
     "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

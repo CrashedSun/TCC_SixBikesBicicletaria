@@ -1,7 +1,8 @@
 // server/index.js
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config({ path: './server/.env' }); 
+require('dotenv').config({ path: path.join(__dirname, '.env') }); 
 
 const db = require('./config/database'); 
 const authMiddleware = require('./middleware/authMiddleware');
@@ -149,11 +150,13 @@ app.get('/api/usuarios/me', authMiddleware(ANY_USER), authController.getUserInfo
 // Rota para atualizar dados básicos do usuário autenticado
 app.put('/api/usuarios/me', authMiddleware(ANY_USER), authController.updateMyBasicInfo);
 
-// Servir arquivos estáticos do Frontend
-app.use(express.static('public'));
+// =====================================================
+// BACKEND PURO (API) — NÃO SERVE ARQUIVOS ESTÁTICOS
+// O frontend roda em servidor próprio (public/server.js)
+// =====================================================
 
 app.listen(PORT, async () => {
-    console.log(`Servidor Node.js rodando em http://localhost:${PORT}`);
+    console.log(`[BACKEND] API rodando em http://localhost:${PORT}`);
     try { await db.query('SELECT 1+1 AS result'); console.log('Conexão com PostgreSQL OK.'); } 
     catch (e) { console.error('Falha ao conectar ao PostgreSQL.'); }
     // Migração leve: garantir coluna de vínculo com agendamento em itemagendamento

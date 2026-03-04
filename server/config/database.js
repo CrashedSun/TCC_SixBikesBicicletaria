@@ -1,6 +1,7 @@
 // server/config/database.js - CÓDIGO FINAL PARA CONEXÃO REAL
+const path = require('path');
 const { Pool } = require('pg');
-require('dotenv').config({ path: './server/.env' }); 
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') }); 
 
 class DatabaseConfig {
     constructor() {
