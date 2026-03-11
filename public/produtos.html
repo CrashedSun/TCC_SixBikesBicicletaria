@@ -18,6 +18,15 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;700;900&display=swap">
     <link rel="stylesheet" href="assets/css/fontawesome.min.css">
 
+    <style>
+        .top-category-link.active { font-weight: bold !important; border-bottom: 2px solid #198754; }
+        .sidebar-cat-link:hover, .sidebar-cat-link.active { color: #198754 !important; font-weight: bold !important; }
+        .templatemo-accordion .collapse.show { display: block; }
+        .sidebar-category-toggle { cursor: pointer; }
+        .sidebar-category-toggle:not(.collapsed) .fa-chevron-circle-down { transform: rotate(180deg); transition: transform 0.3s; }
+        .sidebar-category-toggle.collapsed .fa-chevron-circle-down { transform: rotate(0deg); transition: transform 0.3s; }
+    </style>
+
 </head>
 
 <body>
@@ -39,7 +48,7 @@
                     </ul>
                 </div>
                 <div class="navbar align-self-center d-flex">
-                    <a class="nav-icon d-none d-lg-inline" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
+                    <a class="nav-icon" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
                         <i class="fa fa-fw fa-search text-dark mr-2"></i>
                     </a>
                     <a class="nav-icon position-relative text-decoration-none" href="carrinho.html">
@@ -80,67 +89,30 @@
 
             <div class="col-lg-3">
                 <h1 class="h2 pb-4">Categorias</h1>
-                <ul class="list-unstyled templatemo-accordion">
-                    <li class="pb-3">
-                        <a class="collapsed d-flex justify-content-between h3 text-decoration-none" href="#">
-                            Peças
-                            <i class="pull-right fa fa-fw fa-chevron-circle-down mt-1"></i>
-                        </a>
-                        <ul id="collapseThree" class="collapse list-unstyled pl-3">
-                            <li><a class="text-decoration-none" href="#">Pneu</a></li>
-                            <li><a class="text-decoration-none" href="#">Freio</a></li>
-                            <li><a class="text-decoration-none" href="#">Aro</a></li>
-                            <li><a class="text-decoration-none" href="#">Cambio</a></li>
-                            <li><a class="text-decoration-none" href="#">Guidão</a></li>
-                            <li><a class="text-decoration-none" href="#">Mesa</a></li>
-                            <li><a class="text-decoration-none" href="#">Pedevela</a></li>
-                            <li><a class="text-decoration-none" href="#">Catraca</a></li>
-                            <li><a class="text-decoration-none" href="#">Selim</a></li>
-                        </ul>
-                    </li>
-                    <li class="pb-3">
-                        <a class="collapsed d-flex justify-content-between h3 text-decoration-none" href="#">
-                            Acessorios
-                            <i class="pull-right fa fa-fw fa-chevron-circle-down mt-1"></i>
-                        </a>
-                        <ul id="collapseTwo" class="collapse list-unstyled pl-3">
-                            <li><a class="text-decoration-none" href="#">Farol</a></li>
-                            <li><a class="text-decoration-none" href="#">Vista Light</a></li>
-                            <li><a class="text-decoration-none" href="#">Descanso</a></li>
-                            <li><a class="text-decoration-none" href="#">Bar End</a></li>
-                            <li><a class="text-decoration-none" href="#">Bolsa de Quadro</a></li>
-                            <li><a class="text-decoration-none" href="#">Capacete</a></li>
-                            <li><a class="text-decoration-none" href="#">Bagageiro</a></li>
-                            <li><a class="text-decoration-none" href="#">Bomba de Ar</a></li>
-                            <li><a class="text-decoration-none" href="#">Cadeado</a></li>
-                            <li><a class="text-decoration-none" href="#">Kit remendo</a></li>
-                        </ul>
-                    </li>
-
+                <ul id="sidebarCategorias" class="list-unstyled">
+                    <li class="pb-2"><a href="#" class="h5 text-dark text-decoration-none sidebar-cat-link active" data-categoria="todos">Todas</a></li>
+                    <!-- Categorias serão carregadas dinamicamente -->
                 </ul>
             </div>
 
             <div class="col-lg-9">
                 <div class="row">
                     <div class="col-md-6">
-                        <ul class="list-inline shop-top-menu pb-3 pt-1">
+                        <ul id="topCategoryMenu" class="list-inline shop-top-menu pb-3 pt-1">
                             <li class="list-inline-item">
-                                <a class="h3 text-dark text-decoration-none mr-3" href="#">Todos</a>
+                                <a class="h3 text-dark text-decoration-none mr-3 top-category-link active" href="#" data-category="todos">Todos</a>
                             </li>
-                            <li class="list-inline-item">
-                                <a class="h3 text-dark text-decoration-none mr-3" href="#">Peças</a>
-                            </li>
-                            <li class="list-inline-item">
-                                <a class="h3 text-dark text-decoration-none" href="#">Acessorios</a>
-                            </li>
+                            <!-- Categorias serão adicionadas dinamicamente -->
                         </ul>
                     </div>
                     <div class="col-md-6 pb-4">
                         <div class="d-flex">
-                            <select class="form-control">
-                                <option>Classificar</option>
-                                <option>A a Z</option>
-                                <option>Item</option>
+                            <select class="form-control" id="sortSelect">
+                                <option value="">Classificar</option>
+                                <option value="az">A a Z</option>
+                                <option value="za">Z a A</option>
+                                <option value="preco-asc">Menor Preço</option>
+                                <option value="preco-desc">Maior Preço</option>
                             </select>
                         </div>
                     </div>
@@ -467,7 +439,8 @@
     <script src="assets/js/templatemo.js"></script>
     <script src="assets/js/custom.js"></script>
     <script src="assets/js/cart.js"></script>
-    <script src="assets/js/auth.js"></script> <script>
+    <script src="assets/js/auth.js"></script>
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
             function updateCartCount(){
                 if(window.Cart){
@@ -477,24 +450,155 @@
             }
             const template = document.getElementById('product-card-template');
             const PAGE_SIZE = 20;
-            let allProducts = [];
+            let allProducts = [];       // todos do backend (estoque > 0)
+            let filteredProducts = [];   // após filtros
+            let allCategories = [];      // categorias reais do banco
             let currentPage = 1;
             let productRow = null;
 
-            // Localiza o container de cards dentro da coluna principal (col-lg-9)
+            let activeCategory = 'todos';   // 'todos' ou nome da categoria do banco
+            let activeSort = '';             // '', 'az', 'za', 'preco-asc', 'preco-desc'
+
+            // Localiza o container de cards
             const col9 = document.querySelector('.col-lg-9');
             if (col9) {
                 const rows = col9.querySelectorAll(':scope > .row');
-                // A segunda .row dentro de .col-lg-9 contém os cards
                 productRow = rows[1] || null;
             }
 
+            // ==================== CONSTRUÇÃO DINÂMICA DE CATEGORIAS ====================
+            function buildSidebar(categorias) {
+                const sidebar = document.getElementById('sidebarCategorias');
+                // Mantém o primeiro item ("Todas")
+                const firstItem = sidebar.querySelector('li');
+                sidebar.innerHTML = '';
+                sidebar.appendChild(firstItem);
+
+                categorias.forEach(cat => {
+                    const li = document.createElement('li');
+                    li.className = 'pb-2';
+                    const a = document.createElement('a');
+                    a.href = '#';
+                    a.className = 'h5 text-dark text-decoration-none sidebar-cat-link';
+                    a.setAttribute('data-categoria', cat.nome);
+                    a.textContent = cat.nome;
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        activeCategory = cat.nome;
+                        highlightSidebar();
+                        updateTopMenuActive();
+                        applyFiltersAndSort();
+                    });
+                    li.appendChild(a);
+                    sidebar.appendChild(li);
+                });
+
+                // Re-attach "Todas" click
+                const todosLink = firstItem.querySelector('a');
+                if (todosLink) {
+                    todosLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        activeCategory = 'todos';
+                        highlightSidebar();
+                        updateTopMenuActive();
+                        applyFiltersAndSort();
+                    });
+                }
+            }
+
+            function buildTopMenu(categorias) {
+                const menu = document.getElementById('topCategoryMenu');
+                // Remove todos exceto "Todos"
+                const firstItem = menu.querySelector('li');
+                menu.innerHTML = '';
+                menu.appendChild(firstItem);
+
+                categorias.forEach(cat => {
+                    const li = document.createElement('li');
+                    li.className = 'list-inline-item';
+                    const a = document.createElement('a');
+                    a.href = '#';
+                    a.className = 'h3 text-dark text-decoration-none mr-3 top-category-link';
+                    a.setAttribute('data-category', cat.nome);
+                    a.textContent = cat.nome;
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        activeCategory = cat.nome;
+                        highlightSidebar();
+                        updateTopMenuActive();
+                        applyFiltersAndSort();
+                    });
+                    li.appendChild(a);
+                    menu.appendChild(li);
+                });
+
+                // Re-attach "Todos" click
+                const todosLink = firstItem.querySelector('a');
+                if (todosLink) {
+                    todosLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        activeCategory = 'todos';
+                        highlightSidebar();
+                        updateTopMenuActive();
+                        applyFiltersAndSort();
+                    });
+                }
+            }
+
+            function highlightSidebar() {
+                document.querySelectorAll('.sidebar-cat-link').forEach(l => {
+                    l.classList.remove('active');
+                });
+                const active = document.querySelector(`.sidebar-cat-link[data-categoria="${activeCategory}"]`);
+                if (active) active.classList.add('active');
+            }
+
+            function updateTopMenuActive() {
+                document.querySelectorAll('.top-category-link').forEach(l => {
+                    l.classList.remove('active');
+                });
+                const activeLink = document.querySelector(`.top-category-link[data-category="${activeCategory}"]`);
+                if (activeLink) activeLink.classList.add('active');
+            }
+
+            // ==================== FILTRO + ORDENAÇÃO ====================
+            function applyFiltersAndSort() {
+                let result = [...allProducts];
+                // 1. Filtrar por categoria
+                if (activeCategory !== 'todos') {
+                    const catLower = activeCategory.toLowerCase();
+                    result = result.filter(p => {
+                        const prodCat = (p.categoria || '').toLowerCase().trim();
+                        return prodCat === catLower;
+                    });
+                }
+                // 2. Ordenar
+                if (activeSort === 'az') {
+                    result.sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
+                } else if (activeSort === 'za') {
+                    result.sort((a, b) => (b.nome || '').localeCompare(a.nome || '', 'pt-BR'));
+                } else if (activeSort === 'preco-asc') {
+                    result.sort((a, b) => parseFloat(a.preco || 0) - parseFloat(b.preco || 0));
+                } else if (activeSort === 'preco-desc') {
+                    result.sort((a, b) => parseFloat(b.preco || 0) - parseFloat(a.preco || 0));
+                }
+                filteredProducts = result;
+                currentPage = 1;
+                renderCards(currentPage);
+                renderPagination(currentPage);
+            }
+
+            // ==================== RENDER ====================
             function renderCards(page = 1) {
                 if (!productRow) return;
                 productRow.innerHTML = '';
                 const start = (page - 1) * PAGE_SIZE;
                 const end = start + PAGE_SIZE;
-                const slice = allProducts.slice(start, end);
+                const slice = filteredProducts.slice(start, end);
+                if (slice.length === 0) {
+                    productRow.innerHTML = '<div class="col-12 text-center py-5"><h4 class="text-muted">Nenhum produto encontrado nesta categoria.</h4></div>';
+                    return;
+                }
                 slice.forEach(product => {
                     const id = product.id ?? product.idproduto ?? product.idProduto ?? product.id_produto ?? '';
                     let priceNum = typeof product.preco === 'number' ? product.preco : parseFloat(String(product.preco || '0').replace(',', '.'));
@@ -513,7 +617,6 @@
                         const href = link.getAttribute('href') + id;
                         link.setAttribute('href', href);
                     });
-                    // Botão adicionar ao carrinho
                     const cartIcon = card.querySelector('.fas.fa-cart-plus');
                     if (cartIcon) {
                         const cartBtn = cartIcon.closest('a');
@@ -538,7 +641,7 @@
                 const ul = document.getElementById('productsPagination');
                 if (!ul) return;
                 ul.innerHTML = '';
-                const totalPages = Math.max(1, Math.ceil(allProducts.length / PAGE_SIZE));
+                const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
 
                 const createItem = (label, targetPage, disabled = false, active = false) => {
                     const li = document.createElement('li');
@@ -559,18 +662,36 @@
                     return li;
                 };
 
-                // Prev
                 ul.appendChild(createItem('«', Math.max(1, page - 1), page === 1, false));
-
-                // Page numbers (simple full range; can be optimized if needed)
                 for (let p = 1; p <= totalPages; p++) {
                     ul.appendChild(createItem(String(p), p, false, p === page));
                 }
-
-                // Next
                 ul.appendChild(createItem('»', Math.min(totalPages, page + 1), page === totalPages, false));
             }
 
+            // ==================== SORT SELECT ====================
+            const sortSelect = document.getElementById('sortSelect');
+            if (sortSelect) {
+                sortSelect.addEventListener('change', () => {
+                    activeSort = sortSelect.value;
+                    applyFiltersAndSort();
+                });
+            }
+
+            // ==================== CARREGAR CATEGORIAS DO BANCO ====================
+            async function loadCategories() {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/produtos/categorias`);
+                    if (!response.ok) throw new Error('Falha ao carregar categorias');
+                    const data = await response.json();
+                    allCategories = Array.isArray(data) ? data : [];
+                } catch (e) {
+                    console.warn('Categorias não carregadas do endpoint, extraindo dos produtos:', e.message);
+                    allCategories = [];
+                }
+            }
+
+            // ==================== LOAD PRODUCTS ====================
             async function loadProducts() {
                 try {
                     const response = await fetch(`${API_BASE_URL}/produtos/public`);
@@ -579,11 +700,28 @@
                     if (!response.ok || !Array.isArray(data.data)) {
                         throw new Error(data.message || 'Falha ao carregar produtos.');
                     }
-                    // Filtra produtos com estoque > 0
                     allProducts = (data.data || []).filter(p => {
                         const est = p.qtd ?? p.quantidade ?? p.quantidadeAtual ?? 0;
                         return (Number(est) || 0) > 0;
                     });
+                    filteredProducts = [...allProducts];
+
+                    // Se não carregou categorias do endpoint, extrai dos produtos
+                    if (allCategories.length === 0) {
+                        const catSet = new Set();
+                        allProducts.forEach(p => {
+                            const cat = (p.categoria || '').trim();
+                            if (cat) catSet.add(cat);
+                        });
+                        allCategories = Array.from(catSet).sort().map(nome => ({ nome }));
+                    }
+
+                    // Constrói sidebar e menu superior com categorias reais
+                    buildSidebar(allCategories);
+                    buildTopMenu(allCategories);
+                    updateTopMenuActive();
+                    highlightSidebar();
+
                     currentPage = 1;
                     renderCards(currentPage);
                     renderPagination(currentPage);
@@ -594,7 +732,8 @@
                 }
             }
 
-            loadProducts();
+            // Inicialização
+            loadCategories().then(() => loadProducts());
             updateCartCount();
             window.addEventListener('storage', (e) => { if(e.key === 'sixbikes_cart') updateCartCount(); });
         });

@@ -167,6 +167,14 @@ body, ul, li, p, a, label, input, div {
   height: 6px;
 }
 
+@media (max-width: 575.98px) {
+  .navbar-brand.logo.h1 { font-size: 20px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  #templatemo_main_nav .navbar-nav { flex-direction: column; align-items: flex-start; }
+  #templatemo_main_nav .navbar .nav-icon { margin-right: 10px !important; }
+  .tempaltemo-carousel .h1 { font-size: 0.7em !important; }
+  #template-mo-zay-hero-carousel .carousel-item { min-height: auto !important; }
+}
+
 @media (min-width: 576px) {
   .tempaltemo-carousel .h1 { font-size: 1em !important;}
 }

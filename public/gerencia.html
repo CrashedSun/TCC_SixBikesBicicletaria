@@ -49,6 +49,55 @@
             padding: 25px;
             width: calc(100% - 240px);
         }
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1051;
+            background: #7ed957;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1039;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 1040;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .sidebar-overlay.open {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 60px 15px 15px;
+            }
+            .main-content .table {
+                font-size: 13px;
+            }
+            .main-content .card {
+                overflow-x: auto;
+            }
+        }
 
         /* Estilos para o Grid de Funcionários (NOVO REQUISITO) */
         .scrollable-table-container {
@@ -76,6 +125,8 @@
 </head>
 <body>
 
+    <button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open');document.querySelector('.sidebar-overlay').classList.toggle('open');">&#9776;</button>
+    <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('open');"></div>
     <div class="sidebar text-center">
         <h5 id="userName" class="text-center fw-bold mb-2"></h5>
         <h3 class="mb-5">Gerência SixBikes Bicicletaria</h3>
@@ -204,9 +255,17 @@
                 alert("Por favor, selecione um funcionário na lista antes de continuar.");
                 return;
             }
-                
 
             const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+
+            // Impede gerente de bloquear proprietário (verificação frontend)
+            const perfilAlvo = (row.querySelector('td[data-col="tipoPerfil"]')?.textContent || '').trim().toUpperCase();
+            const meuPerfil = (localStorage.getItem('userProfile') || '').toUpperCase();
+            if (meuPerfil === 'GERENTE' && perfilAlvo === 'PROPRIETARIO') {
+                alert('Gerentes não possuem permissão para bloquear o acesso do Proprietário.');
+                return;
+            }
+
             const isCurrentlyBlocked = row.classList.contains('table-danger-custom');
             const action = isCurrentlyBlocked ? "DESBLOQUEAR" : "BLOQUEAR";
 
@@ -214,7 +273,7 @@
                 return;
             }
 
-                try {
+            try {
                 // isCurrentlyBlocked === true means ativo === false in DB, so desired new ativo should be the inverse of blocked state
                 // desired isActive = isCurrentlyBlocked ? true (unblock) : false (block)
                 await fetchAuthenticated(`/funcionarios/${userId}/bloquear`, 'PUT', { isActive: isCurrentlyBlocked });
@@ -240,6 +299,9 @@
                     link.classList.add('active');
                 }
             });
+            // Fecha sidebar no mobile
+            document.querySelector('.sidebar').classList.remove('open');
+            document.querySelector('.sidebar-overlay').classList.remove('open');
 
             /* ================= DASHBOARD ================== */
             if (page === 'dashboard') {
@@ -336,7 +398,7 @@
                             <td data-col="id">${f.id}</td>
                             <td data-col="nome">${f.nome}</td>
                             <td data-col="login">${f.login}</td>
-                            <td data-col="cargo">${f.tipoPerfil}</td>
+                            <td data-col="tipoPerfil">${f.tipoPerfil}</td>
                             <td data-col="status">${f.ativo ? 'Ativo' : 'BLOQUEADO'}</td>
                         </tr>
                     `).join('');
@@ -358,7 +420,7 @@
                                     <option value="id">ID</option>
                                     <option value="nome">Nome</option>
                                     <option value="login">Login</option>
-                                    <option value="cargo">Cargo</option>
+                                    <option value="tipoPerfil">Cargo</option>
                                 </select>
                             </div>
                             <div class="col-md-3 text-end">
@@ -429,12 +491,23 @@
                     });
                     
                     // Continue existing click logic
+                    const meuPerfil = (localStorage.getItem('userProfile') || '').toUpperCase();
                     document.querySelectorAll('#funcionariosTable tbody tr').forEach(row => {
                         row.addEventListener('click', () => {
                             selectedUserId = row.dataset.userId;
                             const blockBtn = document.getElementById('blockButton');
+
+                            const perfilAlvo = (row.querySelector('td[data-col="tipoPerfil"]')?.textContent || '').trim().toUpperCase();
+                            const isProprietarioTarget = perfilAlvo === 'PROPRIETARIO';
+
+                            // Gerente não pode bloquear proprietário
+                            if (meuPerfil === 'GERENTE' && isProprietarioTarget) {
+                                blockBtn.disabled = true;
+                                blockBtn.innerHTML = `<i class="fas fa-lock"></i> Bloqueio não permitido`;
+                                return;
+                            }
+
                             blockBtn.disabled = false;
-                            
                             const isBlocked = row.classList.contains('table-danger-custom');
                             blockBtn.innerHTML = `<i class="fas ${isBlocked ? 'fa-unlock' : 'fa-lock'}"></i> ${isBlocked ? 'Desbloquear Acesso' : 'Bloquear Acesso'}`;
                         });
@@ -454,7 +527,7 @@
                                 val = (tr.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
                             } else if (coluna === 'login') {
                                 val = (tr.querySelector('td:nth-child(3)')?.textContent || '').toLowerCase();
-                            } else if (coluna === 'cargo') {
+                            } else if (coluna === 'tipoPerfil') {
                                 val = (tr.querySelector('td:nth-child(4)')?.textContent || '').toLowerCase();
                             }
                             val = val.replace(/[^0-9a-z]/gi,'');
@@ -605,8 +678,11 @@
 
                                                 <div class="col-md-6 mb-2">
                                                     <label class="form-label">Categoria</label>
-                                                    <select class="form-select" id="catDropdown" required>
+                                                    <div class="d-flex gap-2">
+                                                        <select class="form-select" id="catDropdown" required>
                                                         </select>
+                                                        <button type="button" class="btn btn-outline-success btn-sm" id="btnAbrirNovaCategoria" title="Adicionar nova categoria" style="white-space:nowrap;">+ Nova</button>
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -623,6 +699,29 @@
                                             <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
                                         </div>
                                     </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MODAL NOVA CATEGORIA -->
+                        <div class="modal fade" id="modalNovaCategoria" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content" style="border-radius: 15px;">
+                                    <div class="modal-header" style="background:#7ed957; color:white;">
+                                        <h5 class="modal-title fw-bold">➕ Nova Categoria</h5>
+                                        <button type="button" class="btn-close" id="btnFecharNovaCategoria"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Nome da Categoria</label>
+                                            <input type="text" class="form-control" id="inputNovaCategoria" placeholder="Ex: Acessórios, Peças..." required maxlength="100">
+                                        </div>
+                                        <div id="novaCategoriaStatus" class="mt-2"></div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-success px-4" id="btnSalvarNovaCategoria">💾 Salvar Categoria</button>
+                                        <button type="button" class="btn btn-secondary px-4" id="btnVoltarCadastro">Voltar</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -664,6 +763,49 @@
                             modalCadastro.show();
                         });
                     }
+
+                    // === LÓGICA DO MODAL NOVA CATEGORIA ===
+                    const modalNovaCategoriaEl = document.getElementById("modalNovaCategoria");
+                    const modalNovaCategoria = new bootstrap.Modal(modalNovaCategoriaEl);
+
+                    function fecharCategoriaEReabrirCadastro() {
+                        modalNovaCategoria.hide();
+                        setTimeout(async () => {
+                            await populateCategories('catDropdown');
+                            modalCadastro.show();
+                        }, 300);
+                    }
+
+                    document.getElementById("btnAbrirNovaCategoria")?.addEventListener("click", () => {
+                        modalCadastro.hide();
+                        document.getElementById('inputNovaCategoria').value = '';
+                        document.getElementById('novaCategoriaStatus').textContent = '';
+                        setTimeout(() => modalNovaCategoria.show(), 300);
+                    });
+
+                    document.getElementById("btnFecharNovaCategoria")?.addEventListener("click", fecharCategoriaEReabrirCadastro);
+                    document.getElementById("btnVoltarCadastro")?.addEventListener("click", fecharCategoriaEReabrirCadastro);
+
+                    document.getElementById("btnSalvarNovaCategoria")?.addEventListener("click", async () => {
+                        const nome = document.getElementById('inputNovaCategoria').value.trim();
+                        const statusEl = document.getElementById('novaCategoriaStatus');
+                        if (!nome) {
+                            statusEl.className = 'mt-2 text-danger fw-bold';
+                            statusEl.textContent = 'Informe o nome da categoria.';
+                            return;
+                        }
+                        statusEl.className = 'mt-2 text-info';
+                        statusEl.textContent = 'Salvando...';
+                        try {
+                            await fetchAuthenticated('/api/produtos/categorias', 'POST', { nome });
+                            statusEl.className = 'mt-2 text-success fw-bold';
+                            statusEl.textContent = 'Categoria criada com sucesso!';
+                            setTimeout(fecharCategoriaEReabrirCadastro, 800);
+                        } catch (err) {
+                            statusEl.className = 'mt-2 text-danger fw-bold';
+                            statusEl.textContent = err.error || err.message || 'Erro ao criar categoria.';
+                        }
+                    });
 
 
                     // 2. Lógica de submissão do formulário (IMPORTANTE: Envia o ID da Categoria)

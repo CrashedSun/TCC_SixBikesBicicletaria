@@ -6,7 +6,7 @@ const FuncionarioModel = require('./FuncionarioModel');
  */
 class ProprietarioModel extends FuncionarioModel {
     constructor(id, nome, login, senhaHash, matricula) {
-        // Fixa o cargo/perfil como PROPRIETARIO
+        // Fixa o tipoPerfil como PROPRIETARIO
         super(id, nome, login, senhaHash, matricula, 'PROPRIETARIO');
     }
 }

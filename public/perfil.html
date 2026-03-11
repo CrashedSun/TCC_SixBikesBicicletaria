@@ -40,7 +40,7 @@
           </ul>
         </div>
         <div class="navbar align-self-center d-flex">
-          <a class="nav-icon d-none d-lg-inline" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
+          <a class="nav-icon" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
             <i class="fa fa-fw fa-search text-dark mr-2"></i>
           </a>
           <a class="nav-icon position-relative text-decoration-none" href="carrinho.html">
@@ -107,8 +107,8 @@
           <input type="text" id="telefone" class="form-control" placeholder="(11) 99999-9999">
         </div>
         <div class="col-md-4">
-          <label class="small-label mb-1" for="cargo">Cargo</label>
-          <input type="text" id="cargo" class="form-control readonly" readonly placeholder="-">
+          <label class="small-label mb-1" for="tipoPerfil">Cargo</label>
+          <input type="text" id="tipoPerfil" class="form-control readonly" readonly placeholder="-">
         </div>
         <div class="col-12 text-end mt-2">
           <button type="submit" class="btn btn-success">Salvar Alterações</button>
@@ -146,6 +146,26 @@
         <button id="btnClearSession" class="btn btn-outline-secondary btn-sm">Limpar Sessão</button>
       </div>
     </div>
+
+    <!-- Área de Reservas e Serviços (apenas CLIENTE) -->
+    <div id="areaClienteHistorico" class="d-none">
+      <div class="section-box">
+        <h5 class="mb-3">Minhas Reservas &amp; Serviços</h5>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button class="btn btn-success btn-sm" data-historico="reservas-pendentes">Reservas Pendentes</button>
+          <button class="btn btn-outline-success btn-sm" data-historico="reservas-todas">Todas as Reservas</button>
+          <button class="btn btn-success btn-sm" data-historico="servicos-pendentes">Serviços Pendentes</button>
+          <button class="btn btn-outline-success btn-sm" data-historico="servicos-todos">Todos os Serviços</button>
+        </div>
+        <div id="historicoResultado" class="small text-muted">Clique em um botão acima para visualizar.</div>
+        <div class="table-responsive">
+          <table id="historicoTabela" class="table table-sm table-striped d-none">
+            <thead id="historicoThead"></thead>
+            <tbody id="historicoTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Footer (simplificado) -->
@@ -181,11 +201,11 @@
         document.getElementById('profileRole').textContent = 'Perfil: ' + (me.perfil || perfil);
         document.getElementById('profileLogin').textContent = 'Login: ' + (me.login || '-') + ' · ID: ' + (me.id || '-');
         document.getElementById('nome').value = me.nome || '';
-        // Preenche direto do backend; email e cargo permanecem somente leitura
+        // Preenche direto do backend; email e tipoPerfil permanecem somente leitura
         document.getElementById('email').value = me.email || '';
         document.getElementById('cpf').value = me.cpf || '';
         document.getElementById('telefone').value = me.telefone || '';
-        document.getElementById('cargo').value = me.cargo || (me.perfil || perfil);
+        document.getElementById('tipoPerfil').value = me.tipoPerfil || (me.perfil || perfil);
         const avatar = document.getElementById('avatarCircle');
         if(avatar){ avatar.textContent = (me.nome||'U').charAt(0).toUpperCase(); }
       } catch(e){
@@ -253,10 +273,88 @@
         localStorage.removeItem('usuarioEmail');
         localStorage.removeItem('usuarioCPF');
         localStorage.removeItem('usuarioTelefone');
-        localStorage.removeItem('usuarioCargo');
+        localStorage.removeItem('usuarioTipoPerfil');
         document.getElementById('basicStatus').textContent='Sessão parcial limpa.';
         document.getElementById('basicStatus').style.color='orange';
       });
+
+      // --- Área Reservas & Serviços (somente CLIENTE) ---
+      const perfil = localStorage.getItem('userProfile');
+      if (perfil === 'CLIENTE') {
+        document.getElementById('areaClienteHistorico').classList.remove('d-none');
+
+        let cacheReservas = null;
+        let cacheServicos = null;
+
+        async function carregarReservas() {
+          if (cacheReservas) return cacheReservas;
+          try { cacheReservas = await fetchAuthenticated('/reservas/minhas'); } catch(e) { cacheReservas = []; }
+          return cacheReservas;
+        }
+        async function carregarServicos() {
+          if (cacheServicos) return cacheServicos;
+          try { cacheServicos = await fetchAuthenticated('/agendamentos/meus'); } catch(e) { cacheServicos = []; }
+          return cacheServicos;
+        }
+
+        function formatDate(d) { if(!d) return '-'; const dt=new Date(d); return dt.toLocaleDateString('pt-BR'); }
+        function formatMoney(v) { return 'R$ ' + (parseFloat(v)||0).toFixed(2).replace('.',','); }
+
+        function renderReservas(lista) {
+          const thead = document.getElementById('historicoThead');
+          const tbody = document.getElementById('historicoTbody');
+          const tabela = document.getElementById('historicoTabela');
+          thead.innerHTML = '<tr><th>#</th><th>Data</th><th>Status</th><th>Pagamento</th><th>Total</th></tr>';
+          tbody.innerHTML = '';
+          if (!lista.length) {
+            document.getElementById('historicoResultado').textContent = 'Nenhuma reserva encontrada.';
+            tabela.classList.add('d-none'); return;
+          }
+          lista.forEach(r => {
+            tbody.innerHTML += `<tr><td>${r.idreserva}</td><td>${formatDate(r.datareserva)}</td><td>${r.status}</td><td>${r.statuspagamento}</td><td>${formatMoney(r.totalreserva)}</td></tr>`;
+          });
+          document.getElementById('historicoResultado').textContent = '';
+          tabela.classList.remove('d-none');
+        }
+
+        function renderServicos(lista) {
+          const thead = document.getElementById('historicoThead');
+          const tbody = document.getElementById('historicoTbody');
+          const tabela = document.getElementById('historicoTabela');
+          thead.innerHTML = '<tr><th>#</th><th>Serviço</th><th>Data Agendada</th><th>Horário</th><th>Status</th><th>Valor</th></tr>';
+          tbody.innerHTML = '';
+          if (!lista.length) {
+            document.getElementById('historicoResultado').textContent = 'Nenhum serviço encontrado.';
+            tabela.classList.add('d-none'); return;
+          }
+          lista.forEach(s => {
+            const raw = s.dataagendada || s.dataAgendada;
+            const horario = raw ? new Date(raw).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : '-';
+            tbody.innerHTML += `<tr><td>${s.id}</td><td>${s.servico_nome||'-'}</td><td>${formatDate(raw)}</td><td>${horario}</td><td>${s.status}</td><td>${formatMoney(s.valor)}</td></tr>`;
+          });
+          document.getElementById('historicoResultado').textContent = '';
+          tabela.classList.remove('d-none');
+        }
+
+        document.querySelectorAll('[data-historico]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const tipo = btn.getAttribute('data-historico');
+            document.getElementById('historicoResultado').textContent = 'Carregando...';
+            document.getElementById('historicoTabela').classList.add('d-none');
+            if (tipo === 'reservas-pendentes') {
+              const todas = await carregarReservas();
+              renderReservas(todas.filter(r => r.statuspagamento === 'PENDENTE' && r.status !== 'CANCELADA'));
+            } else if (tipo === 'reservas-todas') {
+              renderReservas(await carregarReservas());
+            } else if (tipo === 'servicos-pendentes') {
+              const todos = await carregarServicos();
+              renderServicos(todos.filter(s => s.status === 'ABERTO' || s.status === 'EM ANDAMENTO'));
+            } else if (tipo === 'servicos-todos') {
+              renderServicos(await carregarServicos());
+            }
+          });
+        });
+      }
     });
   </script>
 </body>

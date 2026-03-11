@@ -8,7 +8,7 @@ const UsuarioModel = require('../models/UsuarioModel');
  */
 class UsuarioRepository {
     
-    usuarioColumns = 'id, nome, login, senha_hash, tipo_perfil, cpf, email, telefone, matricula, cargo, ativo, trocar_senha';
+    usuarioColumns = 'id, nome, login, senha_hash, tipo_perfil, cpf, email, telefone, matricula, ativo, trocar_senha';
 
     /**
      * Busca um usuário pelo login para autenticação (UC001).
@@ -34,7 +34,6 @@ class UsuarioRepository {
                 userDB.email,
                 userDB.telefone,
                 userDB.matricula,
-                userDB.cargo,
                 (userDB.ativo === undefined ? true : !!userDB.ativo),
                 (userDB.trocar_senha === undefined ? false : !!userDB.trocar_senha)
             );
@@ -64,7 +63,6 @@ class UsuarioRepository {
                 userDB.email,
                 userDB.telefone,
                 userDB.matricula,
-                userDB.cargo,
                 (userDB.ativo === undefined ? true : !!userDB.ativo),
                 (userDB.trocar_senha === undefined ? false : !!userDB.trocar_senha)
             );
@@ -92,7 +90,6 @@ class UsuarioRepository {
                 userDB.email,
                 userDB.telefone,
                 userDB.matricula,
-                userDB.cargo,
                 // Alguns bancos podem usar 'ativo' como string/boolean
                 (userDB.ativo === undefined ? true : !!userDB.ativo),
                 (userDB.trocar_senha === undefined ? false : !!userDB.trocar_senha)
@@ -152,11 +149,11 @@ class UsuarioRepository {
     
     /**
      * Insere um novo funcionário na tabela usuario e retorna o id criado.
-     * Recebe um objeto com: nome, login, senha_hash, tipo_perfil, cpf?, email?, telefone?, matricula?, cargo?
+     * Recebe um objeto com: nome, login, senha_hash, tipo_perfil, cpf?, email?, telefone?, matricula?
      */
     async createFuncionario(dados) {
-        const sql = `INSERT INTO usuario (nome, login, senha_hash, tipo_perfil, cpf, email, telefone, matricula, cargo, ativo, trocar_senha)
-                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, true, true) RETURNING id`;
+        const sql = `INSERT INTO usuario (nome, login, senha_hash, tipo_perfil, cpf, email, telefone, matricula, ativo, trocar_senha)
+                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8, true, true) RETURNING id`;
         const params = [
             dados.nome,
             dados.login,
@@ -165,8 +162,7 @@ class UsuarioRepository {
             dados.cpf || null,
             dados.email || null,
             dados.telefone || null,
-            dados.matricula || null,
-            dados.cargo || null
+            dados.matricula || null
         ];
         try {
             const result = await db.query(sql, params);

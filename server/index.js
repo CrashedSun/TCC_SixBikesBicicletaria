@@ -45,6 +45,7 @@ const ANY_USER = ['CLIENTE', 'ATENDENTE', 'MECANICO', 'GERENTE', 'PROPRIETARIO']
 app.get('/api/produtos', authMiddleware(['CLIENTE', ...ALL_EMPLOYEES]), produtoController.listarTodos); 
 // Rota de categorias DEVE vir antes de /:id para não capturar "categorias" como ID
 app.get('/api/produtos/categorias', authMiddleware(ALL_EMPLOYEES), produtoController.listarCategorias);
+app.post('/api/produtos/categorias', authMiddleware(ADMIN_ROLES), produtoController.criarCategoria);
 app.post('/api/produtos', authMiddleware(ADMIN_ROLES), produtoController.cadastrar); 
 app.get('/api/produtos/:id', authMiddleware(['CLIENTE', ...ALL_EMPLOYEES]), produtoController.buscarPorId);
 app.put('/api/produtos/:id', authMiddleware(ADMIN_ROLES), produtoController.atualizar); 
@@ -84,6 +85,8 @@ app.put('/api/tickets/:id/assumir', authMiddleware(['ATENDENTE', ...ADMIN_ROLES]
 app.put('/api/tickets/:id/fechar', authMiddleware(['ATENDENTE', ...ADMIN_ROLES]), ticketController.fechar);
 // Cliente cria a reserva com itens / Atendente cria reserva de balcão
 app.post('/api/reservas', authMiddleware(['CLIENTE', 'ATENDENTE', ...ADMIN_ROLES]), reservaController.criar);
+// Cliente lista suas próprias reservas
+app.get('/api/reservas/minhas', authMiddleware(['CLIENTE']), reservaController.listarMinhas);
 // Atendente lista pendentes
 app.get('/api/reservas/pendentes', authMiddleware(['ATENDENTE', ...ADMIN_ROLES]), reservaController.listarPendentes);
 // Atendente atualiza itens antes do pagamento
@@ -155,8 +158,8 @@ app.put('/api/usuarios/me', authMiddleware(ANY_USER), authController.updateMyBas
 // O frontend roda em servidor próprio (public/server.js)
 // =====================================================
 
-app.listen(PORT, async () => {
-    console.log(`[BACKEND] API rodando em http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', async () => {
+    console.log(`[BACKEND] API rodando em http://0.0.0.0:${PORT}`);
     try { await db.query('SELECT 1+1 AS result'); console.log('Conexão com PostgreSQL OK.'); } 
     catch (e) { console.error('Falha ao conectar ao PostgreSQL.'); }
     // Migração leve: garantir coluna de vínculo com agendamento em itemagendamento

@@ -30,6 +30,14 @@ class ReservaController {
     }
   }
 
+  // Lista reservas do próprio cliente
+  async listarMinhas(req, res) {
+    try {
+      const lista = await ReservaService.listarMinhas(req.user.id);
+      return res.status(200).json(lista);
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+
   // Lista reservas pendentes pagamento para atendente
   async listarPendentes(req, res) {
     try {

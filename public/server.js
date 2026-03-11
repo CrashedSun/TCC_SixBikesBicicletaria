@@ -16,8 +16,8 @@ app.get('/{*splat}', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`[FRONTEND] Rodando em http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[FRONTEND] Rodando em http://0.0.0.0:${PORT}`);
     console.log(`[FRONTEND] Acessar: http://localhost:${PORT}/index.html`);
-    console.log(`[FRONTEND] O backend (API) deve estar rodando em http://localhost:8080`);
+    console.log(`[FRONTEND] O backend (API) deve estar rodando na porta 8080`);
 });

@@ -38,7 +38,7 @@
                     </ul>
                 </div>
                 <div class="navbar align-self-center d-flex">
-                    <a class="nav-icon d-none d-lg-inline" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
+                    <a class="nav-icon" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
                         <i class="fa fa-fw fa-search text-dark mr-2"></i>
                     </a>
                     <a class="nav-icon position-relative text-decoration-none" href="carrinho.html">
@@ -258,7 +258,7 @@
                 return;
             }
             try {
-                const base = window.API_BASE_URL || 'http://localhost:8080/api';
+                const base = window.API_BASE_URL || (window.location.protocol + '//' + window.location.hostname + ':8080/api');
                 const resp = await fetch(`${base}/produtos/${encodeURIComponent(id)}/public`);
                 const data = await resp.json();
                 if (!resp.ok || !data || !data.data) {
@@ -311,6 +311,28 @@
                         window.Cart.add({ id, nome, preco: precoNum, imagemUrl: img, estoque }, qty);
                         updateCartCount();
                         alert('Adicionado ao carrinho!');
+                    }
+                });
+
+                // Handle Reservar button click
+                const reservarBtn = document.querySelector('button[name="submit"][value="reservar"]');
+                reservarBtn?.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const token = localStorage.getItem('userToken');
+                    if (!token) {
+                        alert('Você precisa estar logado para reservar. Faça login primeiro.');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    const qtyRaw = (hiddenQty && hiddenQty.value) || (badge && badge.textContent) || '1';
+                    const qty = clamp(parseInt(qtyRaw, 10) || 1);
+                    try {
+                        const resp = await fetchAuthenticated('/api/reservas', 'POST', {
+                            itens: [{ idProduto: parseInt(id, 10), quantidade: qty, valorUnitario: precoNum }]
+                        });
+                        alert('Reserva criada com sucesso! Retire o produto na loja.');
+                    } catch (err) {
+                        alert('Erro ao reservar: ' + (err.error || err.message || 'Falha desconhecida.'));
                     }
                 });
             } catch (e) {

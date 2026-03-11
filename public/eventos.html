@@ -28,7 +28,7 @@
                     </ul>
                 </div>
                 <div class="navbar align-self-center d-flex">
-                    <a class="nav-icon d-none d-lg-inline" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
+                    <a class="nav-icon" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
                         <i class="fa fa-fw fa-search text-dark mr-2"></i>
                     </a>
                     <a class="nav-icon position-relative text-decoration-none" href="carrinho.html">
@@ -138,7 +138,7 @@
             const container = document.getElementById('eventosContainer');
             container.innerHTML = '<div class="col-12 text-center"><p class="text-info">Carregando eventos...</p></div>';
             try {
-                const base = window.API_BASE_URL || 'http://localhost:8080/api';
+                const base = window.API_BASE_URL || (window.location.protocol + '//' + window.location.hostname + ':8080/api');
                 const resp = await fetch(base + '/eventos/public');
                 if (resp.status === 404) {
                     throw new Error('Rota /api/eventos/public não encontrada (404). Reinicie o servidor (npm start) para aplicar a nova rota.');
@@ -199,7 +199,7 @@
                         }
                         btn.disabled = true;
                         try {
-                            const resp = await fetch((window.API_BASE_URL||'http://localhost:8080/api') + `/eventos/${id}/inscrever`, {
+                            const resp = await fetch((window.API_BASE_URL||(window.location.protocol+'//'+window.location.hostname+':8080/api')) + `/eventos/${id}/inscrever`, {
                                 method: 'POST',
                                 headers: { 'Authorization': `Bearer ${tokenLocal}`, 'Content-Type': 'application/json' }
                             });

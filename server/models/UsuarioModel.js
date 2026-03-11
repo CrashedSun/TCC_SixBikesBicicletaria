@@ -1,13 +1,13 @@
 // server/models/UsuarioModel.js
 /**
  * Superclasse que representa qualquer usuário do sistema (Cliente, Funcionário, Gerente, etc.).
- * Os atributos cpf, email, telefone, matricula e cargo são opcionais e dependem do tipoPerfil.
+ * Os atributos cpf, email, telefone e matricula são opcionais e dependem do tipoPerfil.
  */
 class UsuarioModel {
     /**
      * @param {string} tipoPerfil - Deve ser um valor do domínio: {“CLIENTE”, “ATENDENTE”, “MECANICO”, “GERENTE”, “PROPRIETARIO”}[cite: 717].
      */
-    constructor(id, nome, login, senhaHash, tipoPerfil, cpf, email, telefone, matricula, cargo, ativo = true, trocarSenha = false) {
+    constructor(id, nome, login, senhaHash, tipoPerfil, cpf, email, telefone, matricula, ativo = true, trocarSenha = false) {
         this.id = id;
         this.nome = nome;
         this.login = login;
@@ -21,7 +21,6 @@ class UsuarioModel {
         
         // Atributos do Funcionário
         this.matricula = matricula; // Identificador interno [cite: 741]
-        this.cargo = cargo;         // Cargo exercido [cite: 742]
         this.ativo = ativo === undefined ? true : ativo;
         this.trocarSenha = trocarSenha === undefined ? false : trocarSenha;
     }

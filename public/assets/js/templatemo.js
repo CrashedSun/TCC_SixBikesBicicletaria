@@ -29,20 +29,7 @@ $(document).ready(function() {
       $('#product-detail').attr('src',this_src);
       return false;
     });
-    $('#btn-minus').click(function(){
-      var val = $("#var-value").html();
-      val = (val=='1')?val:val-1;
-      $("#var-value").html(val);
-      $("#product-quanity").val(val);
-      return false;
-    });
-    $('#btn-plus').click(function(){
-      var val = $("#var-value").html();
-      val++;
-      $("#var-value").html(val);
-      $("#product-quanity").val(val);
-      return false;
-    });
+    // btn-minus e btn-plus são tratados no script de shop-single.html
     $('.btn-size').click(function(){
       var this_val = $(this).html();
       $("#product-size").val(this_val);

@@ -95,6 +95,16 @@ class ProdutoService {
         return ProdutoRepository.findAllCategories(); 
     }
 
+    async criarCategoria(nome) {
+        if (!nome || typeof nome !== 'string' || nome.trim().length === 0) {
+            throw new Error('Nome da categoria é obrigatório.');
+        }
+        if (nome.trim().length > 100) {
+            throw new Error('Nome da categoria deve ter no máximo 100 caracteres.');
+        }
+        return ProdutoRepository.createCategory(nome);
+    }
+
     /** Atualiza os dados do produto (UC002 - alteração) */
     async atualizarProduto(id, dados) {
         id = Number.parseInt(id);

@@ -33,7 +33,6 @@ class FuncionarioService {
             email: dados.email || null,
             telefone: dados.telefone || null,
             matricula: dados.matricula || null,
-            cargo: dados.cargo || null,
             trocar_senha: true
         };
 

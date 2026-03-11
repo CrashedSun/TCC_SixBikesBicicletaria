@@ -18,3 +18,80 @@ Custom Css
 .table-active-select {
     background-color: #d1e7dd !important; /* Cor do Bootstrap success light */
 }
+
+/* ===== RESPONSIVO MOBILE ===== */
+
+/* Navbar - brand menor no mobile */
+@media (max-width: 575.98px) {
+    .navbar-brand.h1 {
+        font-size: 22px !important;
+    }
+    .navbar .nav-icon {
+        margin-right: 8px !important;
+    }
+    .navbar .nav-icon i {
+        font-size: 16px !important;
+    }
+    /* Reduz padding excessivo em cards de produto */
+    .col-12.p-5 {
+        padding: 1rem !important;
+    }
+    /* Tipografia menor no mobile */
+    body, ul, li, p, a, label, input, div {
+        font-size: 15px !important;
+    }
+    .h1 {
+        font-size: 28px !important;
+    }
+    .h2 {
+        font-size: 22px !important;
+    }
+    .h3 {
+        font-size: 18px !important;
+    }
+    /* Banner padding reduzido */
+    #template-mo-zay-hero-carousel .row.p-5 {
+        padding: 1.5rem !important;
+    }
+    /* Footer ajustes */
+    #tempaltemo_footer .col-md-4 {
+        padding-top: 1.5rem !important;
+    }
+    #tempaltemo_footer .h2 {
+        font-size: 18px !important;
+    }
+    /* Tabelas responsivas */
+    .table-responsive {
+        font-size: 13px !important;
+    }
+    /* Perfil wrapper */
+    .profile-wrapper {
+        margin: 20px 10px !important;
+    }
+    .section-box {
+        padding: 15px !important;
+    }
+    /* Login e registro boxes */
+    .login-box, .registro-box {
+        margin: 30px 15px !important;
+        padding: 20px !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    /* Navbar icons alinham melhor */
+    .navbar .align-self-center.d-flex {
+        justify-content: center;
+        gap: 10px;
+        padding: 10px 0;
+    }
+    /* Carrinho table */
+    .table th, .table td {
+        white-space: nowrap;
+    }
+    /* Sobre nós - imagem embaixo */
+    .bg-success .col-md-4 img {
+        max-width: 200px;
+        margin-top: 1rem;
+    }
+}

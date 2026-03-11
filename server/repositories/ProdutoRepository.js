@@ -197,6 +197,24 @@ class ProdutoRepository {
         }
     }
 
+    async createCategory(nome) {
+        const query = `
+            INSERT INTO Categoria (nome)
+            VALUES ($1)
+            RETURNING idcategoria, nome;
+        `;
+        try {
+            const result = await pool.query(query, [nome.trim()]);
+            return result.rows[0];
+        } catch (error) {
+            if (error.code === '23505') {
+                throw new Error('Já existe uma categoria com esse nome.');
+            }
+            console.error('ERRO createCategory:', error.message);
+            throw new Error('Falha ao criar categoria.');
+        }
+    }
+
     async listarCategorias() { 
         // Apenas repassa a chamada para o Repositório, que fará o SELECT no DB.
         return ProdutoRepository.findAllCategories(); 

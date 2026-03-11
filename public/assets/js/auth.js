@@ -1,7 +1,8 @@
 // public/assets/js/auth.js (Código completo)
 
 // Exponha a URL base da API globalmente e mantenha uma cópia local
-window.API_BASE_URL = window.API_BASE_URL || 'http://localhost:8080/api';
+// Usa o hostname atual para funcionar em qualquer dispositivo na rede
+window.API_BASE_URL = window.API_BASE_URL || (window.location.protocol + '//' + window.location.hostname + ':8080/api');
 const API_BASE_URL = window.API_BASE_URL;
 
 function logout() {

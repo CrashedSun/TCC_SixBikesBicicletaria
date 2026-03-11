@@ -38,7 +38,7 @@
                     </ul>
                 </div>
                 <div class="navbar align-self-center d-flex">
-                    <a class="nav-icon d-none d-lg-inline" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
+                    <a class="nav-icon" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
                         <i class="fa fa-fw fa-search text-dark mr-2"></i>
                     </a>
                     <a class="nav-icon position-relative text-decoration-none" href="carrinho.html">
@@ -255,7 +255,7 @@
 
             // Carrega os 3 primeiros produtos em ordem alfabética
             try {
-                const base = window.API_BASE_URL || 'http://localhost:8080/api';
+                const base = window.API_BASE_URL || (window.location.protocol + '//' + window.location.hostname + ':8080/api');
                 const resp = await fetch(`${base}/produtos/public`);
                 const data = await resp.json();
                 if (resp.ok && Array.isArray(data.data)) {
@@ -330,7 +330,7 @@
 
             // Carrega os 3 primeiros serviços
             try {
-                const base = window.API_BASE_URL || 'http://localhost:8080/api';
+                const base = window.API_BASE_URL || (window.location.protocol + '//' + window.location.hostname + ':8080/api');
                 const resp = await fetch(`${base}/servicos/public`);
                 const data = await resp.json();
                 if (resp.ok && Array.isArray(data)) {

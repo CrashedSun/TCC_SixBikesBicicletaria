@@ -10,6 +10,11 @@ class ReservaService {
 
   async listarPendentes() { return await ReservaRepository.listarPorStatusPagamento('PENDENTE'); }
 
+  async listarMinhas(clienteId) {
+    if (!clienteId) throw new Error('Cliente inválido.');
+    return await ReservaRepository.listarPorCliente(clienteId);
+  }
+
   async atualizarItens(idReserva, itens) {
     if (!idReserva) throw new Error('Reserva inválida.');
     if (!Array.isArray(itens)) throw new Error('Formato de itens inválido.');

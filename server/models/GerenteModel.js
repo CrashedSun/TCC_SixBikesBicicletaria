@@ -6,7 +6,7 @@ const FuncionarioModel = require('./FuncionarioModel');
  */
 class GerenteModel extends FuncionarioModel {
     constructor(id, nome, login, senhaHash, matricula) {
-        // Fixa o cargo/perfil como GERENTE
+        // Fixa o tipoPerfil como GERENTE
         super(id, nome, login, senhaHash, matricula, 'GERENTE');
     }
 }

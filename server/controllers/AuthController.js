@@ -77,7 +77,7 @@ class AuthController {
                 email: usuario.email || null,
                 cpf: usuario.cpf || null,
                 telefone: usuario.telefone || null,
-                cargo: usuario.cargo || null
+                tipoPerfil: usuario.tipoPerfil || null
             });
         } catch (error) {
             return res.status(500).json({ error: error.message || 'Falha ao obter informações do usuário.' });

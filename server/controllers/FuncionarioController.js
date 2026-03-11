@@ -37,6 +37,15 @@ class FuncionarioController {
             if (req.user.id === userIdToBlock) {
                  return res.status(403).json({ error: "Você não pode bloquear sua própria conta." });
             }
+
+            // Impede que um GERENTE bloqueie um PROPRIETÁRIO
+            const targetUser = await UsuarioRepository.findById(userIdToBlock);
+            if (!targetUser) {
+                return res.status(404).json({ error: "Usuário não encontrado." });
+            }
+            if (req.user.perfil.toUpperCase() === 'GERENTE' && targetUser.tipoPerfil.toUpperCase() === 'PROPRIETARIO') {
+                return res.status(403).json({ error: "Gerentes não possuem permissão para bloquear o acesso do Proprietário." });
+            }
             
             // lê o estado desejado enviado pelo frontend (isActive: true => ativo)
             const isActive = (req.body && typeof req.body.isActive !== 'undefined') ? !!req.body.isActive : false;

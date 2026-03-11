@@ -7,9 +7,9 @@ class ReservaRepository {
         try {
             if (client.query) await client.query('BEGIN');
             const insertReservaSQL = `
-                INSERT INTO reserva (idcliente, datareserva, prazoretirada, status, statuspagamento)
-                VALUES ($1, CURRENT_TIMESTAMP, $2, 'ATIVA', 'PENDENTE') RETURNING idreserva AS "idReserva"`;
-            const { rows } = await client.query(insertReservaSQL, [clienteId, prazoRetirada || null]);
+                INSERT INTO reserva (idcliente, datareserva, status, statuspagamento)
+                VALUES ($1, CURRENT_TIMESTAMP, 'ATIVA', 'PENDENTE') RETURNING idreserva AS "idReserva"`;
+            const { rows } = await client.query(insertReservaSQL, [clienteId]);
             const idReserva = rows[0].idreserva || rows[0].idReserva;
             // PRIMEIRO: Verificar estoque de TODOS os itens antes de inserir qualquer coisa
             for (const it of itens) {
@@ -47,6 +47,19 @@ class ReservaRepository {
             if (client.query) await client.query('ROLLBACK');
             throw e;
         }
+    }
+
+    async listarPorCliente(clienteId) {
+        const sql = `
+            SELECT r.idreserva, r.datareserva, r.status, r.statuspagamento, r.metodopagamento,
+                   COALESCE(SUM(ir.quantidade * ir.valorunitario), 0) AS totalreserva
+              FROM reserva r
+         LEFT JOIN itemreserva ir ON ir.idreserva = r.idreserva
+             WHERE r.idcliente = $1
+          GROUP BY r.idreserva, r.datareserva, r.status, r.statuspagamento, r.metodopagamento
+          ORDER BY r.datareserva DESC`;
+        const { rows } = await db.query(sql, [clienteId]);
+        return rows;
     }
 
     async listarPorStatusPagamento(statusPagamento = 'PENDENTE') {

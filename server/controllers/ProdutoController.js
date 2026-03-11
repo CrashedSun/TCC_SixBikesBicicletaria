@@ -99,6 +99,16 @@ class ProdutoController {
         }
     }
 
+    async criarCategoria(req, res) {
+        try {
+            const { nome } = req.body;
+            const categoria = await ProdutoService.criarCategoria(nome);
+            return res.status(201).json(categoria);
+        } catch(e) {
+            return res.status(400).json({ error: e.message });
+        }
+    }
+
     /** Rota: GET /api/produtos/:id (ou /api/produtos/:id/public) */
     async buscarPorId(req, res) {
         try {
