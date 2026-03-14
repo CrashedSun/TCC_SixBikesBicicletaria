@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <title>SixBikes Bicicletaria - Perfil</title>
@@ -34,7 +34,7 @@
         <div class="flex-fill">
           <ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
             <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
+            <li class="nav-item"><a class="nav-link" href="servicos.html">serviços</a></li>
             <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
             <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
           </ul>
@@ -78,7 +78,7 @@
     <div class="section-box d-flex align-items-center gap-3 flex-wrap">
       <div class="avatar-circle" id="avatarCircle">U</div>
       <div>
-        <h3 id="profileName" class="mb-1">Usuário</h3>
+        <h3 id="profileName" class="mb-1">USUÁRIO</h3>
         <div class="small text-muted" id="profileRole">Perfil: -</div>
         <div class="small text-muted" id="profileLogin">Login: -</div>
       </div>
@@ -88,7 +88,7 @@
     </div>
 
     <div class="section-box">
-      <h5 class="mb-3">Dados Básicos</h5>
+      <h5 class="mb-3">Dados básicos</h5>
       <form id="basicForm" class="row g-3">
         <div class="col-md-6">
           <label class="small-label mb-1" for="nome">Nome</label>
@@ -118,7 +118,7 @@
     </div>
 
     <div class="section-box">
-      <h5 class="mb-3">Segurança</h5>
+      <h5 class="mb-3">segurança</h5>
       <form id="passwordForm" class="row g-3">
         <div class="col-md-4">
           <label class="small-label mb-1" for="senhaAtual">Senha Atual</label>
@@ -139,31 +139,31 @@
       <div id="passStatus" class="small mt-2"></div>
     </div>
 
-    <div class="section-box">
-      <h5 class="mb-2">Sessão</h5>
-      <div class="d-flex flex-wrap align-items-center gap-3">
-        <div class="small">Token armazenado no navegador.</div>
-        <button id="btnClearSession" class="btn btn-outline-secondary btn-sm">Limpar Sessão</button>
-      </div>
-    </div>
-
-    <!-- Área de Reservas e Serviços (apenas CLIENTE) -->
+    <!-- Área de Reservas e serviços (apenas CLIENTE) -->
     <div id="areaClienteHistorico" class="d-none">
       <div class="section-box">
-        <h5 class="mb-3">Minhas Reservas &amp; Serviços</h5>
+        <h5 class="mb-3">Minhas Reservas &amp; serviços</h5>
         <div class="d-flex flex-wrap gap-2 mb-3">
           <button class="btn btn-success btn-sm" data-historico="reservas-pendentes">Reservas Pendentes</button>
           <button class="btn btn-outline-success btn-sm" data-historico="reservas-todas">Todas as Reservas</button>
-          <button class="btn btn-success btn-sm" data-historico="servicos-pendentes">Serviços Pendentes</button>
-          <button class="btn btn-outline-success btn-sm" data-historico="servicos-todos">Todos os Serviços</button>
+          <button class="btn btn-success btn-sm" data-historico="servicos-pendentes">serviços Pendentes</button>
+          <button class="btn btn-outline-success btn-sm" data-historico="servicos-todos">Todos os serviços</button>
         </div>
-        <div id="historicoResultado" class="small text-muted">Clique em um botão acima para visualizar.</div>
+        <div id="historicoResultado" class="small text-muted">Clique em um Botão acima para visualizar.</div>
         <div class="table-responsive">
           <table id="historicoTabela" class="table table-sm table-striped d-none">
             <thead id="historicoThead"></thead>
             <tbody id="historicoTbody"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <div class="section-box">
+      <h5 class="mb-2">Sessão</h5>
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        <div class="small">Token armazenado no navegador.</div>
+        <button id="btnClearSession" class="btn btn-outline-secondary btn-sm">Limpar Sessão</button>
       </div>
     </div>
   </div>
@@ -190,16 +190,16 @@
       const token = localStorage.getItem('userToken');
       const perfil = localStorage.getItem('userProfile');
       if(!token || !perfil){ window.location.href='login.html'; return; }
-      // Ajusta ícone usuário para permanecer na página
+      // Ajusta ícone USUÁRIO para permanecer na Página
       const navUser = document.getElementById('nav-user-link');
       if(navUser){ navUser.href='perfil.html'; }
 
       try {
         const me = await fetchAuthenticated('/usuarios/me');
-        // Campos disponíveis a partir do AuthController.getUserInfo + possivel ext
-        document.getElementById('profileName').textContent = me.nome || 'Usuário';
+        // Campos Disponíveis a partir do AuthController.getUserInfo + possivel ext
+        document.getElementById('profileName').textContent = me.nome || 'USUÁRIO';
         document.getElementById('profileRole').textContent = 'Perfil: ' + (me.perfil || perfil);
-        document.getElementById('profileLogin').textContent = 'Login: ' + (me.login || '-') + ' · ID: ' + (me.id || '-');
+        document.getElementById('profileLogin').textContent = 'Login: ' + (me.login || '-') + ' | ID: ' + (me.id || '-');
         document.getElementById('nome').value = me.nome || '';
         // Preenche direto do backend; email e tipoPerfil permanecem somente leitura
         document.getElementById('email').value = me.email || '';
@@ -211,7 +211,7 @@
       } catch(e){
         console.warn('Falha ao carregar perfil:', e.message);
         // fallback mínimo
-        document.getElementById('profileName').textContent = localStorage.getItem('usuario') || 'Usuário';
+        document.getElementById('profileName').textContent = localStorage.getItem('usuario') || 'USUÁRIO';
       }
     }
 
@@ -232,15 +232,15 @@
         const telefone = document.getElementById('telefone').value.trim();
         try {
           const resp = await fetchAuthenticated('/usuarios/me', 'PUT', { nome, cpf, telefone });
-          status.textContent = resp.message || 'Alterações salvas.';
+          status.textContent = resp.message || 'AlterAções salvas.';
           status.style.color = 'green';
           // Atualiza header e local cache básico
           localStorage.setItem('usuario', nome);
           if(cpf) localStorage.setItem('usuarioCPF', cpf);
           if(telefone) localStorage.setItem('usuarioTelefone', telefone);
-          document.getElementById('profileName').textContent = nome || 'Usuário';
+          document.getElementById('profileName').textContent = nome || 'USUÁRIO';
         } catch(e){
-          status.textContent = e.message || 'Falha ao salvar alterações.';
+          status.textContent = e.message || 'Falha ao salvar AlterAções.';
           status.style.color = 'red';
         }
       });
@@ -256,7 +256,7 @@
         if(nova.length < 6){ status.textContent='Nova senha muito curta.'; status.style.color='red'; return; }
         if(nova !== conf){ status.textContent='Senha e confirmação diferentes.'; status.style.color='red'; return; }
         try {
-          // Não temos endpoint que valide senha atual; assume token válido e apenas envia nova senha.
+          // não temos endpoint que valide senha atual; assume token válido e apenas envia nova senha.
           const resp = await fetchAuthenticated('/senha', 'PUT', { senha: nova });
           status.textContent = resp.message || 'Senha alterada.';
           status.style.color = 'green';
@@ -278,7 +278,7 @@
         document.getElementById('basicStatus').style.color='orange';
       });
 
-      // --- Área Reservas & Serviços (somente CLIENTE) ---
+      // --- Área Reservas & serviços (somente CLIENTE) ---
       const perfil = localStorage.getItem('userProfile');
       if (perfil === 'CLIENTE') {
         document.getElementById('areaClienteHistorico').classList.remove('d-none');
@@ -304,14 +304,19 @@
           const thead = document.getElementById('historicoThead');
           const tbody = document.getElementById('historicoTbody');
           const tabela = document.getElementById('historicoTabela');
-          thead.innerHTML = '<tr><th>#</th><th>Data</th><th>Status</th><th>Pagamento</th><th>Total</th></tr>';
+          thead.innerHTML = '<tr><th>#</th><th>Data</th><th>Prazo Retirada</th><th>Status</th><th>Pagamento</th><th>Total</th></tr>';
           tbody.innerHTML = '';
           if (!lista.length) {
             document.getElementById('historicoResultado').textContent = 'Nenhuma reserva encontrada.';
             tabela.classList.add('d-none'); return;
           }
           lista.forEach(r => {
-            tbody.innerHTML += `<tr><td>${r.idreserva}</td><td>${formatDate(r.datareserva)}</td><td>${r.status}</td><td>${r.statuspagamento}</td><td>${formatMoney(r.totalreserva)}</td></tr>`;
+            const rowClass = r.status === 'EXPIRADA' ? 'table-danger' : '';
+            const statusBadge = r.status === 'EXPIRADA'
+              ? `<span class="badge bg-danger">${r.status}</span>`
+              : r.status === 'ATIVA' ? `<span class="badge bg-success">${r.status}</span>`
+              : `<span class="badge bg-secondary">${r.status}</span>`;
+            tbody.innerHTML += `<tr class="${rowClass}"><td>${r.idreserva}</td><td>${formatDate(r.datareserva)}</td><td>${formatDate(r.prazoretirada)}</td><td>${statusBadge}</td><td>${r.statuspagamento}</td><td>${formatMoney(r.totalreserva)}</td></tr>`;
           });
           document.getElementById('historicoResultado').textContent = '';
           tabela.classList.remove('d-none');
@@ -321,7 +326,7 @@
           const thead = document.getElementById('historicoThead');
           const tbody = document.getElementById('historicoTbody');
           const tabela = document.getElementById('historicoTabela');
-          thead.innerHTML = '<tr><th>#</th><th>Serviço</th><th>Data Agendada</th><th>Horário</th><th>Status</th><th>Valor</th></tr>';
+          thead.innerHTML = '<tr><th>#</th><th>serviço</th><th>Data Agendada</th><th>Horário</th><th>Status</th><th>Valor</th></tr>';
           tbody.innerHTML = '';
           if (!lista.length) {
             document.getElementById('historicoResultado').textContent = 'Nenhum serviço encontrado.';
@@ -359,3 +364,12 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

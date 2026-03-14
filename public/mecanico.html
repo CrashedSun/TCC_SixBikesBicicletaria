@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -224,7 +224,7 @@ function loadPage(page) {
                     <div class="card p-3 shadow-sm">
                         <h5 class="fw-bold mb-2">Agendamentos Abertos</h5>
                         <table class="table table-sm align-middle mb-0">
-                            <thead><tr><th>ID</th><th>Cliente</th><th>Serviço</th><th>Data</th></tr></thead>
+                            <thead><tr><th>ID</th><th>Cliente</th><th>serviço</th><th>Data</th></tr></thead>
                             <tbody id="dashAbertosBody"></tbody>
                         </table>
                     </div>
@@ -233,7 +233,7 @@ function loadPage(page) {
                     <div class="card p-3 shadow-sm">
                         <h5 class="fw-bold mb-2">Meus Em Andamento</h5>
                         <table class="table table-sm align-middle mb-0">
-                            <thead><tr><th>ID</th><th>Cliente</th><th>Serviço</th><th>Data</th></tr></thead>
+                            <thead><tr><th>ID</th><th>Cliente</th><th>serviço</th><th>Data</th></tr></thead>
                             <tbody id="dashAtivosBody"></tbody>
                         </table>
                     </div>
@@ -305,7 +305,7 @@ function loadPage(page) {
                 <option value="qtd">Qtd</option>
                 <option value="ean">EAN</option>
             </select></div>
-            <div class="col-md-3 text-end"><button class="btn btn-success w-100" id="openEstoqueModal">📦 Gerenciar Estoque</button></div>
+            <div class="col-md-3 text-end"><button class="btn btn-success w-100" id="openEstoqueModal">Gerenciar Estoque</button></div>
         </div>
         <div class="card p-0">
             <table class="table table-striped mb-0">
@@ -363,7 +363,7 @@ function loadPage(page) {
         <h2>Agendamentos</h2>
         <div class="card p-0">
             <table class="table mb-0">
-                <thead><tr><th>ID</th><th>Cliente</th><th>Serviço</th><th>Data</th><th>Status</th><th></th></tr></thead>
+                <thead><tr><th>ID</th><th>Cliente</th><th>serviço</th><th>Data</th><th>Status</th><th></th></tr></thead>
                 <tbody id="agendaAbertosTable"></tbody>
             </table>
         </div>
@@ -372,13 +372,13 @@ function loadPage(page) {
     loadAgendamentosAbertos();
     } else if (page === 'servicos') {
     content.innerHTML = `
-        <h2>Meus Serviços</h2>
+        <h2>Meus serviços</h2>
         <div class="mb-3 text-end">
-            <button class="btn btn-primary" id="btnGerenciarServico" disabled>Gerenciar Serviço</button>
+            <button class="btn btn-primary" id="btnGerenciarServico" disabled>Gerenciar serviço</button>
         </div>
         <div class="card p-0">
             <table class="table mb-0">
-                <thead><tr><th>ID</th><th>Cliente</th><th>Serviço</th><th>Data</th><th>Status</th></tr></thead>
+                <thead><tr><th>ID</th><th>Cliente</th><th>serviço</th><th>Data</th><th>Status</th></tr></thead>
                 <tbody id="agendaAtivosTable"></tbody>
             </table>
         </div>
@@ -485,7 +485,7 @@ function openGerenciarServicoModal() {
     const id = window.selectedAgendamentoId;
     if (!id) { alert('Selecione um serviço na lista.'); return; }
     const item = (window.meusAtivosMap || {})[id];
-    if (!item) { alert('Não foi possível carregar os dados do serviço.'); return; }
+    if (!item) { alert('não foi possível carregar os dados do serviço.'); return; }
     const dt = item.dataagendada ? new Date(item.dataagendada).toLocaleString() : '-';
     document.getElementById('gsId').textContent = item.id;
     document.getElementById('gsCliente').textContent = item.cliente_nome || '-';
@@ -497,15 +497,15 @@ function openGerenciarServicoModal() {
     const modal = new bootstrap.Modal(modalEl);
     // Carrega produtos para o datalist (uma vez por abertura)
     loadProdutosDatalist();
-    // Carrega itens já usados
+    // Carrega itens Já usados
     loadItensAgendamento(id);
-    // Liga botão adicionar
+    // Liga Botão adicionar
     const btnAdd = document.getElementById('btnAddPeca');
     if (btnAdd && !btnAdd.hasListener) {
         btnAdd.addEventListener('click', onAddItemPeca);
         btnAdd.hasListener = true;
     }
-    // Liga botão finalizar
+    // Liga Botão finalizar
     const btnFinalizar = document.getElementById('btnFinalizarServico');
     if (btnFinalizar && !btnFinalizar.hasListener) {
         btnFinalizar.addEventListener('click', onFinalizarServico);
@@ -596,7 +596,7 @@ async function onFinalizarServico(e) {
     if (!confirm('Finalizar este serviço e enviar para pagamento?')) return;
     try {
         await fetchAuth(`/agendamentos/${id}/finalizar`, { method: 'PUT' });
-        alert('Serviço finalizado com sucesso!');
+        alert('serviço finalizado com sucesso!');
         const modalEl = document.getElementById('modalGerenciarServico');
         const modal = bootstrap.Modal.getInstance(modalEl);
         if (modal) modal.hide();
@@ -625,18 +625,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Adiciona nova aba Serviços no menu
+    // Adiciona nova aba serviços no menu
     const sidebar = document.querySelector('.sidebar');
     if (sidebar && !sidebar.querySelector('a[data-page="servicos"]')) {
         const a = document.createElement('a');
         a.href = '#';
         a.dataset.page = 'servicos';
-        a.innerHTML = '<i class="fas fa-wrench me-2"></i>Serviços';
+        a.innerHTML = '<i class="fas fa-wrench me-2"></i>serviços';
         a.addEventListener('click', (e) => { e.preventDefault(); document.querySelectorAll('.sidebar a').forEach(x=>x.classList.remove('active')); a.classList.add('active'); loadPage('servicos'); });
         sidebar.insertBefore(a, sidebar.querySelector('.logout-btn'));
     }
 
-    // Usando funções globais para carregar grids
+    // Usando Funções globais para carregar grids
     window.addEventListener('mustChangePassword', (event) => {
         const modalEl = document.getElementById('modalTrocarSenha');
         if (!modalEl) return;
@@ -693,12 +693,12 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
-<!-- Modal: Gerenciar Serviço -->
+<!-- Modal: Gerenciar serviço -->
 <div class="modal fade" id="modalGerenciarServico" tabindex="-1" aria-labelledby="modalGerenciarServicoLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header" style="background:#7ed957; color:white;">
-                <h5 class="modal-title" id="modalGerenciarServicoLabel">Gerenciar Serviço</h5>
+                <h5 class="modal-title" id="modalGerenciarServicoLabel">Gerenciar serviço</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -716,7 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="form-control" readonly id="gsStatus"></div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Serviço</label>
+                        <label class="form-label">serviço</label>
                         <div class="form-control" readonly id="gsServico"></div>
                     </div>
                     <div class="col-md-6">
@@ -724,7 +724,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="form-control" readonly id="gsData"></div>
                     </div>
                     <div class="col-12">
-                        <label class="form-label">Observações</label>
+                        <label class="form-label">ObservAções</label>
                         <div class="form-control" style="min-height:80px;" readonly id="gsObs"></div>
                     </div>
                     <div class="col-12">
@@ -754,7 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-success" id="btnFinalizarServico">Finalizar Serviço</button>
+                <button type="button" class="btn btn-success" id="btnFinalizarServico">Finalizar serviço</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
@@ -763,3 +763,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,29 @@
+Terminal 1 — Backend (API):
+
+npm run start:backend
+
+Vai mostrar: [BACKEND] API rodando em http://localhost:8080
+
+
+
+Terminal 2 — Frontend (HTML):
+
+npm run start:frontend
+
+Vai mostrar: [FRONTEND] Rodando em http://localhost:3000
+
+Acesse o site pelo navegador em: http://localhost:3000
+
+Como funciona a comunicação
+O frontend (auth.js:4) já define API_BASE_URL = 'http://localhost:8080/api'
+Todas as requisições usam fetch() para enviar/receber JSON via HTTP
+O backend responde apenas JSON (não serve HTML)
+O CORS já está habilitado no backend (app.use(cors())) permitindo que o frontend na porta 3000 acesse a API na porta 8080
+
+Modo desenvolvimento (com auto-reload)
+
+# Terminal 1
+npm run dev:backend
+
+# Terminal 2
+npm run dev:frontend

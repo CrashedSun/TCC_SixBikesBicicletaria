@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="utf-8">
@@ -25,10 +25,18 @@
                         <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
                         <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
                         <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="eventos.html">Eventos</a></li>
                         <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
                     </ul>
                 </div>
                 <div class="navbar align-self-center d-flex">
+                    <a class="nav-icon" href="#" data-bs-toggle="modal" data-bs-target="#templatemo_search">
+                        <i class="fa fa-fw fa-search text-dark mr-2"></i>
+                    </a>
+                    <a class="nav-icon position-relative text-decoration-none" href="carrinho.html">
+                        <i class="fa fa-fw fa-cart-arrow-down text-dark mr-1"></i>
+                        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">0</span>
+                    </a>
                     <a class="nav-icon position-relative text-decoration-none" href="login.html">
                         <i class="fa fa-fw fa-user text-dark mr-3"></i>
                     </a>
@@ -36,6 +44,24 @@
             </div>
         </div>
     </nav>
+<!-- End Header -->
+
+    <!-- Modal -->
+    <div class="modal fade bg-white" id="templatemo_search" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="w-100 pt-1 mb-5 text-right">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="" method="get" class="modal-content modal-body border-0 p-0">
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="inputModalSearch" name="q" placeholder="Search ...">
+                    <button type="submit" class="input-group-text bg-success text-light">
+                        <i class="fa fa-fw fa-search text-white"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div class="container py-5">
         <div class="row text-center pt-5 pb-3">
@@ -89,9 +115,9 @@
                 <div class="col-md-4 pt-5">
                     <h2 class="h2 text-light border-bottom pb-3 border-light">Produtos</h2>
                     <ul class="list-unstyled text-light footer-link-list">
-                        <li><a class="text-decoration-none" href="#">Categoria 1</a></li>
-                        <li><a class="text-decoration-none" href="#">Categoria 2</a></li>
-                        <li><a class="text-decoration-none" href="#">Categoria 3</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=1">Categoria 1</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=2">Categoria 2</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=3">Categoria 3</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4 pt-5">
@@ -143,7 +169,7 @@
                 data.forEach(s => {
                     const opt = document.createElement('option');
                     opt.value = s.idservico;
-                    opt.textContent = `${s.nome} — ${s.duracaoestimada} min`;
+                    opt.textContent = `${s.nome} - ${s.duracaoestimada} min`;
                     select.appendChild(opt);
                 });
                 // Pré-seleciona se veio na query string
@@ -225,3 +251,5 @@
     </script>
 </body>
 </html>
+
+

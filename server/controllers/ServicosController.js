@@ -3,7 +3,9 @@ const servicosService = require('../services/ServicosService');
 module.exports = {
   async listar(req, res) {
     try {
-      const data = await servicosService.listar();
+      const data = req.query.sort === 'mais-vendidos'
+        ? await servicosService.listarMaisVendidos(req.query.limit)
+        : await servicosService.listar();
       res.json(data);
     } catch (e) {
       res.status(500).json({ error: e.message });

@@ -17,6 +17,7 @@ const vendaController = require('./controllers/VendaController');
 const ticketController = require('./controllers/TicketController'); 
 const relatorioController = require('./controllers/RelatorioController'); 
 const reservaController = require('./controllers/ReservaController');
+const reservaService = require('./services/ReservaService');
 const servicosController = require('./controllers/ServicosController');
 const eventoController = require('./controllers/EventoController');
 
@@ -178,4 +179,21 @@ app.listen(PORT, '0.0.0.0', async () => {
     } catch (e) {
         console.warn('Aviso: não foi possível adicionar colunas de pagamento em agendamento:', e.message);
     }
+
+    // Migração: garante a coluna prazoretirada em reserva
+    try {
+        await db.query("ALTER TABLE reserva ADD COLUMN IF NOT EXISTS prazoretirada TIMESTAMP WITHOUT TIME ZONE;");
+    } catch (e) {
+        console.warn('Aviso: não foi possível adicionar coluna prazoretirada em reserva:', e.message);
+    }
+
+    // Job: expirar reservas com prazo vencido ao iniciar e a cada hora
+    const expirarReservas = async () => {
+        try {
+            const n = await reservaService.expirarVencidas();
+            if (n > 0) console.log(`[Reservas] ${n} reserva(s) expirada(s) por prazo vencido.`);
+        } catch (e) { console.warn('[Reservas] Erro ao expirar reservas:', e.message); }
+    };
+    expirarReservas();
+    setInterval(expirarReservas, 60 * 60 * 1000); // verifica a cada 1 hora
 });

@@ -63,6 +63,41 @@ class ProdutoRepository {
         }
     }
 
+    async findBestSellers(limit = 3) {
+        const query = `
+            SELECT p.idproduto AS "idProduto", p.nome, p.descricao, p.preco,
+                   COALESCE(e.quantidadeatual, 0) AS qtd,
+                   c.nome AS categoria,
+                   p.imagem_url AS "imagemUrl",
+                   COALESCE(vendas.totalvendido, 0) AS "totalVendido"
+              FROM produto p
+              LEFT JOIN estoque e ON e.idproduto = p.idproduto
+              LEFT JOIN categoria c ON c.idcategoria = p.idcategoria
+              LEFT JOIN (
+                    SELECT ir.idproduto, SUM(ir.quantidade) AS totalvendido
+                      FROM itemreserva ir
+                      JOIN reserva r ON r.idreserva = ir.idreserva
+                     WHERE r.statuspagamento = 'PAGO'
+                       AND r.status IN ('ATIVA', 'EXPIRADA')
+                  GROUP BY ir.idproduto
+              ) vendas ON vendas.idproduto = p.idproduto
+             WHERE COALESCE(e.quantidadeatual, 0) > 0
+          ORDER BY COALESCE(vendas.totalvendido, 0) DESC, p.nome ASC
+             LIMIT $1;
+        `;
+        try {
+            const result = await pool.query(query, [limit]);
+            return result.rows;
+        } catch (error) {
+            if (error.code === '42P01') {
+                console.warn('Tabelas de produtos/reservas não existem. Retornando catálogo vazio.');
+                return [];
+            }
+            console.error('ERRO findBestSellers:', error.message);
+            throw new Error('Falha ao consultar os produtos mais vendidos.');
+        }
+    }
+
     /**
      * Registra um novo produto e inicializa seu estoque em uma transação (UC002).
      * @param {object} produtoData - { nome, descricao, preco, quantidadeInicial, idCategoria }

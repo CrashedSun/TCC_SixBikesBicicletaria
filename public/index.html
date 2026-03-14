@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 
 <head>
@@ -31,7 +31,7 @@
                 <div class="flex-fill">
                     <ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
                         <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                        <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
+                        <li class="nav-item"><a class="nav-link" href="servicos.html">serviços</a></li>
                         <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
                         <li class="nav-item"><a class="nav-link" href="eventos.html">Eventos</a></li>
                         <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
@@ -98,23 +98,23 @@
     </div>
 <!-- End Banner -->
 
-<!-- Serviços -->
+<!-- serviços -->
     <section class="bg-light">
         <div class="container py-5">
             <div class="row text-center py-3">
                 <div class="col-lg-6 m-auto">
-                    <h1 class="h1">Serviços</h1>
+                    <h1 class="h1">serviços</h1>
                     <p>
-                        Conheça nossos serviços para manter sua bike em perfeito estado
+                        Recomendados com base nos serviços mais vendidos da bicicletaria
                     </p>
                 </div>
             </div>
             <div class="row" id="featured-servicos-row">
-                <!-- Serviços carregados dinamicamente -->
+                <!-- serviços carregados dinamicamente -->
             </div>
         </div>
     </section>
-    <!-- End Serviços -->
+    <!-- End serviços -->
 
     <!-- Produtos -->
     <section class="container py-5">
@@ -122,7 +122,7 @@
             <div class="col-lg-6 m-auto">
                 <h1 class="h1">Nossos Produtos</h1>
                 <p>
-                    
+                    Seleção recomendada pelos produtos mais vendidos do momento.
                 </p>
             </div>
         </div>
@@ -137,9 +137,9 @@
         <div class="container">
             <div class="row align-items-center py-5">
                 <div class="col-md-8 text-white">
-                    <h1>Sobre Nós</h1>
+                    <h1>Sobre nós</h1>
                     <p>
-                        Somos especializados em facilitar a vida dos ciclistas. No nosso site, você pode agendar serviços para sua bike e reservar produtos como peças e acessórios, para retirá-los prontos na nossa bicicletaria.
+                        Somos especializados em facilitar a vida dos ciclistas. No nosso site, você pode agendar serviços para sua bike e reservar produtos como Peças e Acessórios, para retirá-los prontos na nossa bicicletaria.
                     </p>
                     <p>
                         Com atendimento rápido, serviços de qualidade e a conveniência de compras sem espera, garantimos a melhor experiência para você pedalar com segurança e conforto.
@@ -179,13 +179,13 @@
                 <div class="col-md-4 pt-5">
                     <h2 class="h2 text-light border-bottom pb-3 border-light">Produtos</h2>
                     <ul class="list-unstyled text-light footer-link-list">
-                        <li><a class="text-decoration-none" href="#">Catergoria 1</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 2</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 3</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 4</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 5</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 6</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 7</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=1">Categoria 1</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=2">Categoria 2</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=3">Categoria 3</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=4">Categoria 4</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=5">Categoria 5</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=6">Categoria 6</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=7">Categoria 7</a></li>
                     </ul>
                 </div>
 
@@ -193,7 +193,7 @@
                     <h2 class="h2 text-light border-bottom pb-3 border-light">Abas</h2>
                     <ul class="list-unstyled text-light footer-link-list">
                         <li><a class="text-decoration-none" href="index.html">Home</a></li>
-                        <li><a class="text-decoration-none" href="servicos.html">Serviços</a></li>
+                        <li><a class="text-decoration-none" href="servicos.html">serviços</a></li>
                         <li><a class="text-decoration-none" href="produtos.html">Produtos</a></li>
                         <li><a class="text-decoration-none" href="eventos.html">Eventos</a></li>
                         <li><a class="text-decoration-none" href="contato.html">Contato</a></li>
@@ -256,17 +256,12 @@
             // Carrega os 3 primeiros produtos em ordem alfabética
             try {
                 const base = window.API_BASE_URL || (window.location.protocol + '//' + window.location.hostname + ':8080/api');
-                const resp = await fetch(`${base}/produtos/public`);
+                const resp = await fetch(`${base}/produtos/public?sort=mais-vendidos&limit=3`);
                 const data = await resp.json();
                 if (resp.ok && Array.isArray(data.data)) {
-                    const withStock = (data.data || []).filter(p => {
-                        const est = p.qtd ?? p.quantidade ?? p.quantidadeAtual ?? 0;
-                        return (Number(est) || 0) > 0;
-                    });
-                    const sorted = withStock.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-                    const top3 = sorted.slice(0, 3);
+                    const top3 = data.data || [];
                     const row = document.getElementById('featured-products-row');
-                    top3.forEach(p => {
+                    top3.forEach((p, index) => {
                         const col = document.createElement('div');
                         col.className = 'col-12 col-md-4 p-5 mt-3';
                         const img = p.imagemUrl || './assets/img/category_img_01.webp';
@@ -274,9 +269,12 @@
                         const link = `shop-single.html?id=${encodeURIComponent(id)}`;
                         const priceNum = typeof p.preco === 'number' ? p.preco : parseFloat(String(p.preco || '0').replace(',', '.'));
                         const estoque = p.qtd ?? p.quantidade ?? 0;
+                        const totalVendido = Number(p.totalVendido || 0);
+                        const ribbon = index === 0 ? '<span class="position-absolute top-0 start-0 badge bg-danger text-uppercase m-3 px-3 py-2">Mais vendido</span>' : '';
                         col.innerHTML = `
                             <div class="card mb-4 product-wap rounded-0" style="border:none;">
                                 <div class="card rounded-0">
+                                    ${ribbon}
                                     <img src="${img}" class="card-img rounded-0 img-fluid" alt="${p.nome || 'Produto'}">
                                     <div class="card-img-overlay rounded-0 product-overlay d-flex align-items-center justify-content-center">
                                         <ul class="list-unstyled">
@@ -288,6 +286,7 @@
                                 </div>
                                 <div class="card-body">
                                     <a href="${link}" class="h5 text-decoration-none text-dark">${p.nome || 'Produto'}</a>
+                                    <p class="text-muted mb-0 mt-2">${totalVendido} unidade(s) vendida(s)</p>
                                 </div>
                             </div>
                         `;
@@ -299,7 +298,7 @@
                             e.preventDefault();
                             if (!window.Cart) {
                                 console.error('Cart module not loaded');
-                                alert('Erro ao carregar o carrinho. Tente recarregar a página.');
+                                alert('Erro ao carregar o carrinho. Tente recarregar a Página.');
                                 return;
                             }
                             const id = btn.dataset.id;
@@ -318,7 +317,7 @@
                             alert('Adicionado ao carrinho!');
                         });
                     });
-                    // Adiciona botão "Ver mais"
+                    // Adiciona Botão "Ver mais"
                     const btnCol = document.createElement('p');
                     btnCol.className = 'text-center';
                     btnCol.innerHTML = '<a class="btn btn-success" href="produtos.html">Ver mais</a>';
@@ -331,20 +330,23 @@
             // Carrega os 3 primeiros serviços
             try {
                 const base = window.API_BASE_URL || (window.location.protocol + '//' + window.location.hostname + ':8080/api');
-                const resp = await fetch(`${base}/servicos/public`);
+                const resp = await fetch(`${base}/servicos/public?sort=mais-vendidos&limit=3`);
                 const data = await resp.json();
                 if (resp.ok && Array.isArray(data)) {
                     const top3 = data.slice(0, 3);
                     const row = document.getElementById('featured-servicos-row');
-                    top3.forEach(s => {
+                    top3.forEach((s, index) => {
                         const col = document.createElement('div');
                         col.className = 'col-12 col-md-4 mb-4';
                         const img = s.foto || './assets/img/feature_prod_01.jpeg';
                         const valorFmt = parseFloat(s.valor || 0).toFixed(2);
                         const nomeEscaped = (s.nome || '').replace(/"/g, '&quot;');
+                        const totalVendido = Number(s.totalVendido || 0);
+                        const ribbon = index === 0 ? '<span class="position-absolute top-0 start-0 badge bg-danger text-uppercase m-3 px-3 py-2">Mais vendido</span>' : '';
                         col.innerHTML = `
                             <div class="card mb-4 product-wap rounded-0" style="border:none;">
                                 <div class="card rounded-0">
+                                    ${ribbon}
                                     <img src="${img}" class="card-img rounded-0 img-fluid" alt="${nomeEscaped}">
                                     <div class="card-img-overlay rounded-0 product-overlay d-flex align-items-center justify-content-center">
                                         <ul class="list-unstyled">
@@ -358,6 +360,7 @@
                                         <li>${s.duracaoestimada} min</li>
                                         <li class="text-success">R$ ${valorFmt}</li>
                                     </ul>
+                                    <p class="text-muted mb-0 mt-2">${totalVendido} agendamento(s)</p>
                                 </div>
                             </div>
                         `;
@@ -369,7 +372,7 @@
                             e.preventDefault();
                             const token = localStorage.getItem('userToken');
                             if (!token) {
-                                alert('Você precisa estar logado para agendar um serviço.');
+                                alert('você precisa estar logado para agendar um serviço.');
                                 window.location.href = 'login.html';
                                 return;
                             }
@@ -390,3 +393,10 @@
 </body>
 
 </html>
+
+
+
+
+
+
+

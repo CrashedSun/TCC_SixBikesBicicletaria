@@ -5,6 +5,23 @@ module.exports = {
     const { rows } = await db.query('SELECT idservico, nome, duracaoestimada, valor, foto FROM servicos ORDER BY idservico DESC');
     return rows;
   },
+  async listarMaisVendidos(limit = 3) {
+    const { rows } = await db.query(
+      `SELECT s.idservico, s.nome, s.duracaoestimada, s.valor, s.foto,
+              COALESCE(popularidade.totalvendido, 0) AS "totalVendido"
+         FROM servicos s
+         LEFT JOIN (
+              SELECT a.idservico, COUNT(*) AS totalvendido
+                FROM agendamento a
+               WHERE a.status IN ('EM ANDAMENTO', 'PARA PAGAMENTO', 'PAGO', 'CONCLUIDO')
+            GROUP BY a.idservico
+         ) popularidade ON popularidade.idservico = s.idservico
+     ORDER BY COALESCE(popularidade.totalvendido, 0) DESC, s.nome ASC
+        LIMIT $1`,
+      [limit]
+    );
+    return rows;
+  },
   async buscarPorId(id) {
     const { rows } = await db.query('SELECT idservico, nome, duracaoestimada, valor, foto FROM servicos WHERE idservico = $1', [id]);
     return rows[0] || null;

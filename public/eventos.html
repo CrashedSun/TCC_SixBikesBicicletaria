@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -21,7 +21,7 @@
                 <div class="flex-fill">
                     <ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
                         <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                        <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
+                        <li class="nav-item"><a class="nav-link" href="servicos.html">serviços</a></li>
                         <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
                         <li class="nav-item"><a class="nav-link active" href="eventos.html">Eventos</a></li>
                         <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
@@ -61,7 +61,7 @@
         <div class="row text-center mb-4">
             <div class="col-lg-8 m-auto">
                 <h1 class="h1">Eventos</h1>
-                <p>Confira nossos próximos eventos e participe!</p>
+                <p>Confira nossos Próximos eventos e participe!</p>
             </div>
         </div>
         <div class="row" id="eventosContainer">
@@ -83,16 +83,16 @@
                 <div class="col-md-4 pt-5">
                     <h2 class="h2 text-light border-bottom pb-3 border-light">Produtos</h2>
                     <ul class="list-unstyled text-light footer-link-list">
-                        <li><a class="text-decoration-none" href="#">Categoria 1</a></li>
-                        <li><a class="text-decoration-none" href="#">Categoria 2</a></li>
-                        <li><a class="text-decoration-none" href="#">Categoria 3</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=1">Categoria 1</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=2">Categoria 2</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=3">Categoria 3</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4 pt-5">
                     <h2 class="h2 text-light border-bottom pb-3 border-light">Abas</h2>
                     <ul class="list-unstyled text-light footer-link-list">
                         <li><a class="text-decoration-none" href="index.html">Home</a></li>
-                        <li><a class="text-decoration-none" href="servicos.html">Serviços</a></li>
+                        <li><a class="text-decoration-none" href="servicos.html">serviços</a></li>
                         <li><a class="text-decoration-none" href="produtos.html">Produtos</a></li>
                         <li><a class="text-decoration-none" href="eventos.html">Eventos</a></li>
                         <li><a class="text-decoration-none" href="contato.html">Contato</a></li>
@@ -216,7 +216,7 @@
                             if(vagasRestantes === 0){
                                 badge.textContent = 'Lotado';
                                 badge.className = 'badge status-badge bg-warning text-dark';
-                                // Remove botão e mostra estado
+                                // Remove Botão e mostra estado
                                 const overlay = card.querySelector('.card-img-overlay');
                                 if(overlay){ overlay.innerHTML = `<span class='badge bg-warning text-dark'>Lotado</span>`; }
                             } else {
@@ -234,9 +234,16 @@
                 });
             } catch(e){
                 console.warn(e);
-                container.innerHTML = '<div class="col-12 text-center"><p class="text-danger">Não foi possível carregar os eventos.</p></div>';
+                container.innerHTML = '<div class="col-12 text-center"><p class="text-danger">não foi possível carregar os eventos.</p></div>';
             }
         });
     </script>
 </body>
 </html>
+
+
+
+
+
+
+

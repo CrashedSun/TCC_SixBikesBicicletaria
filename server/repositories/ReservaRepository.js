@@ -7,9 +7,10 @@ class ReservaRepository {
         try {
             if (client.query) await client.query('BEGIN');
             const insertReservaSQL = `
-                INSERT INTO reserva (idcliente, datareserva, status, statuspagamento)
-                VALUES ($1, CURRENT_TIMESTAMP, 'ATIVA', 'PENDENTE') RETURNING idreserva AS "idReserva"`;
-            const { rows } = await client.query(insertReservaSQL, [clienteId]);
+                INSERT INTO reserva (idcliente, datareserva, prazoretirada, status, statuspagamento)
+                VALUES ($1, CURRENT_TIMESTAMP, COALESCE($2, CURRENT_TIMESTAMP + INTERVAL '3 days'), 'ATIVA', 'PENDENTE') RETURNING idreserva AS "idReserva"`;  
+            const prazoRetiradaValue = prazoRetirada || null;
+            const { rows } = await client.query(insertReservaSQL, [clienteId, prazoRetiradaValue]);
             const idReserva = rows[0].idreserva || rows[0].idReserva;
             // PRIMEIRO: Verificar estoque de TODOS os itens antes de inserir qualquer coisa
             for (const it of itens) {
@@ -51,12 +52,12 @@ class ReservaRepository {
 
     async listarPorCliente(clienteId) {
         const sql = `
-            SELECT r.idreserva, r.datareserva, r.status, r.statuspagamento, r.metodopagamento,
+            SELECT r.idreserva, r.datareserva, r.prazoretirada, r.status, r.statuspagamento, r.metodopagamento,
                    COALESCE(SUM(ir.quantidade * ir.valorunitario), 0) AS totalreserva
               FROM reserva r
          LEFT JOIN itemreserva ir ON ir.idreserva = r.idreserva
              WHERE r.idcliente = $1
-          GROUP BY r.idreserva, r.datareserva, r.status, r.statuspagamento, r.metodopagamento
+          GROUP BY r.idreserva, r.datareserva, r.prazoretirada, r.status, r.statuspagamento, r.metodopagamento
           ORDER BY r.datareserva DESC`;
         const { rows } = await db.query(sql, [clienteId]);
         return rows;
@@ -70,7 +71,7 @@ class ReservaRepository {
               FROM reserva r
               JOIN usuario u ON u.id = r.idcliente
          LEFT JOIN itemreserva ir ON ir.idreserva = r.idreserva
-             WHERE r.statuspagamento = $1 AND r.status <> 'CANCELADA'
+               WHERE r.statuspagamento = $1 AND r.status = 'ATIVA'
           GROUP BY r.idreserva, r.idcliente, r.datareserva, r.prazoretirada, r.status, r.statuspagamento, r.metodopagamento, r.idatendente, u.nome
           ORDER BY r.datareserva DESC`;
         const { rows } = await db.query(sql, [statusPagamento]);
@@ -173,6 +174,43 @@ class ReservaRepository {
           ORDER BY COALESCE(r.prazoretirada, r.datareserva) DESC;`;
         const { rows } = await db.query(sql);
         return rows;
+    }
+
+    async expirarVencidas() {
+        // Busca reservas ATIVAS com prazo expirado
+        const { rows: vencidas } = await db.query(
+            `SELECT idreserva FROM reserva WHERE status = 'ATIVA' AND prazoretirada IS NOT NULL AND prazoretirada < NOW()`
+        );
+        if (!vencidas.length) return 0;
+
+        const client = await db.getClient?.() || db;
+        let count = 0;
+        try {
+            if (client.query) await client.query('BEGIN');
+            for (const { idreserva } of vencidas) {
+                // Devolve itens ao estoque (igual ao cancelamento)
+                const { rows: itens } = await client.query(
+                    'SELECT idproduto, quantidade FROM itemreserva WHERE idreserva = $1', [idreserva]
+                );
+                for (const it of itens) {
+                    await client.query(
+                        'UPDATE estoque SET quantidadeatual = quantidadeatual + $2 WHERE idproduto = $1',
+                        [it.idproduto, it.quantidade]
+                    );
+                }
+                // Marca como EXPIRADA (verifica novamente status para evitar concorrência)
+                const upd = await client.query(
+                    `UPDATE reserva SET status = 'EXPIRADA' WHERE idreserva = $1 AND status = 'ATIVA'`,
+                    [idreserva]
+                );
+                if (upd.rowCount > 0) count++;
+            }
+            if (client.query) await client.query('COMMIT');
+            return count;
+        } catch (e) {
+            if (client.query) await client.query('ROLLBACK');
+            throw e;
+        }
     }
 }
 

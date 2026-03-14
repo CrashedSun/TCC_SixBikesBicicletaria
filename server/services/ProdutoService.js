@@ -40,6 +40,11 @@ class ProdutoService {
         return ProdutoRepository.findAllWithStock(); 
     }
 
+    async listarMaisVendidos(limit = 3) {
+        limit = Number.parseInt(limit, 10) || 3;
+        return ProdutoRepository.findBestSellers(limit);
+    }
+
     /** Busca um produto por ID com estoque e imagem */
     async buscarPorId(id) {
         id = Number.parseInt(id);

@@ -4,6 +4,9 @@ module.exports = {
   async listar() {
     return await repo.listarTodos();
   },
+  async listarMaisVendidos(limit = 3) {
+    return await repo.listarMaisVendidos(parseInt(limit, 10) || 3);
+  },
   async obter(id) {
     if (!id) throw new Error('ID obrigatório');
     const s = await repo.buscarPorId(id);

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -98,20 +98,20 @@
 
 <div class="sidebar">
 
-    <!-- ⭐ NOME DO USUÁRIO LOGADO -->
+    <!-- ? NOME DO USUÁRIO LOGADO -->
     <h5 id="userName" class="text-center fw-bold mb-2"></h5>
 
     <h3 class="text-center mb-4">BICICLETARIA</h3>
 
     <!-- MENU -->
-    <a href="#" onclick="loadPage('dashboard')">📊 Dashboard</a>
-    <a href="#" onclick="loadPage('estoque')">📦 Estoque</a>
-    <a href="#" onclick="loadPage('agendamentos')">📅 Agendamentos</a>
-    <a href="#" onclick="loadPage('clientes')">👥 Clientes</a>
-    <a href="#" onclick="loadPage('funcionarios')">👨‍🔧 Funcionários</a>
+    <a href="#" onclick="loadPage('dashboard')">Dashboard</a>
+    <a href="#" onclick="loadPage('estoque')">Estoque</a>
+    <a href="#" onclick="loadPage('agendamentos')">Agendamentos</a>
+    <a href="#" onclick="loadPage('clientes')">Clientes</a>
+    <a href="#" onclick="loadPage('funcionarios')">Funcionários</a>
 
-    <!-- ⭐ BOTÃO LOGOUT -->
-    <a href="#" class="logout-btn" onclick="logout()">🚪 Sair</a>
+    <!-- ? BOT?fO LOGOUT -->
+    <a href="#" class="logout-btn" onclick="logout()">Sair</a>
 </div>
 
 <div class="content">
@@ -172,9 +172,9 @@ function loadPage(page) {
             <div class="row mt-4">
                 <div class="col-md-6">
                     <div class="card shadow-sm">
-                        <h5>Serviços Agendados</h5>
+                        <h5>serviços Agendados</h5>
                         <table class="table mt-2">
-                            <thead><tr><th>Cliente</th><th>Serviço</th><th>Status</th></tr></thead>
+                            <thead><tr><th>Cliente</th><th>serviço</th><th>Status</th></tr></thead>
                             <tbody>
                                 <tr><td>João</td><td>Revisão</td><td><span class="badge bg-success">Completo</span></td></tr>
                             </tbody>
@@ -223,7 +223,7 @@ if (page === 'estoque') {
 
             <div class="col-md-3 text-end">
                 <button class="btn btn-success w-100" id="openEstoqueModal">
-                    📦 Gerenciar Estoque
+                    Gerenciar Estoque
                 </button>
             </div>
         </div>
@@ -371,14 +371,14 @@ if (page === 'estoque') {
                     <option value="id">ID</option>
                     <option value="cpf">CPF</option>
                     <option value="nome">Nome</option>
-                    <option value="servico">Serviço</option>
+                    <option value="servico">serviço</option>
                     <option value="status">Status</option>
                 </select>
             </div>
 
             <div class="col-md-3 text-end">
                 <button class="btn btn-success w-100" id="openAgendaModal">
-                    📅 Gerenciar Agendamentos
+                    Gerenciar Agendamentos
                 </button>
             </div>
         </div>
@@ -392,7 +392,7 @@ if (page === 'estoque') {
                         <th>CPF</th>
                         <th>Nome</th>
                         <th>Data</th>
-                        <th>Serviço</th>
+                        <th>serviço</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -454,7 +454,7 @@ if (page === 'estoque') {
                         </div>
 
                         <div class="mb-2">
-                            <label class="form-label">Serviço</label>
+                            <label class="form-label">serviço</label>
                             <input type="text" class="form-control">
                         </div>
 
@@ -537,7 +537,7 @@ if (page === 'estoque') {
 
                 <div class="col-md-3 text-end">
                     <button class="btn btn-success w-100" id="openClientesModal">
-                        👥 Gerenciar Clientes
+                        Gerenciar Clientes
                     </button>
                 </div>
             </div>
@@ -588,7 +588,7 @@ if (page === 'estoque') {
                     <div class="modal-content shadow-lg" style="border-radius: 18px;">
                         
                         <div class="modal-header" style="background:#7ed957; color:white; border-radius: 18px 18px 0 0;">
-                            <h5 class="modal-title fw-bold">👥 Gerenciar Clientes</h5>
+                            <h5 class="modal-title fw-bold">Gerenciar Clientes</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
@@ -627,9 +627,9 @@ if (page === 'estoque') {
                         </div>
 
                         <div class="modal-footer">
-                                <button class="btn btn-warning px-4">🔍 Pesquisar</button>
-                                <button class="btn btn-success px-4">💾 Salvar</button>
-                                <button class="btn btn-danger px-4">🗑 Excluir</button>
+                                <button class="btn btn-warning px-4">Pesquisar</button>
+                                <button class="btn btn-success px-4">Salvar</button>
+                                <button class="btn btn-danger px-4">Excluir</button>
                                 <button class="btn btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
                         </div>
 
@@ -663,7 +663,7 @@ if (page === 'estoque') {
 
     }
 
-    /* ================= FUNCIONÁRIOS ================== */
+    /* ================= Funcionários ================== */
     if (page === 'funcionarios') {
         content.innerHTML = `
             <h2>Funcionários</h2>
@@ -690,7 +690,7 @@ if (page === 'estoque') {
 
                 <div class="col-md-3 text-end">
                     <button class="btn btn-primary w-100" id="openFuncionariosModal">
-                        🧑‍🔧 Gerenciar Funcionários
+                        Gerenciar Funcionários
                     </button>
                 </div>
             </div>
@@ -739,7 +739,7 @@ if (page === 'estoque') {
                 </table>
             </div>
 
-            <!-- MODAL FUNCIONÁRIOS -->
+            <!-- MODAL Funcionários -->
             <div class="modal fade" id="modalFuncionarios" tabindex="-1">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content" style="border-radius: 15px;">
@@ -791,9 +791,9 @@ if (page === 'estoque') {
                         </div>
 
                         <div class="modal-footer">
-                            <button class="btn btn-warning px-4">🔍 Pesquisar</button>
-                            <button class="btn btn-success px-4">💾 Salvar</button>
-                            <button class="btn btn-danger px-4">🗑 Excluir</button>
+                            <button class="btn btn-warning px-4">Pesquisar</button>
+                            <button class="btn btn-success px-4">Salvar</button>
+                            <button class="btn btn-danger px-4">Excluir</button>
                             <button class="btn btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
                         </div>
 
@@ -834,3 +834,9 @@ loadPage('dashboard');
 
 </body>
 </html>
+
+
+
+
+
+

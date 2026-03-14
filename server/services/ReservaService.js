@@ -37,6 +37,8 @@ class ReservaService {
   }
 
   async listarHoje() { return await ReservaRepository.listarHoje(); }
+
+  async expirarVencidas() { return await ReservaRepository.expirarVencidas(); }
 }
 
 module.exports = new ReservaService();

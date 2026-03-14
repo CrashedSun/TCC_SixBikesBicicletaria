@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -31,7 +31,7 @@
                 <div class="flex-fill">
                     <ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
                         <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                        <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
+                        <li class="nav-item"><a class="nav-link" href="servicos.html">serviços</a></li>
                         <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
                         <li class="nav-item"><a class="nav-link" href="eventos.html">Eventos</a></li>
                         <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
@@ -77,15 +77,15 @@
     <div class="container py-5">
         <div class="row text-center pt-5 pb-3">
             <div class="col-lg-6 m-auto">
-                <h1 class="h1">Nossos Serviços</h1>
+                <h1 class="h1">Nossos serviços</h1>
                 <p>
-                    Confira todos os serviços disponíveis para manter sua bike em perfeito estado
+                    Confira todos os serviços Disponíveis para manter sua bike em perfeito estado
                 </p>
             </div>
         </div>
         
         <div class="row" id="servicosContainer">
-            <!-- Serviços serão carregados dinamicamente aqui -->
+            <!-- serviços serão carregados dinamicamente aqui -->
         </div>
 
         <div class="row mt-5">
@@ -129,13 +129,13 @@
                 <div class="col-md-4 pt-5">
                     <h2 class="h2 text-light border-bottom pb-3 border-light">Produtos</h2>
                     <ul class="list-unstyled text-light footer-link-list">
-                        <li><a class="text-decoration-none" href="#">Catergoria 1</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 2</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 3</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 4</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 5</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 6</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 7</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=1">Categoria 1</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=2">Categoria 2</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=3">Categoria 3</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=4">Categoria 4</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=5">Categoria 5</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=6">Categoria 6</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=7">Categoria 7</a></li>
                     </ul>
                 </div>
 
@@ -143,7 +143,7 @@
                     <h2 class="h2 text-light border-bottom pb-3 border-light">Abas</h2>
                     <ul class="list-unstyled text-light footer-link-list">
                         <li><a class="text-decoration-none" href="index.html">Home</a></li>
-                        <li><a class="text-decoration-none" href="servicos.html">Serviços</a></li>
+                        <li><a class="text-decoration-none" href="servicos.html">serviços</a></li>
                         <li><a class="text-decoration-none" href="produtos.html">Produtos</a></li>
                         <li><a class="text-decoration-none" href="eventos.html">Eventos</a></li>
                         <li><a class="text-decoration-none" href="contato.html">Contato</a></li>
@@ -289,7 +289,7 @@
                 };
 
                 // Prev
-                ul.appendChild(createItem('«', Math.max(1, page - 1), page === 1, false));
+                ul.appendChild(createItem('?', Math.max(1, page - 1), page === 1, false));
 
                 // Page numbers
                 for (let p = 1; p <= totalPages; p++) {
@@ -297,7 +297,7 @@
                 }
 
                 // Next
-                ul.appendChild(createItem('»', Math.min(totalPages, page + 1), page === totalPages, false));
+                ul.appendChild(createItem('?', Math.min(totalPages, page + 1), page === totalPages, false));
             }
 
             async function loadServicos() {
@@ -317,7 +317,7 @@
                 } catch (error) {
                     console.error("Erro ao carregar serviços:", error);
                     document.getElementById('servicosContainer').innerHTML = 
-                        '<div class="col-12 text-center"><p class="text-danger">Não foi possível carregar os serviços.</p></div>';
+                        '<div class="col-12 text-center"><p class="text-danger">não foi possível carregar os serviços.</p></div>';
                 }
             }
 
@@ -338,7 +338,7 @@
                     // Filtra apenas ABERTO e EM ANDAMENTO
                     const visiveis = Array.isArray(data) ? data.filter(i => (i.status === 'ABERTO' || i.status === 'EM ANDAMENTO')) : [];
                     if (!Array.isArray(data) || visiveis.length === 0) {
-                        container.innerHTML = '<p class="text-muted">Você não possui agendamentos.</p>';
+                        container.innerHTML = '<p class="text-muted">você não possui agendamentos.</p>';
                         return;
                     }
                     // Renderizar lista
@@ -352,7 +352,7 @@
                         elem.className = 'list-group-item list-group-item-action';
                         elem.innerHTML = `
                             <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">${item.servico_nome || 'Serviço'}</h5>
+                                <h5 class="mb-1">${item.servico_nome || 'serviço'}</h5>
                                 <small class="text-muted">${item.status}</small>
                             </div>
                             <p class="mb-1">Agendado para: ${dtStr}</p>
@@ -371,7 +371,7 @@
                 // Verificar se está logado
                 const token = localStorage.getItem('userToken');
                 if (!token) {
-                    alert('Você precisa estar logado para agendar um serviço.');
+                    alert('você precisa estar logado para agendar um serviço.');
                     window.location.href = 'login.html';
                     return;
                 }
@@ -385,3 +385,10 @@
 </body>
 
 </html>
+
+
+
+
+
+
+

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -178,7 +178,7 @@
    CONFIGURAÇÃO INICIAL E LÓGICA DE NAVEGAÇÃO
    ====================================================================== */
 
-// Exibe o nome do usuário logado (valor virá do localStorage após o login)
+// Exibe o nome do USUÁRIO logado (valor virá do localStorage após o login)
 if (!localStorage.getItem("usuario")) {
     localStorage.setItem("usuario", "Fulano");
 }
@@ -193,10 +193,10 @@ document.getElementById("userName").textContent = "Olá, " + localStorage.getIte
 function loadPage(page) {
     const content = document.getElementById('main-content');    
     
-    // Simulação de carregamento (em um projeto real, esta função faria um fetchAuthenticated)
+    // Simulação de carregamento (em um projeto real, esta Função faria um fetchAuthenticated)
     content.innerHTML = `<h2>Carregando ${page}...</h2>`; 
     
-    // Garante que o link ativo na sidebar é atualizado
+    // Garante que o link ativo na sidebar ? atualizado
     document.querySelectorAll('.sidebar a').forEach(link => {
         link.classList.remove('active');
         if (link.dataset.page === page) {
@@ -267,7 +267,7 @@ function loadPage(page) {
                             <thead>
                                 <tr>
                                     <th>Nome</th>
-                                    <th>Serviço</th>
+                                    <th>serviço</th>
                                     <th>Data</th>
                                     <th>Valor</th>
                                 </tr>
@@ -299,7 +299,7 @@ function loadPage(page) {
                 setText('badgeAbertos', abertos.length);
                 setText('badgeParaPg', agList.length);
 
-                // Render tickets abertos (máximo 5)
+                // Render tickets abertos (Máximo 5)
                 const tBody = document.getElementById('dashTicketsAbertos');
                 if (tBody) {
                     tBody.innerHTML = '';
@@ -318,7 +318,7 @@ function loadPage(page) {
                     if (abertos.length === 0) tBody.innerHTML = '<tr><td colspan="4" class="text-muted">Nenhum ticket aberto.</td></tr>';
                 }
 
-                // Render agendamentos para pagamento (máximo 5)
+                // Render agendamentos para pagamento (Máximo 5)
                 const aBody = document.getElementById('dashAgParaPagamento');
                 if (aBody) {
                     aBody.innerHTML = '';
@@ -474,14 +474,14 @@ function loadPage(page) {
                         <option value="id">ID</option>
                         <option value="cpf">CPF</option>
                         <option value="nome">Nome</option>
-                        <option value="servico">Serviço</option>
+                        <option value="servico">serviço</option>
                         <option value="status">Status</option>
                     </select>
                 </div>
 
                 <div class="col-md-3 text-end">
                     <button class="btn btn-success w-100" id="recarregarAgendamentos">
-                        🔄 Atualizar
+                        Atualizar
                     </button>
                 </div>
             </div>
@@ -494,7 +494,7 @@ function loadPage(page) {
                             <th>CPF</th>
                             <th>Nome</th>
                             <th>Data Agendada</th>
-                            <th>Serviço</th>
+                            <th>serviço</th>
                             <th>Valor</th>
                             <th>Status</th>
                             <th class="text-center">Ações</th>
@@ -539,7 +539,7 @@ function loadPage(page) {
                 tbody.querySelectorAll('button[data-pagar]').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const id = btn.dataset.pagar;
-                        const metodo = prompt('Informe método de pagamento: PIX, DINHEIRO, CREDITO, DEBITO', 'PIX');
+                        const metodo = prompt('Informe Método de pagamento: PIX, DINHEIRO, CREDITO, DEBITO', 'PIX');
                         if (!metodo) return;
                         btn.disabled = true;
                         try {
@@ -860,7 +860,7 @@ function loadPage(page) {
                     </select>
                 </div>
                 <div class="col-md-3 text-end">
-                    <button class="btn btn-outline-secondary" id="refreshReservas">🔄 Atualizar</button>
+                    <button class="btn btn-outline-secondary" id="refreshReservas">Atualizar</button>
                 </div>
             </div>
             <div class="card p-0">
@@ -942,7 +942,7 @@ function loadPage(page) {
                                     <h6>1. Selecionar Cliente</h6>
                                     <div class="input-group mb-2">
                                         <input type="text" id="buscaCliente" class="form-control" placeholder="Digite nome ou email do cliente...">
-                                        <button class="btn btn-outline-primary" id="btnBuscarCliente">🔍 Buscar</button>
+                                        <button class="btn btn-outline-primary" id="btnBuscarCliente">Buscar</button>
                                     </div>
                                     <div id="resultadosCliente" class="list-group mb-3" style="max-height:200px;overflow:auto;"></div>
                                     <div id="clienteSelecionado" class="alert alert-info d-none">
@@ -956,7 +956,7 @@ function loadPage(page) {
                                     <h6>2. Adicionar Produtos</h6>
                                     <div class="input-group mb-2">
                                         <input type="text" id="buscaProdutoNova" class="form-control" placeholder="Digite nome do produto...">
-                                        <button class="btn btn-outline-primary" id="btnBuscarProduto">🔍 Buscar</button>
+                                        <button class="btn btn-outline-primary" id="btnBuscarProduto">Buscar</button>
                                     </div>
                                     <div id="resultadosProduto" class="list-group mb-3" style="max-height:200px;overflow:auto;"></div>
                                 </div>
@@ -1037,7 +1037,7 @@ function loadPage(page) {
             });
         }
 
-        // Toggle da área de busca
+        // Toggle da Área de busca
         const buscaInput = document.getElementById('buscaProduto');
         const listaProdutosEl = document.getElementById('listaProdutos');
         const toggleBuscaBtn = document.getElementById('toggleBuscaProdutos');
@@ -1188,7 +1188,7 @@ function loadPage(page) {
                 tbody.querySelectorAll('button[data-pagar]').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const id = btn.dataset.pagar;
-                        const metodo = prompt('Informe método de pagamento: PIX, DINHEIRO, CREDITO, DEBITO', 'PIX');
+                        const metodo = prompt('Informe Método de pagamento: PIX, DINHEIRO, CREDITO, DEBITO', 'PIX');
                         if (!metodo) return;
                         try {
                             await fetchAuthenticated(`/api/reservas/${id}/pagar`, 'PUT', { metodoPagamento: metodo });
@@ -1497,7 +1497,7 @@ function loadPage(page) {
 
                 <div class="col-md-3 text-end">
                     <button class="btn btn-success w-100" id="openVendasModal">
-                        💼 Gerenciar Vendas
+                        Gerenciar Vendas
                     </button>
                 </div>
             </div>
@@ -1555,7 +1555,7 @@ function loadPage(page) {
                         <div class="modal-content shadow-lg" style="border-radius: 18px;">
                             
                             <div class="modal-header" style="background:#7ed957; color:white; border-radius: 18px 18px 0 0;">
-                                <h5 class="modal-title fw-bold">💼 Gerenciar Vendas</h5>
+                                <h5 class="modal-title fw-bold">Gerenciar Vendas</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
 
@@ -1610,9 +1610,9 @@ function loadPage(page) {
                             </div>
 
                             <div class="modal-footer">
-                                <button class="btn btn-warning px-4">🔍 Pesquisar</button>
-                                <button class="btn btn-success px-4">💾 Salvar</button>
-                                <button class="btn btn-danger px-4">🗑 Excluir</button>
+                                <button class="btn btn-warning px-4">Pesquisar</button>
+                                <button class="btn btn-success px-4">Salvar</button>
+                                <button class="btn btn-danger px-4">Excluir</button>
                                 <button class="btn btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
                             </div>
 
@@ -1637,7 +1637,7 @@ function setupTableSearchAndModal(page, searchId, filterId, tableId, modalId, bu
         });
     }
 
-    // Lógica de Busca / Filtro
+    // lógica de Busca / Filtro
     const search = document.getElementById(searchId);
     const filtro = document.getElementById(filterId);
     const linhas = document.querySelectorAll(`#${tableId} tr`);
@@ -1685,7 +1685,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // 3. Verifica se precisa trocar a senha (usa função de auth.js)
+    // 3. Verifica se precisa trocar a senha (usa Função de auth.js)
     if(typeof checkAndShowChangePasswordModal !== 'undefined') {
         checkAndShowChangePasswordModal();
     }
@@ -1699,7 +1699,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <h5 class="modal-title" id="modalTrocarSenhaLabel">Trocar Senha - Primeiro Acesso</h5>
       </div>
       <div class="modal-body">
-        <p>Como este é seu primeiro acesso, por favor escolha uma nova senha para continuar.</p>
+        <p>Como este ? seu primeiro acesso, por favor escolha uma nova senha para continuar.</p>
         <div class="mb-3">
           <label class="form-label">Nova senha</label>
           <input type="password" id="novaSenha" class="form-control" minlength="6" required>
@@ -1719,3 +1719,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+

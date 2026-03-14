@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -6,7 +6,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Ícones removidos para evitar 404; adicione arquivos em assets/img se necessário -->
+    <!-- ícones removidos para evitar 404; adicione arquivos em assets/img se necessário -->
     <!-- <link rel="apple-touch-icon" href="assets/img/apple-icon.png"> -->
     <!-- <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.ico"> -->
 
@@ -41,7 +41,7 @@
                 <div class="flex-fill">
                     <ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
                         <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                        <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
+                        <li class="nav-item"><a class="nav-link" href="servicos.html">serviços</a></li>
                         <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
                         <li class="nav-item"><a class="nav-link" href="eventos.html">Eventos</a></li>
                         <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
@@ -347,13 +347,13 @@
                 <div class="col-md-4 pt-5">
                     <h2 class="h2 text-light border-bottom pb-3 border-light">Produtos</h2>
                     <ul class="list-unstyled text-light footer-link-list">
-                        <li><a class="text-decoration-none" href="#">Catergoria 1</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 2</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 3</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 4</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 5</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 6</a></li>
-                        <li><a class="text-decoration-none" href="#">Catergoria 7</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=1">Categoria 1</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=2">Categoria 2</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=3">Categoria 3</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=4">Categoria 4</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=5">Categoria 5</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=6">Categoria 6</a></li>
+                        <li><a class="text-decoration-none" href="produtos.html?categoria=7">Categoria 7</a></li>
                     </ul>
                 </div>
 
@@ -361,7 +361,7 @@
                     <h2 class="h2 text-light border-bottom pb-3 border-light">Abas</h2>
                     <ul class="list-unstyled text-light footer-link-list">
                         <li><a class="text-decoration-none" href="index.html">Home</a></li>
-                        <li><a class="text-decoration-none" href="servicos.html">Serviços</a></li>
+                        <li><a class="text-decoration-none" href="servicos.html">serviços</a></li>
                         <li><a class="text-decoration-none" href="produtos.html">Produtos</a></li>
                         <li><a class="text-decoration-none" href="contato.html">Contato</a></li>
                     </ul>
@@ -455,9 +455,61 @@
             let allCategories = [];      // categorias reais do banco
             let currentPage = 1;
             let productRow = null;
+            const initialCategoryParam = new URLSearchParams(window.location.search).get('categoria');
 
             let activeCategory = 'todos';   // 'todos' ou nome da categoria do banco
+            let activeCategoryId = null;
             let activeSort = '';             // '', 'az', 'za', 'preco-asc', 'preco-desc'
+
+            function resolveRequestedCategory(categorias) {
+                activeCategoryId = null;
+                if (!initialCategoryParam) return null;
+
+                const paramRaw = String(initialCategoryParam).trim();
+                if (!paramRaw) return null;
+
+                const byIndexMatch = paramRaw.match(/^\d+$/);
+                if (byIndexMatch) {
+                    const requestedNumber = Number(paramRaw);
+
+                    const byId = categorias.find(cat => Number(cat.idCategoria ?? cat.idcategoria ?? cat.id) === requestedNumber);
+                    if (byId && byId.nome) {
+                        activeCategoryId = requestedNumber;
+                        return byId.nome;
+                    }
+
+                    const idx = requestedNumber - 1;
+                    if (idx >= 0 && idx < categorias.length) {
+                        return categorias[idx].nome;
+                    }
+                    return null;
+                }
+
+                const normalizedParam = paramRaw
+                    .toLowerCase()
+                    .replace('Categoria', 'categoria')
+                    .trim();
+
+                const categoryWithNumberMatch = normalizedParam.match(/^categoria\s*(\d+)$/);
+                if (categoryWithNumberMatch) {
+                    const requestedNumber = Number(categoryWithNumberMatch[1]);
+
+                    const byId = categorias.find(cat => Number(cat.idCategoria ?? cat.idcategoria ?? cat.id) === requestedNumber);
+                    if (byId && byId.nome) {
+                        activeCategoryId = requestedNumber;
+                        return byId.nome;
+                    }
+
+                    const idx = requestedNumber - 1;
+                    if (idx >= 0 && idx < categorias.length) {
+                        return categorias[idx].nome;
+                    }
+                    return null;
+                }
+
+                const exact = categorias.find(cat => (cat.nome || '').toLowerCase().trim() === normalizedParam);
+                return exact ? exact.nome : null;
+            }
 
             // Localiza o container de cards
             const col9 = document.querySelector('.col-lg-9');
@@ -466,7 +518,7 @@
                 productRow = rows[1] || null;
             }
 
-            // ==================== CONSTRUÇÃO DINÂMICA DE CATEGORIAS ====================
+            // ==================== CONSTRUÇÃO DIN?,MICA DE CATEGORIAS ====================
             function buildSidebar(categorias) {
                 const sidebar = document.getElementById('sidebarCategorias');
                 // Mantém o primeiro item ("Todas")
@@ -485,6 +537,7 @@
                     a.addEventListener('click', (e) => {
                         e.preventDefault();
                         activeCategory = cat.nome;
+                        activeCategoryId = null;
                         highlightSidebar();
                         updateTopMenuActive();
                         applyFiltersAndSort();
@@ -499,6 +552,7 @@
                     todosLink.addEventListener('click', (e) => {
                         e.preventDefault();
                         activeCategory = 'todos';
+                        activeCategoryId = null;
                         highlightSidebar();
                         updateTopMenuActive();
                         applyFiltersAndSort();
@@ -524,6 +578,7 @@
                     a.addEventListener('click', (e) => {
                         e.preventDefault();
                         activeCategory = cat.nome;
+                        activeCategoryId = null;
                         highlightSidebar();
                         updateTopMenuActive();
                         applyFiltersAndSort();
@@ -538,6 +593,7 @@
                     todosLink.addEventListener('click', (e) => {
                         e.preventDefault();
                         activeCategory = 'todos';
+                        activeCategoryId = null;
                         highlightSidebar();
                         updateTopMenuActive();
                         applyFiltersAndSort();
@@ -565,7 +621,24 @@
             function applyFiltersAndSort() {
                 let result = [...allProducts];
                 // 1. Filtrar por categoria
-                if (activeCategory !== 'todos') {
+                if (activeCategoryId !== null) {
+                    const byId = result.filter(p => {
+                        const productCategoryId = Number(p.idCategoria ?? p.idcategoria ?? p.id_categoria ?? p.idcat ?? 0);
+                        return productCategoryId === activeCategoryId;
+                    });
+
+                    if (byId.length > 0) {
+                        result = byId;
+                    } else if (activeCategory !== 'todos') {
+                        const catLowerFallback = activeCategory.toLowerCase();
+                        result = result.filter(p => {
+                            const prodCat = (p.categoria || '').toLowerCase().trim();
+                            return prodCat === catLowerFallback;
+                        });
+                    } else {
+                        result = [...allProducts];
+                    }
+                } else if (activeCategory !== 'todos') {
                     const catLower = activeCategory.toLowerCase();
                     result = result.filter(p => {
                         const prodCat = (p.categoria || '').toLowerCase().trim();
@@ -662,11 +735,11 @@
                     return li;
                 };
 
-                ul.appendChild(createItem('«', Math.max(1, page - 1), page === 1, false));
+                ul.appendChild(createItem('?', Math.max(1, page - 1), page === 1, false));
                 for (let p = 1; p <= totalPages; p++) {
                     ul.appendChild(createItem(String(p), p, false, p === page));
                 }
-                ul.appendChild(createItem('»', Math.min(totalPages, page + 1), page === totalPages, false));
+                ul.appendChild(createItem('?', Math.min(totalPages, page + 1), page === totalPages, false));
             }
 
             // ==================== SORT SELECT ====================
@@ -719,16 +792,20 @@
                     // Constrói sidebar e menu superior com categorias reais
                     buildSidebar(allCategories);
                     buildTopMenu(allCategories);
+
+                    const requestedCategory = resolveRequestedCategory(allCategories);
+                    if (requestedCategory) {
+                        activeCategory = requestedCategory;
+                    }
+
                     updateTopMenuActive();
                     highlightSidebar();
 
-                    currentPage = 1;
-                    renderCards(currentPage);
-                    renderPagination(currentPage);
+                    applyFiltersAndSort();
 
                 } catch (error) {
                     console.error("Erro ao carregar produtos:", error);
-                    alert('Não foi possível carregar o catálogo: ' + error.message);
+                    alert('não foi possível carregar o Catálogo: ' + error.message);
                 }
             }
 
@@ -741,3 +818,10 @@
 </body>
 
 </html>
+
+
+
+
+
+
+

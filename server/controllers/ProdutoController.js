@@ -4,7 +4,9 @@ const ProdutoService = require('../services/ProdutoService');
 class ProdutoController {
     /** Rota: GET /api/produtos */
     async listarTodos(req, res) { 
-        const produtos = await ProdutoService.listarProdutos();
+        const produtos = req.query.sort === 'mais-vendidos'
+            ? await ProdutoService.listarMaisVendidos(req.query.limit)
+            : await ProdutoService.listarProdutos();
         return res.status(200).json({ message: "Consulta de produtos e estoque OK.", data: produtos }); 
     }
 

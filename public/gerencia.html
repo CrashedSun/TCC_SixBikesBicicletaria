@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -133,7 +133,7 @@
         <nav class="nav flex-column">
             <a href="#" class="nav-link active" data-page="dashboard"><i class="fas fa-home me-2"></i> Dashboard</a>
             <a href="#" class="nav-link" data-page="estoque"><i class="fas fa-warehouse me-2"></i> Gerenciar Estoque</a>
-            <a href="#" class="nav-link" data-page="servicos"><i class="fas fa-tools me-2"></i> Catálogo de Serviços</a>
+            <a href="#" class="nav-link" data-page="servicos"><i class="fas fa-tools me-2"></i> Catálogo de serviços</a>
             <a href="#" class="nav-link" data-page="clientes"><i class="fas fa-users me-2"></i> Clientes</a>
             
             <a href="#" class="nav-link" data-page="relatorios"><i class="fas fa-chart-line me-2"></i> Relatórios</a>
@@ -152,7 +152,7 @@
             <div class="modal-content shadow-lg" style="border-radius: 18px;">
                 
                 <div class="modal-header" style="background:#7ed957; color:white; border-radius: 18px 18px 0 0;">
-                    <h5 class="modal-title fw-bold" id="modalFuncionariosLabel">🧑‍🔧 Cadastrar Novo Funcionário (UC009)</h5>
+                    <h5 class="modal-title fw-bold" id="modalFuncionariosLabel">Cadastrar Novo Funcionário (UC009)</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
@@ -184,7 +184,7 @@
                         <h6 class="fw-bold mb-3 mt-4">Nível de Acesso (RF010 / RNF002)</h6>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">Cargo/Permissão</label>
+                                <label class="form-label">Cargo/permissão</label>
                                 <select id="funcPerfil" class="form-select" required>
                                     <option value="ATENDENTE">Atendente</option>
                                     <option value="MECANICO">Mecânico</option>
@@ -197,7 +197,7 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-success px-4" id="btnSalvarFunc">💾 Cadastrar</button>
+                        <button type="submit" class="btn btn-success px-4" id="btnSalvarFunc">Cadastrar</button>
                         <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
                     </div>
                 </form>
@@ -215,7 +215,7 @@
             <h5 class="modal-title" id="modalTrocarSenhaLabel">Trocar Senha - Primeiro Acesso</h5>
           </div>
           <div class="modal-body">
-            <p>Como este é seu primeiro acesso, por favor escolha uma nova senha para continuar.</p>
+            <p>Como este ? seu primeiro acesso, por favor escolha uma nova senha para continuar.</p>
             <div class="mb-3">
               <label class="form-label">Nova senha</label>
               <input type="password" id="novaSenha" class="form-control" minlength="6" required>
@@ -234,7 +234,7 @@
     </div>
 
     <script>
-    // Exibe o nome do usuário logado na sidebar (salvo em localStorage.usuario)
+    // Exibe o nome do USUÁRIO logado na sidebar (salvo em localStorage.usuario)
     if (!localStorage.getItem("usuario")) {
         localStorage.setItem("usuario", "Fulano");
     }
@@ -248,17 +248,17 @@
         // Removido mock embutido para permitir integração com o servidor.
 
         /**
-         * Envia uma requisição ao backend para bloquear/desbloquear o acesso de um usuário.
+         * Envia uma requisição ao backend para bloquear/desbloquear o acesso de um USUÁRIO.
          */
         async function blockUser(userId) {
             if (!userId) {
-                alert("Por favor, selecione um funcionário na lista antes de continuar.");
+                alert("Por favor, selecione um Funcionário na lista antes de continuar.");
                 return;
             }
 
             const row = document.querySelector(`tr[data-user-id="${userId}"]`);
 
-            // Impede gerente de bloquear proprietário (verificação frontend)
+            // Impede gerente de bloquear Proprietário (verificação frontend)
             const perfilAlvo = (row.querySelector('td[data-col="tipoPerfil"]')?.textContent || '').trim().toUpperCase();
             const meuPerfil = (localStorage.getItem('userProfile') || '').toUpperCase();
             if (meuPerfil === 'GERENTE' && perfilAlvo === 'PROPRIETARIO') {
@@ -269,7 +269,7 @@
             const isCurrentlyBlocked = row.classList.contains('table-danger-custom');
             const action = isCurrentlyBlocked ? "DESBLOQUEAR" : "BLOQUEAR";
 
-            if (!confirm(`Tem certeza que deseja ${action} o acesso do usuário ID ${userId}?`)) {
+            if (!confirm(`Tem certeza que deseja ${action} o acesso do USUÁRIO ID ${userId}?`)) {
                 return;
             }
 
@@ -278,7 +278,7 @@
                 // desired isActive = isCurrentlyBlocked ? true (unblock) : false (block)
                 await fetchAuthenticated(`/funcionarios/${userId}/bloquear`, 'PUT', { isActive: isCurrentlyBlocked });
                 
-                alert(`Acesso do usuário ID ${userId} foi ${action.toLowerCase()} com sucesso.`);
+                alert(`Acesso do USUÁRIO ID ${userId} foi ${action.toLowerCase()} com sucesso.`);
                 loadPage('funcionarios'); // Recarrega a lista para refletir a mudança
             } catch (error) {
                 alert("Falha ao processar solicitação: " + (error.error || error.message || error));
@@ -311,17 +311,21 @@
                 let resHoje = [];
                 let paraPagamentoLista = [];
                 try {
-                    const funcs = await fetchAuthenticated('/funcionarios', 'GET');
+                    const funcsRaw = await fetchAuthenticated('/funcionarios', 'GET');
+                    const funcs = Array.isArray(funcsRaw) ? funcsRaw : (funcsRaw?.data || funcsRaw?.funcionarios || []);
                     if (Array.isArray(funcs)) activeCount = funcs.filter(f => f.ativo).length;
                 } catch (e) { console.warn('Falha funcs:', e); }
                 try {
-                    agHoje = await fetchAuthenticated('/agendamentos/hoje', 'GET');
+                    const agRaw = await fetchAuthenticated('/agendamentos/hoje', 'GET');
+                    agHoje = Array.isArray(agRaw) ? agRaw : (agRaw?.data || agRaw?.agendamentos || []);
                 } catch (e) { console.warn('Falha agendamentos hoje:', e); }
                 try {
-                    paraPagamentoLista = await fetchAuthenticated('/agendamentos/para-pagamento', 'GET');
+                    const pgRaw = await fetchAuthenticated('/agendamentos/para-pagamento', 'GET');
+                    paraPagamentoLista = Array.isArray(pgRaw) ? pgRaw : (pgRaw?.data || pgRaw?.agendamentos || []);
                 } catch (e) { console.warn('Falha para-pagamento:', e); }
                 try {
-                    resHoje = await fetchAuthenticated('/reservas/hoje', 'GET');
+                    const resRaw = await fetchAuthenticated('/reservas/hoje', 'GET');
+                    resHoje = Array.isArray(resRaw) ? resRaw : (resRaw?.data || resRaw?.reservas || []);
                 } catch (e) { console.warn('Falha reservas hoje:', e); }
 
                 const kpiAgHoje = agHoje.length;
@@ -329,25 +333,25 @@
                 const kpiParaPagamento = Array.isArray(paraPagamentoLista) ? paraPagamentoLista.length : 0;
 
                 content.innerHTML = `
-                    <h1 class="mb-4">📊 Dashboard do Gerente/Proprietário</h1>
+                    <h1 class="mb-4">Dashboard do Gerente/Proprietário</h1>
                     <div class="row g-4">
                         <div class="col-md-6 col-lg-4"><div class="p-3 bg-white shadow-sm rounded border-start border-success border-4"><h5 class="text-success">Agend. Hoje</h5><p class="fs-4 fw-bold">${kpiAgHoje}</p></div></div>
                         <div class="col-md-6 col-lg-4"><div class="p-3 bg-white shadow-sm rounded border-start border-primary border-4"><h5 class="text-primary">Reservas Hoje</h5><p class="fs-4 fw-bold">${kpiResHoje}</p></div></div>
                         <div class="col-md-6 col-lg-4"><div class="p-3 bg-white shadow-sm rounded border-start border-warning border-4"><h5 class="text-warning">Para Pagamento</h5><p class="fs-4 fw-bold">${kpiParaPagamento}</p></div></div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-5">
-                        <h3 class="mb-0">📅 Agendamentos de Hoje</h3>
-                        <button class="btn btn-outline-success" id="refreshDashboardBtn">🔄 Atualizar</button>
+                        <h3 class="mb-0">Agendamentos de Hoje</h3>
+                        <button class="btn btn-outline-success" id="refreshDashboardBtn">Atualizar</button>
                     </div>
                     <div class="card p-0 mt-3">
                         <table class="table table-striped mb-0" id="agHojeTable">
                             <thead>
-                                <tr><th>ID</th><th>Cliente</th><th>CPF</th><th>Serviço</th><th>Data Agendada</th><th>Status</th></tr>
+                                <tr><th>ID</th><th>Cliente</th><th>CPF</th><th>serviço</th><th>Data Agendada</th><th>Status</th></tr>
                             </thead>
                             <tbody></tbody>
                         </table>
                     </div>
-                    <h3 class="mt-5 mb-3">🛒 Reservas de Hoje</h3>
+                    <h3 class="mt-5 mb-3">Reservas de Hoje</h3>
                     <div class="card p-0">
                         <table class="table table-striped mb-0" id="resHojeTable">
                             <thead>
@@ -361,9 +365,14 @@
                 function renderAgHoje() {
                     const tbody = document.querySelector('#agHojeTable tbody');
                     tbody.innerHTML = '';
+                    if (!Array.isArray(agHoje) || agHoje.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-muted">Nenhum agendamento para hoje.</td></tr>';
+                        return;
+                    }
                     (agHoje || []).forEach(a => {
                         const tr = document.createElement('tr');
-                        const dataFmt = a.dataagendada ? String(a.dataagendada).split('T')[0] : '';
+                        const dataAg = a.dataagendada || a.dataAgendada;
+                        const dataFmt = dataAg ? String(dataAg).split('T')[0] : '';
                         tr.innerHTML = `<td>${a.id}</td><td>${a.cliente_nome||''}</td><td>${a.cliente_cpf||''}</td><td>${a.servico_nome||''}</td><td>${dataFmt}</td><td>${a.status}</td>`;
                         tbody.appendChild(tr);
                     });
@@ -371,10 +380,15 @@
                 function renderResHoje() {
                     const tbody = document.querySelector('#resHojeTable tbody');
                     tbody.innerHTML = '';
+                    if (!Array.isArray(resHoje) || resHoje.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-muted">Nenhuma reserva para hoje.</td></tr>';
+                        return;
+                    }
                     (resHoje || []).forEach(r => {
-                        const dataFmt = r.datareserva ? String(r.datareserva).split('T')[0] : '';
+                        const dataRes = r.datareserva || r.dataReserva;
+                        const dataFmt = dataRes ? String(dataRes).split('T')[0] : '';
                         const totalFmt = parseFloat(r.totalreserva || r.totalReserva || 0).toFixed(2);
-                        tr = document.createElement('tr');
+                        const tr = document.createElement('tr');
                         tr.innerHTML = `<td>${r.idreserva||r.idReserva}</td><td>${r.nomecliente||r.nomeCliente||''}</td><td>${dataFmt}</td><td>${totalFmt}</td><td>${r.status}</td><td>${r.statuspagamento||r.statusPagamento}</td>`;
                         tbody.appendChild(tr);
                     });
@@ -385,9 +399,9 @@
             }
 
 
-            /* ================= GERENCIAR FUNCIONÁRIOS (UC009 - COMPLETO) ================== */
+            /* ================= GERENCIAR Funcionários (UC009 - COMPLETO) ================== */
             else if (page === 'funcionarios') {
-                content.innerHTML = `<h2>Gerenciar Funcionários</h2><p>Buscando lista de funcionários...</p>`;
+                content.innerHTML = `<h2>Gerenciar Funcionários</h2><p>Buscando lista de Funcionários...</p>`;
                 selectedUserId = null; 
 
                 try {
@@ -449,7 +463,7 @@
 
                     `;
 
-                    // Lógica de Seleção de Linha
+                    // lógica de seleção de Linha
                     document.querySelectorAll('#funcionariosTable tbody tr').forEach(row => {
                         row.addEventListener('click', () => {
                             document.querySelectorAll('#funcionariosTable tbody tr').forEach(r => r.classList.remove('table-active-select'));
@@ -471,8 +485,8 @@
                                 document.getElementById('funcSenha').value = '';
                                 document.getElementById('funcSenha').removeAttribute('required');
                                 document.getElementById('funcPerfil').value = func.tipoPerfil || 'ATENDENTE';
-                                document.getElementById('modalFuncionariosLabel').textContent = '✏️ Editar Funcionário';
-                                document.getElementById('btnSalvarFunc').textContent = '💾 Salvar Alterações';
+                                document.getElementById('modalFuncionariosLabel').textContent = 'Editar Funcionário';
+                                document.getElementById('btnSalvarFunc').textContent = 'Salvar AlterAções';
                                 const modal = new bootstrap.Modal(document.getElementById('modalFuncionarios'));
                                 modal.show();
                             } catch(e){
@@ -486,8 +500,8 @@
                         document.getElementById('funcIdEdit').value = '';
                         document.getElementById('cadastroFuncionarioForm').reset();
                         document.getElementById('funcSenha').setAttribute('required', 'required');
-                        document.getElementById('modalFuncionariosLabel').textContent = '🧑‍🔧 Cadastrar Novo Funcionário (UC009)';
-                        document.getElementById('btnSalvarFunc').textContent = '💾 Cadastrar';
+                        document.getElementById('modalFuncionariosLabel').textContent = 'Cadastrar Novo Funcionário (UC009)';
+                        document.getElementById('btnSalvarFunc').textContent = 'Cadastrar';
                     });
                     
                     // Continue existing click logic
@@ -500,7 +514,7 @@
                             const perfilAlvo = (row.querySelector('td[data-col="tipoPerfil"]')?.textContent || '').trim().toUpperCase();
                             const isProprietarioTarget = perfilAlvo === 'PROPRIETARIO';
 
-                            // Gerente não pode bloquear proprietário
+                            // Gerente não pode bloquear Proprietário
                             if (meuPerfil === 'GERENTE' && isProprietarioTarget) {
                                 blockBtn.disabled = true;
                                 blockBtn.innerHTML = `<i class="fas fa-lock"></i> Bloqueio não permitido`;
@@ -535,7 +549,7 @@
                         });
                     });
 
-                    // Lógica de Filtro/Busca (Adaptado para o Novo HTML)
+                    // lógica de Filtro/Busca (Adaptado para o Novo HTML)
                     const search = document.getElementById("funcSearch");
                     const filtro = document.getElementById("funcFiltro");
                     const linhas = document.querySelectorAll("#funcionariosTable tbody tr");
@@ -557,11 +571,11 @@
 
 
                 } catch (error) {
-                    content.innerHTML = `<h2>Funcionários</h2><div class="alert alert-danger">Falha ao carregar lista de funcionários: ${error.message}</div>`;
+                    content.innerHTML = `<h2>Funcionários</h2><div class="alert alert-danger">Falha ao carregar lista de Funcionários: ${error.message}</div>`;
                 }
             }
             
-            /* ================= OUTRAS PÁGINAS (Simulação) ================== */
+            /* ================= OUTRAS páginas (Simulação) ================== */
                 else if (page === 'estoque') {
                     content.innerHTML = `
                         <h2>Estoque</h2>
@@ -576,8 +590,8 @@
                                 <option value="qtd">Qtd</option>
                             </select></div>
                             <div class="col-md-3 text-end">
-                                <button class="btn btn-primary w-100 mb-2" id="openCadastroModal">✨ Novo Produto</button>
-                                <button class="btn btn-success w-100" id="openEstoqueModal">📦 Gerenciar Estoque</button>
+                                <button class="btn btn-primary w-100 mb-2" id="openCadastroModal">Novo Produto</button>
+                                <button class="btn btn-success w-100" id="openEstoqueModal">Gerenciar Estoque</button>
                             </div>
                         </div>
                         <div class="card p-0">
@@ -647,12 +661,12 @@
                             <div class="modal-dialog modal-lg">
                                 <div class="modal-content" style="border-radius: 15px;">
                                     <div class="modal-header" style="background:#7ed957; color:white;">
-                                        <h5 class="modal-title fw-bold">✨ Cadastrar Novo Produto (UC002)</h5>
+                                        <h5 class="modal-title fw-bold">Cadastrar Novo Produto (UC002)</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <form id="formCadastroProduto">
                                         <div class="modal-body">
-                                            <h6><strong>Dados Básicos do Produto</strong></h6>
+                                            <h6><strong>Dados básicos do Produto</strong></h6>
                                             
                                             <div class="mb-2">
                                                 <label class="form-label">Nome do Produto</label>
@@ -667,7 +681,7 @@
                                             <div class="mb-2">
                                                 <label class="form-label">Imagem do Produto</label>
                                                 <input type="file" class="form-control" id="cadImagem" accept="image/*">
-                                                <div class="form-text">Opcional. A imagem será salva em assets/img com nome único.</div>
+                                                <div class="form-text">Opcional. A imagem será salva em assets/img com nome ânico.</div>
                                             </div>
 
                                             <div class="row">
@@ -695,7 +709,7 @@
                                             <div id="cadastroStatus" class="mt-3"></div>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="submit" class="btn btn-success px-4">💾 Salvar Produto</button>
+                                            <button type="submit" class="btn btn-success px-4">Salvar Produto</button>
                                             <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
                                         </div>
                                     </form>
@@ -708,7 +722,7 @@
                             <div class="modal-dialog">
                                 <div class="modal-content" style="border-radius: 15px;">
                                     <div class="modal-header" style="background:#7ed957; color:white;">
-                                        <h5 class="modal-title fw-bold">➕ Nova Categoria</h5>
+                                        <h5 class="modal-title fw-bold">?z. Nova Categoria</h5>
                                         <button type="button" class="btn-close" id="btnFecharNovaCategoria"></button>
                                     </div>
                                     <div class="modal-body">
@@ -719,7 +733,7 @@
                                         <div id="novaCategoriaStatus" class="mt-2"></div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-success px-4" id="btnSalvarNovaCategoria">💾 Salvar Categoria</button>
+                                        <button type="button" class="btn btn-success px-4" id="btnSalvarNovaCategoria">Salvar Categoria</button>
                                         <button type="button" class="btn btn-secondary px-4" id="btnVoltarCadastro">Voltar</button>
                                     </div>
                                 </div>
@@ -759,7 +773,7 @@
                     const openCadastroBtn = document.getElementById("openCadastroModal");
                     if (openCadastroBtn) {
                         openCadastroBtn.addEventListener("click", () => {
-                            populateCategories('catDropdown'); // Chama a função para popular o dropdown do cadastro
+                            populateCategories('catDropdown'); // Chama a Função para popular o dropdown do cadastro
                             modalCadastro.show();
                         });
                     }
@@ -808,7 +822,7 @@
                     });
 
 
-                    // 2. Lógica de submissão do formulário (IMPORTANTE: Envia o ID da Categoria)
+                    // 2. lógica de submissão do formulário (IMPORTANTE: Envia o ID da Categoria)
                     document.getElementById('formCadastroProduto')?.addEventListener('submit', async (e) => {
                         e.preventDefault();
                         const statusEl = document.getElementById('cadastroStatus');
@@ -922,7 +936,7 @@
                             const catSelect = document.getElementById('estoqueCategoria');
                             await populateCategories('estoqueCategoria');
                             
-                            // Tenta pré-selecionar pela categoria do grid
+                            // Tenta Pré-selecionar pela categoria do grid
                             if (produto.categoria) {
                                 const currentCatName = produto.categoria.toString().trim().toLowerCase();
                                 const opts = Array.from(catSelect.options);
@@ -932,7 +946,7 @@
                             
                             document.getElementById('estoqueQuantidade').value = produto.qtd || 0;
                             
-                            // Persistir dados no botão para uso no salvar
+                            // Persistir dados no Botão para uso no salvar
                             const btnSalvarLocal = document.getElementById('estoqueSalvar');
                             btnSalvarLocal.dataset.idProduto = String(produto.id || '');
                             btnSalvarLocal.dataset.qtdAtual = String(produto.qtd || '0');
@@ -991,11 +1005,11 @@
 
                     carregarCatalogo();
 
-                    // Salvar alterações no modal usando endpoint UC003 movimentar estoque
+                    // Salvar AlterAções no modal usando endpoint UC003 movimentar estoque
                     const btnSalvar = document.getElementById('estoqueSalvar');
                     btnSalvar?.addEventListener('click', async () => {
                         try {
-                            // Recupera dados do botão (fallback se produtoSelecionado estiver indisponível)
+                            // Recupera dados do Botão (fallback se produtoSelecionado estiver indisponível)
                             const idFromBtn = Number(btnSalvar.dataset.idProduto || 0);
                             const atualFromBtn = Number(btnSalvar.dataset.qtdAtual || 0);
                             const id = (produtoSelecionado?.id ?? idFromBtn);
@@ -1029,21 +1043,21 @@
                             await carregarCatalogo();
                             modalEstoque.hide();
                         } catch (e) {
-                            alert('Erro ao salvar alterações: ' + (e.message || e));
+                            alert('Erro ao salvar AlterAções: ' + (e.message || e));
                         }
                     });
 
-                    // (Dentro da função loadPage)
+                    // (Dentro da Função loadPage)
                     // ... conteúdo HTML do estoque ...
 
-                    // --- LÓGICA DO NOVO BOTÃO DE CADASTRO (UC002) ---
+                    // --- LÓGICA DO NOVO BOT?fO DE CADASTRO (UC002) ---
                     // Já inicializado acima: openCadastroModal chama populateCategories() e mostra o modal
                     // Mantemos APENAS o handler que envia idCategoria corretamente.
 
                 }
                 else if (page === 'servicos') {
                         content.innerHTML = `
-                                <h2>Catálogo de Serviços</h2>
+                                <h2>Catálogo de serviços</h2>
                                 <div class="row mb-3">
                                         <div class="col-md-6"><input type="text" id="servSearch" class="form-control" placeholder="Pesquisar..."></div>
                                         <div class="col-md-3">
@@ -1055,8 +1069,8 @@
                                         </div>
                                         <div class="col-md-3 text-end">
                                                 <div class="d-grid gap-2">
-                                                    <button class="btn btn-primary w-100" id="openServicoModal">✨ Novo Serviço</button>
-                                                    <button class="btn btn-warning w-100" id="editServicoBtn" disabled>✏️ Editar Serviço</button>
+                                                    <button class="btn btn-primary w-100" id="openServicoModal">Novo serviço</button>
+                                                    <button class="btn btn-warning w-100" id="editServicoBtn" disabled>Editar serviço</button>
                                                 </div>
                                         </div>
                                 </div>
@@ -1070,14 +1084,14 @@
                                     <div class="modal-dialog modal-lg">
                                         <div class="modal-content" style="border-radius:15px;">
                                             <div class="modal-header" style="background:#7ed957; color:white;">
-                                                <h5 class="modal-title" id="modalServicoLabel">✨ Cadastrar Serviço</h5>
+                                                <h5 class="modal-title" id="modalServicoLabel">Cadastrar serviço</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
                                             <form id="formServico">
                                                 <div class="modal-body">
                                                     <input type="hidden" id="servIdEdit">
                                                     <div class="mb-3">
-                                                        <label class="form-label">Nome do Serviço</label>
+                                                        <label class="form-label">Nome do serviço</label>
                                                         <input type="text" class="form-control" id="servNome" required>
                                                     </div>
                                                     <div class="mb-3">
@@ -1095,7 +1109,7 @@
                                                     <div id="servStatus" class="mt-2"></div>
                                                 </div>
                                                 <div class="modal-footer">
-                                                    <button type="submit" class="btn btn-success" id="servSubmitBtn">💾 Salvar Serviço</button>
+                                                    <button type="submit" class="btn btn-success" id="servSubmitBtn">Salvar serviço</button>
                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                                                 </div>
                                             </form>
@@ -1110,8 +1124,8 @@
                                 document.getElementById('formServico').reset();
                                 document.getElementById('servIdEdit').value = '';
                                 document.getElementById('servStatus').textContent = '';
-                                document.getElementById('modalServicoLabel').textContent = '✨ Cadastrar Serviço';
-                                document.getElementById('servSubmitBtn').textContent = '💾 Salvar Serviço';
+                                document.getElementById('modalServicoLabel').textContent = 'Cadastrar serviço';
+                                document.getElementById('servSubmitBtn').textContent = 'Salvar serviço';
                                 modalServico.show();
                         });
 
@@ -1123,7 +1137,7 @@
                                         (lista || []).forEach(s => {
                                                 const tr = document.createElement('tr');
                                                 tr.style.cursor = 'pointer';
-                                                const img = s.foto ? `<img src="${s.foto}" alt="foto" style="height:40px;object-fit:cover;border-radius:4px;">` : '<span class="text-muted">—</span>';
+                                                const img = s.foto ? `<img src="${s.foto}" alt="foto" style="height:40px;object-fit:cover;border-radius:4px;">` : '<span class="text-muted">?"</span>';
                                                 const valorFmt = parseFloat(s.valor || 0).toFixed(2);
                                                 tr.innerHTML = `<td data-col="idservico">${s.idservico}</td><td data-col="nome">${s.nome}</td><td data-col="duracaoestimada">${s.duracaoestimada}</td><td data-col="valor">${valorFmt}</td><td>${img}</td>`;
                                                 tr.addEventListener('click', () => {
@@ -1148,15 +1162,15 @@
                             if (!servicoSelecionadoId) { return; }
                             try {
                                 const dados = await fetchAuthenticated(`/api/servicos/${servicoSelecionadoId}`, 'GET');
-                                if (!dados || !dados.idservico) throw new Error('Serviço não encontrado');
+                                if (!dados || !dados.idservico) throw new Error('serviço não encontrado');
                                 document.getElementById('servIdEdit').value = dados.idservico;
                                 document.getElementById('servNome').value = dados.nome || '';
                                 document.getElementById('servDuracao').value = dados.duracaoestimada || '';
                                 document.getElementById('servValor').value = parseFloat(dados.valor || 0).toFixed(2);
                                 document.getElementById('servFoto').value = '';
                                 document.getElementById('servStatus').textContent = '';
-                                document.getElementById('modalServicoLabel').textContent = '✏️ Editar Serviço';
-                                document.getElementById('servSubmitBtn').textContent = '💾 Salvar Alterações';
+                                document.getElementById('modalServicoLabel').textContent = 'Editar serviço';
+                                document.getElementById('servSubmitBtn').textContent = 'Salvar AlterAções';
                                 modalServico.show();
                             } catch (e) {
                                 alert('Erro ao carregar serviço para edição: ' + (e.message || e));
@@ -1185,10 +1199,10 @@
                                 try {
                                         if (editId) {
                                             await fetchAuthenticated(`/api/servicos/${editId}`, 'PUT', { nome, duracaoestimada: duracao, valor, fotoBase64 });
-                                            statusEl.textContent = 'Serviço atualizado com sucesso!';
+                                            statusEl.textContent = 'serviço atualizado com sucesso!';
                                         } else {
                                             await fetchAuthenticated('/api/servicos', 'POST', { nome, duracaoestimada: duracao, valor, fotoBase64 });
-                                            statusEl.textContent = 'Serviço cadastrado com sucesso!';
+                                            statusEl.textContent = 'serviço cadastrado com sucesso!';
                                         }
                                         statusEl.className = 'mt-2 text-success fw-bold';
                                         carregarServicos();
@@ -1227,12 +1241,12 @@
                                     <option value="id">ID</option>
                                     <option value="cpf">CPF</option>
                                     <option value="nome">Nome</option>
-                                    <option value="servico">Serviço</option>
+                                    <option value="servico">serviço</option>
                                     <option value="status">Status</option>
                                 </select>
                             </div>
                             <div class="col-md-3 text-end">
-                                <button class="btn btn-success w-100" id="openAgendaModal">📅 Gerenciar Agendamentos</button>
+                                <button class="btn btn-success w-100" id="openAgendaModal">Gerenciar Agendamentos</button>
                             </div>
                         </div>
                         <!-- Tabela -->
@@ -1244,7 +1258,7 @@
                                         <th>CPF</th>
                                         <th>Nome</th>
                                         <th>Data</th>
-                                        <th>Serviço</th>
+                                        <th>serviço</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
@@ -1295,7 +1309,7 @@
                                             <input type="date" class="form-control">
                                         </div>
                                         <div class="mb-2">
-                                            <label class="form-label">Serviço</label>
+                                            <label class="form-label">serviço</label>
                                             <input type="text" class="form-control">
                                         </div>
                                         <div class="mb-2">
@@ -1370,7 +1384,7 @@
                                         </select>
                                     </div>
                                     <div class="col-md-3 text-end">
-                                        <button class="btn btn-success w-100" id="openClientesModal">👥 Gerenciar Clientes</button>
+                                        <button class="btn btn-success w-100" id="openClientesModal">Gerenciar Clientes</button>
                                     </div>
                                 </div>
 
@@ -1394,7 +1408,7 @@
                             <div class="modal-dialog modal-lg">
                                 <div class="modal-content shadow-lg" style="border-radius: 18px;">
                                     <div class="modal-header" style="background:#7ed957; color:white; border-radius: 18px 18px 0 0;">
-                                        <h5 class="modal-title fw-bold">👥 Gerenciar Clientes</h5>
+                                        <h5 class="modal-title fw-bold">Gerenciar Clientes</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
@@ -1423,7 +1437,7 @@
                                         </div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button class="btn btn-success px-4" id="cliSalvar">💾 Salvar</button>
+                                        <button class="btn btn-success px-4" id="cliSalvar">Salvar</button>
                                         <button class="btn btn-secondary px-4" data-bs-dismiss="modal">Fechar</button>
                                     </div>
                                 </div>
@@ -1536,25 +1550,25 @@
                     
                 else if (page === 'relatorios') {
                     content.innerHTML = `
-                        <h1 class="mb-4">📈 Relatórios (UC005)</h1>
+                        <h1 class="mb-4">Relatórios (UC005)</h1>
                         <div class="card p-4 shadow-sm">
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Tipo de Relatório</label>
                                     <select id="tipoRelatorio" class="form-select">
-                                        <option value="financeiro">📊 Relatório Financeiro</option>
-                                        <option value="vendas">💰 Relatório de Vendas</option>
-                                        <option value="servicos">🔧 Relatório de Serviços</option>
-                                        <option value="estoque">📦 Relatório de Estoque</option>
-                                        <option value="eventos">🎉 Relatório de Eventos</option>
+                                        <option value="financeiro">Relatório Financeiro</option>
+                                        <option value="vendas">Relatório de Vendas</option>
+                                        <option value="servicos">Relatório de serviços</option>
+                                        <option value="estoque">Relatório de Estoque</option>
+                                        <option value="eventos">Relatório de Eventos</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Formato de Exportação</label>
                                     <select id="formatoRelatorio" class="form-select">
-                                        <option value="pdf">📄 PDF</option>
-                                        <option value="csv">📊 CSV (Excel)</option>
-                                        <option value="json">🔗 JSON</option>
+                                        <option value="pdf">PDF</option>
+                                        <option value="csv">CSV (Excel)</option>
+                                        <option value="json">JSON</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -1577,12 +1591,12 @@
                         </div>
                         
                         <div class="card mt-4 p-4 shadow-sm" id="relatorioResultado" style="display:none;">
-                            <h4 class="mb-3">📋 Resultado do Relatório</h4>
+                            <h4 class="mb-3">Resultado do Relatório</h4>
                             <div id="relatorioConteudo"></div>
                         </div>
                     `;
 
-                    // Definir data padrão (últimos 30 dias)
+                    // Definir data padrão (Últimos 30 dias)
                     const hoje = new Date();
                     const trintaDiasAtras = new Date();
                     trintaDiasAtras.setDate(hoje.getDate() - 30);
@@ -1603,7 +1617,7 @@
                             return;
                         }
 
-                        statusEl.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Gerando relatório...</div>';
+                        statusEl.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Gerando Relatório...</div>';
                         resultadoDiv.style.display = 'none';
 
                         try {
@@ -1640,7 +1654,7 @@
                                 `;
                                 document.getElementById('copyJsonBtn').addEventListener('click', () => {
                                     navigator.clipboard.writeText(JSON.stringify(dados, null, 2));
-                                    alert('JSON copiado para a área de transferência!');
+                                    alert('JSON copiado para a Área de Transferência!');
                                 });
                                 document.getElementById('downloadJsonBtn').addEventListener('click', () => {
                                     const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
@@ -1658,7 +1672,7 @@
                                         csv += `${v.idreserva},"${v.datareserva}","${v.cliente || '-'}","${v.atendente || '-'}","${v.metodopagamento || '-'}",${v.valortotal}\n`;
                                     });
                                 } else if (tipo === 'servicos') {
-                                    csv = 'ID,Serviço,Cliente,Mecânico,Status,Data\n';
+                                    csv = 'ID,serviço,Cliente,Mecânico,Status,Data\n';
                                     dados.data.forEach(a => {
                                         csv += `${a.id},"${a.nomeservico || '-'}","${a.nomecliente || '-'}","${a.nomemecanico || '-'}","${a.status}","${a.datacriacao}"\n`;
                                     });
@@ -1681,7 +1695,7 @@
                                     }
                                     if (dados.servicos && dados.servicos.dados) {
                                         dados.servicos.dados.forEach(s => {
-                                            csv += `"Serviço",${s.id},"${s.datacriacao}","${s.nomeservico || '-'}",${s.valor}\n`;
+                                            csv += `"serviço",${s.id},"${s.datacriacao}","${s.nomeservico || '-'}",${s.valor}\n`;
                                         });
                                     }
                                 }
@@ -1717,7 +1731,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="card bg-light p-3">
-                                                    <h6>Serviços</h6>
+                                                    <h6>serviços</h6>
                                                     <p class="mb-0"><strong>R$ ${dados.resumo.totalServicos.toFixed(2)}</strong></p>
                                                     <small>${dados.servicos.pagos} pagos de ${dados.servicos.quantidade}</small>
                                                 </div>
@@ -1731,14 +1745,14 @@
                                         </div>
                                         <h5>Vendas</h5>
                                         ${renderTabelaRelatorio('vendas', dados.vendas.dados)}
-                                        <h5 class="mt-4">Serviços</h5>
+                                        <h5 class="mt-4">serviços</h5>
                                         ${renderTabelaRelatorio('servicos', dados.servicos.dados)}
                                     `;
                                 } else {
                                     resumoHTML = `
                                         <p><strong>Total de registros:</strong> ${dados.registros || 0}</p>
                                         ${tipo === 'vendas' ? `<p><strong>Valor Total:</strong> R$ ${dados.total.toFixed(2)}</p>` : ''}
-                                        ${tipo === 'servicos' ? `<p><strong>Serviços Concluídos:</strong> ${dados.concluidos} de ${dados.registros}</p><p><strong>Total Pago:</strong> R$ ${dados.totalPagos.toFixed(2)}</p>` : ''}
+                                        ${tipo === 'servicos' ? `<p><strong>serviços concluídos:</strong> ${dados.concluidos} de ${dados.registros}</p><p><strong>Total Pago:</strong> R$ ${dados.totalPagos.toFixed(2)}</p>` : ''}
                                         ${tipo === 'estoque' ? `<p><strong>Total Itens:</strong> ${dados.totalItens || 0}</p><p><strong>Valor do Estoque:</strong> R$ ${dados.valorEstoque.toFixed(2)}</p>` : ''}
                                         ${tipo === 'eventos' ? `<p><strong>Total de Inscritos:</strong> ${dados.totalInscritos || 0}</p>` : ''}
                                         <hr>
@@ -1749,14 +1763,14 @@
                                 conteudoDiv.innerHTML = `
                                     <div class="alert alert-success">
                                         <i class="fas fa-check-circle"></i> 
-                                        <strong>Relatório Gerado!</strong> Visualize os dados abaixo ou clique no botão para baixar o PDF.
+                                        <strong>Relatório Gerado!</strong> Visualize os dados abaixo ou clique no Botão para baixar o PDF.
                                     </div>
                                     <button class="btn btn-danger mb-3" id="gerarPdfBtn">
                                         <i class="fas fa-file-pdf"></i> Gerar e Baixar PDF
                                     </button>
                                     <div id="dadosRelatorio">
                                         <h3>Relatório de ${dados.tipo || tipo}</h3>
-                                        <p><strong>Período:</strong> ${dataInicio} a ${dataFim}</p>
+                                        <p><strong>período:</strong> ${dataInicio} a ${dataFim}</p>
                                         ${resumoHTML}
                                     </div>
                                 `;
@@ -1766,7 +1780,7 @@
                                 });
                             }
                         } catch (err) {
-                            statusEl.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Erro: ${err.error || err.message || 'Falha ao gerar relatório'}</div>`;
+                            statusEl.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Erro: ${err.error || err.message || 'Falha ao gerar Relatório'}</div>`;
                         }
                     });
 
@@ -1782,7 +1796,7 @@
                                 html += `<tr><td>${v.idreserva}</td><td>${dataFormatada}</td><td>${v.cliente || '-'}</td><td>${v.atendente || '-'}</td><td>${v.metodopagamento || '-'}</td><td>R$ ${parseFloat(v.valortotal || 0).toFixed(2)}</td></tr>`;
                             });
                         } else if (tipo === 'servicos') {
-                            html += '<th>ID</th><th>Serviço</th><th>Cliente</th><th>Mecânico</th><th>Status</th><th>Data</th></tr></thead><tbody>';
+                            html += '<th>ID</th><th>serviço</th><th>Cliente</th><th>Mecânico</th><th>Status</th><th>Data</th></tr></thead><tbody>';
                             data.forEach(a => {
                                 const dataFormatada = a.datacriacao ? new Date(a.datacriacao).toLocaleDateString('pt-BR') : '-';
                                 html += `<tr><td>${a.id}</td><td>${a.nomeservico || '-'}</td><td>${a.nomecliente || '-'}</td><td>${a.nomemecanico || '-'}</td><td>${a.status}</td><td>${dataFormatada}</td></tr>`;
@@ -1811,12 +1825,12 @@
                         // Cabeçalho
                         doc.setFontSize(18);
                         doc.setFont(undefined, 'bold');
-                        doc.text('Six Bikes - Sistema de Gestão', 105, 15, { align: 'center' });
+                        doc.text('Six Bikes - Sistema de Gestáo', 105, 15, { align: 'center' });
                         
                         doc.setFontSize(14);
                         const tipoTitulo = {
                             'vendas': 'Relatório de Vendas',
-                            'servicos': 'Relatório de Serviços',
+                            'servicos': 'Relatório de serviços',
                             'estoque': 'Relatório de Estoque',
                             'eventos': 'Relatório de Eventos',
                             'financeiro': 'Relatório Financeiro'
@@ -1825,7 +1839,7 @@
                         
                         doc.setFontSize(10);
                         doc.setFont(undefined, 'normal');
-                        doc.text(`Período: ${dataInicio} a ${dataFim}`, 105, 32, { align: 'center' });
+                        doc.text(`período: ${dataInicio} a ${dataFim}`, 105, 32, { align: 'center' });
                         doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 105, 37, { align: 'center' });
                         
                         let startY = 45;
@@ -1842,7 +1856,7 @@
                             doc.text(`(${dados.vendas.quantidade} registros)`, 70, startY);
                             startY += 6;
                             
-                            doc.text(`Total em Serviços: R$ ${dados.resumo.totalServicos.toFixed(2)}`, 14, startY);
+                            doc.text(`Total em serviços: R$ ${dados.resumo.totalServicos.toFixed(2)}`, 14, startY);
                             doc.text(`(${dados.servicos.pagos} pagos de ${dados.servicos.quantidade})`, 70, startY);
                             startY += 6;
                             
@@ -1874,20 +1888,20 @@
                                 startY = doc.lastAutoTable.finalY + 10;
                             }
                             
-                            // Tabela de Serviços
+                            // Tabela de serviços
                             if (startY > 250) {
                                 doc.addPage();
                                 startY = 20;
                             }
                             
                             doc.setFont(undefined, 'bold');
-                            doc.text('SERVIÇOS', 14, startY);
+                            doc.text('serviços', 14, startY);
                             startY += 5;
                             
                             if (dados.servicos.dados && dados.servicos.dados.length > 0) {
                                 doc.autoTable({
                                     startY: startY,
-                                    head: [['ID', 'Serviço', 'Cliente', 'Mecânico', 'Status', 'Data']],
+                                    head: [['ID', 'serviço', 'Cliente', 'Mecânico', 'Status', 'Data']],
                                     body: dados.servicos.dados.map(s => [
                                         s.id,
                                         s.nomeservico || '-',
@@ -1914,7 +1928,7 @@
                                 doc.text(`Valor Total: R$ ${dados.total.toFixed(2)}`, 14, startY);
                                 startY += 10;
                             } else if (tipo === 'servicos') {
-                                doc.text(`Serviços Concluídos: ${dados.concluidos} de ${dados.registros}`, 14, startY);
+                                doc.text(`serviços concluídos: ${dados.concluidos} de ${dados.registros}`, 14, startY);
                                 startY += 6;
                                 doc.setFont(undefined, 'bold');
                                 doc.text(`Total Pago: R$ ${dados.totalPagos.toFixed(2)}`, 14, startY);
@@ -1949,7 +1963,7 @@
                                         `R$ ${parseFloat(v.valortotal || 0).toFixed(2)}`
                                     ]);
                                 } else if (tipo === 'servicos') {
-                                    columns = ['ID', 'Serviço', 'Cliente', 'Mecânico', 'Status', 'Data'];
+                                    columns = ['ID', 'serviço', 'Cliente', 'Mecânico', 'Status', 'Data'];
                                     rows = dados.data.map(s => [
                                         s.id,
                                         s.nomeservico || '-',
@@ -2019,7 +2033,7 @@
                                     <option value="nome">Nome</option>
                                     <option value="data">Data</option>
                                 </select></div>
-                                <div class="col-md-3 text-end"><button class="btn btn-outline-secondary" id="refreshEventosBtn">🔄 Atualizar</button></div>
+                                <div class="col-md-3 text-end"><button class="btn btn-outline-secondary" id="refreshEventosBtn">Atualizar</button></div>
                             </div>
                             <div class="card p-0">
                                 <table class="table table-striped mb-0" id="eventosTable">
@@ -2051,7 +2065,7 @@
                                       <div id="evtStatus" class="mt-2"></div>
                                     </div>
                                     <div class="modal-footer">
-                                      <button type="submit" class="btn btn-success">💾 Salvar</button>
+                                      <button type="submit" class="btn btn-success">Salvar</button>
                                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                                     </div>
                                   </form>
@@ -2284,3 +2298,13 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
