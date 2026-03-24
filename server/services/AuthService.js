@@ -7,8 +7,8 @@ const bcrypt = require('bcryptjs');
  * Implementa a lógica de autenticação do usuário (UC001).
  */
 class AuthService {
-    async authenticate(login, senha) { // UC001
-        const usuario = await UsuarioRepository.findByLogin(login);
+    async authenticate(email, senha) { // UC001
+        const usuario = await UsuarioRepository.findByEmail(email);
         if (!usuario) { throw new Error('Credenciais inválidas'); }
         
         // 🚨 Comparação de Hash (Corrige o RNF001 na autenticação)

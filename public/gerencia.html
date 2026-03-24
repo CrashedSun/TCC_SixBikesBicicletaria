@@ -133,10 +133,11 @@
         <nav class="nav flex-column">
             <a href="#" class="nav-link active" data-page="dashboard"><i class="fas fa-home me-2"></i> Dashboard</a>
             <a href="#" class="nav-link" data-page="estoque"><i class="fas fa-warehouse me-2"></i> Gerenciar Estoque</a>
-            <a href="#" class="nav-link" data-page="servicos"><i class="fas fa-tools me-2"></i> Catálogo de serviços</a>
+            <a href="#" class="nav-link" data-page="servicos"><i class="fas fa-tools me-2"></i> Catálogo de Serviços</a>
             <a href="#" class="nav-link" data-page="clientes"><i class="fas fa-users me-2"></i> Clientes</a>
             
             <a href="#" class="nav-link" data-page="relatorios"><i class="fas fa-chart-line me-2"></i> Relatórios</a>
+            <a href="#" class="nav-link" data-page="auditoria"><i class="fas fa-clipboard-list me-2"></i> Auditoria</a>
             <a href="#" class="nav-link" data-page="funcionarios"><i class="fas fa-users-cog me-2"></i> Gerenciar Funcionários</a>
             <a href="#" class="nav-link" data-page="eventos"><i class="fas fa-calendar-alt me-2"></i> Eventos</a>
             <a href="#" class="nav-link" id="logoutButton"><i class="fas fa-sign-out-alt me-2"></i> Sair</a>
@@ -168,7 +169,7 @@
                                 <input type="text" class="form-control" id="funcNome" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">E-mail (Login)</label>
+                                <label class="form-label">E-mail (usado no login)</label>
                                 <input type="email" class="form-control" id="funcLogin" required>
                             </div>
                             <div class="col-md-6">
@@ -243,6 +244,58 @@
         userNameEl.textContent = 'Olá, ' + localStorage.getItem('usuario');
     }
         let selectedUserId = null;
+        window.__currentPage = null;
+
+        const CACHE_KEYS = {
+            estoque: 'cache:gerencia:estoque',
+            servicos: 'cache:gerencia:servicos'
+        };
+
+        function setCachedList(key, data) {
+            try {
+                localStorage.setItem(CACHE_KEYS[key], JSON.stringify({ ts: Date.now(), data }));
+            } catch (_) {}
+        }
+
+        function getCachedList(key) {
+            try {
+                const raw = localStorage.getItem(CACHE_KEYS[key]);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed?.data) ? parsed.data : null;
+            } catch (_) {
+                return null;
+            }
+        }
+
+        const __refreshTimers = {};
+        function schedulePartialRefresh(scope) {
+            if (__refreshTimers[scope]) clearTimeout(__refreshTimers[scope]);
+            __refreshTimers[scope] = setTimeout(() => {
+                if (scope === 'estoque' && window.__currentPage === 'estoque' && typeof window.__refreshEstoque === 'function') {
+                    window.__refreshEstoque();
+                }
+                if (scope === 'servicos' && window.__currentPage === 'servicos' && typeof window.__refreshServicos === 'function') {
+                    window.__refreshServicos();
+                }
+            }, 150);
+        }
+
+        function initRealtimeUpdates() {
+            if (window.__realtimeStarted) return;
+            if (typeof window.openRealtimeStream !== 'function') return;
+            window.__realtimeStarted = true;
+
+            window.__realtimeStream = window.openRealtimeStream((evt) => {
+                const type = evt?.type || '';
+                if (type.startsWith('produto.') || type.startsWith('estoque.')) {
+                    schedulePartialRefresh('estoque');
+                }
+                if (type.startsWith('servico.')) {
+                    schedulePartialRefresh('servicos');
+                }
+            });
+        }
         
         // Usa `fetchAuthenticated` definido em `assets/js/auth.js` para chamadas reais ao backend.
         // Removido mock embutido para permitir integração com o servidor.
@@ -269,7 +322,10 @@
             const isCurrentlyBlocked = row.classList.contains('table-danger-custom');
             const action = isCurrentlyBlocked ? "DESBLOQUEAR" : "BLOQUEAR";
 
-            if (!confirm(`Tem certeza que deseja ${action} o acesso do USUÁRIO ID ${userId}?`)) {
+            const confirmar = typeof window.showStyledConfirm === 'function'
+                ? await window.showStyledConfirm(`Tem certeza que deseja ${action} o acesso do USUÁRIO ID ${userId}?`, { title: `${action} acesso`, confirmText: action })
+                : confirm(`Tem certeza que deseja ${action} o acesso do USUÁRIO ID ${userId}?`);
+            if (!confirmar) {
                 return;
             }
 
@@ -289,6 +345,7 @@
          * Função principal para carregar o conteúdo de cada página/menu.
          */
         async function loadPage(page) {
+            window.__currentPage = page;
             const content = document.getElementById('main-content');
             content.innerHTML = `<h2 class="text-center mt-5">Carregando ${page}...</h2>`;
             
@@ -411,7 +468,7 @@
                         <tr data-user-id="${f.id}" class="clickable-row ${f.ativo ? '' : 'table-danger-custom'}">
                             <td data-col="id">${f.id}</td>
                             <td data-col="nome">${f.nome}</td>
-                            <td data-col="login">${f.login}</td>
+                            <td data-col="email">${f.email || '-'}</td>
                             <td data-col="tipoPerfil">${f.tipoPerfil}</td>
                             <td data-col="status">${f.ativo ? 'Ativo' : 'BLOQUEADO'}</td>
                         </tr>
@@ -433,7 +490,7 @@
                                 <select id="funcFiltro" class="form-select">
                                     <option value="id">ID</option>
                                     <option value="nome">Nome</option>
-                                    <option value="login">Login</option>
+                                    <option value="email">E-mail</option>
                                     <option value="tipoPerfil">Cargo</option>
                                 </select>
                             </div>
@@ -450,7 +507,7 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Nome</th>
-                                        <th>Login</th>
+                                        <th>E-mail</th>
                                         <th>Cargo</th>
                                         <th>Status</th>
                                     </tr>
@@ -480,7 +537,7 @@
                                 const func = await fetchAuthenticated(`/funcionarios/${userId}`, 'GET');
                                 document.getElementById('funcIdEdit').value = func.id;
                                 document.getElementById('funcNome').value = func.nome || '';
-                                document.getElementById('funcLogin').value = func.login || '';
+                                document.getElementById('funcLogin').value = (func.email || '');
                                 document.getElementById('funcMatricula').value = func.matricula || '';
                                 document.getElementById('funcSenha').value = '';
                                 document.getElementById('funcSenha').removeAttribute('required');
@@ -539,7 +596,7 @@
                                 val = (tr.querySelector('td:nth-child(1)')?.textContent || '').toLowerCase();
                             } else if (coluna === 'nome') {
                                 val = (tr.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
-                            } else if (coluna === 'login') {
+                            } else if (coluna === 'email') {
                                 val = (tr.querySelector('td:nth-child(3)')?.textContent || '').toLowerCase();
                             } else if (coluna === 'tipoPerfil') {
                                 val = (tr.querySelector('td:nth-child(4)')?.textContent || '').toLowerCase();
@@ -594,20 +651,8 @@
                                 <button class="btn btn-success w-100" id="openEstoqueModal">Gerenciar Estoque</button>
                             </div>
                         </div>
-                        <div class="card p-0">
-                            <table class="table table-striped mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Nome</th>
-                                        <th>Descrição</th>
-                                        <th>Categoria</th>
-                                        <th>Preço</th>
-                                        <th>Qtd</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="estoqueTable"></tbody>
-                            </table>
+                        <div class="card p-3">
+                            <div id="estoqueCards" class="row" style="--bs-gutter-x:15px; --bs-gutter-y:15px;"></div>
                         </div>
                         <!-- MODAL GERENCIAR ESTOQUE -->
                         <div class="modal fade" id="modalEstoque" tabindex="-1">
@@ -640,6 +685,11 @@
                                             <select class="form-select" id="estoqueCategoria" disabled>
                                                 <option value="">Carregando categorias...</option>
                                             </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Alterar Imagem</label>
+                                            <input type="file" class="form-control" id="estoqueImagem" accept="image/*">
+                                            <div class="form-text">Opcional. Se selecionar, substitui a imagem atual do produto.</div>
                                         </div>
                                         <div class="mb-2">
                                             <label class="form-label">Quantidade</label>
@@ -882,35 +932,34 @@
                     // Estado: produto selecionado no grid
                     let produtoSelecionado = null;
 
-                    // Permite selecionar uma linha do grid e guarda os dados
+                    // Permite selecionar um card do grid e guarda os dados
                     function habilitarSelecaoGrid() {
-                        const tbody = document.getElementById('estoqueTable');
-                        tbody.querySelectorAll('tr').forEach(tr => {
-                            tr.style.cursor = 'pointer';
-                            tr.addEventListener('click', () => {
-                                // limpar seleção anterior
-                                tbody.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
-                                tr.classList.add('table-active');
-                                const id = tr.querySelector('[data-col="idProduto"]').textContent.trim();
-                                const nome = tr.querySelector('[data-col="nome"]').textContent.trim();
-                                const descricao = tr.querySelector('[data-col="descricao"]').textContent.trim();
-                                const categoria = tr.querySelector('[data-col="categoria"]').textContent.trim();
-                                const preco = tr.querySelector('[data-col="preco"]').textContent.trim();
-                                const qtd = tr.querySelector('[data-col="qtd"]').textContent.trim();
-                                produtoSelecionado = { id: Number(id), nome, descricao, categoria, preco: Number(preco), qtd: Number(qtd) };
+                        const cardsContainer = document.getElementById('estoqueCards');
+                        cardsContainer.querySelectorAll('.estoque-item-card').forEach(card => {
+                            card.style.cursor = 'pointer';
+                            card.addEventListener('click', () => {
+                                cardsContainer.querySelectorAll('.estoque-item-card').forEach(c => c.classList.remove('border-success', 'shadow'));
+                                card.classList.add('border-success', 'shadow');
+                                produtoSelecionado = {
+                                    id: Number(card.dataset.idProduto || 0),
+                                    nome: card.dataset.nome || '',
+                                    descricao: card.dataset.descricao || '',
+                                    categoria: card.dataset.categoria || '',
+                                    preco: Number(card.dataset.preco || 0),
+                                    qtd: Number(card.dataset.qtd || 0)
+                                };
                             });
                         });
                     }
 
                     // Remover seleção ao clicar fora do grid
                     document.addEventListener('click', (ev) => {
-                        const tbody = document.getElementById('estoqueTable');
-                        const grid = tbody?.closest('table');
+                        const cardsContainer = document.getElementById('estoqueCards');
                         const modalEl = document.getElementById('modalEstoque');
-                        const isInsideGrid = grid && (grid.contains(ev.target));
+                        const isInsideGrid = cardsContainer && (cardsContainer.contains(ev.target));
                         const isInsideModal = modalEl && modalEl.contains(ev.target);
                         if (!isInsideGrid && !isInsideModal) {
-                            tbody?.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
+                            cardsContainer?.querySelectorAll('.estoque-item-card').forEach(c => c.classList.remove('border-success', 'shadow'));
                             produtoSelecionado = null;
                         }
                     });
@@ -943,6 +992,10 @@
                                 const match = opts.find(o => o.textContent.toLowerCase() === currentCatName);
                                 if (match) { catSelect.value = match.value; }
                             }
+
+                            // Limpa seleção de novo arquivo de imagem ao abrir modal
+                            const imgInput = document.getElementById('estoqueImagem');
+                            if (imgInput) { imgInput.value = ''; }
                             
                             document.getElementById('estoqueQuantidade').value = produto.qtd || 0;
                             
@@ -962,33 +1015,111 @@
                     async function carregarCatalogo() {
                         try {
                             const resposta = await fetchAuthenticated('/api/produtos', 'GET');
-                            const tbody = document.getElementById('estoqueTable');
-                            tbody.innerHTML = '';
+                            const cardsContainer = document.getElementById('estoqueCards');
+                            cardsContainer.innerHTML = '';
 
                             // Normaliza diferentes formatos de resposta (array direto, {data: []}, {produtos: []})
                             const lista = Array.isArray(resposta)
                                 ? resposta
                                 : (resposta?.data || resposta?.produtos || []);
 
+                            setCachedList('estoque', lista);
+
                             lista.forEach(p => {
-                                const tr = document.createElement('tr');
-                                tr.innerHTML = `
-                                    <td data-col="idProduto">${p.idproduto ?? p.idProduto ?? ''}</td>
-                                    <td data-col="nome">${p.nome ?? ''}</td>
-                                    <td data-col="descricao">${p.descricao ?? ''}</td>
-                                    <td data-col="categoria">${(p.categoria ?? '').toString().trim() || 'Sem categoria'}</td>
-                                    <td data-col="preco">${p.preco ?? ''}</td>
-                                    <td data-col="qtd">${p.qtd ?? 0}</td>
+                                const cardCol = document.createElement('div');
+                                cardCol.className = 'col-12 col-sm-6 col-lg-4 col-xl-3';
+                                const idProduto = (p.idproduto ?? p.idProduto ?? '');
+                                const nome = (p.nome ?? '').toString();
+                                const descricao = (p.descricao ?? '').toString();
+                                const categoria = ((p.categoria ?? '').toString().trim() || 'Sem categoria');
+                                const precoNum = Number(p.preco ?? 0);
+                                const qtdNum = Number(p.qtd ?? 0);
+                                const rawImg = (p.imagemUrl || p.imagem_url || '').toString().trim();
+                                const imagemPadrao = '/assets/img/category_img_01.webp';
+                                const imgPath = rawImg || imagemPadrao;
+                                const imgSrc = !imgPath.startsWith('http')
+                                    ? `${window.location.origin}${imgPath.startsWith('/') ? '' : '/'}${imgPath}`
+                                    : imgPath;
+                                const precoFmt = Number.isFinite(precoNum) ? precoNum.toFixed(2) : '0.00';
+
+                                cardCol.innerHTML = `
+                                    <div class="card h-100 border-2 estoque-item-card"
+                                        style="width:100%;"
+                                        data-id-produto="${idProduto}"
+                                        data-nome="${nome.replace(/\"/g, '&quot;')}"
+                                        data-descricao="${descricao.replace(/\"/g, '&quot;')}"
+                                        data-categoria="${categoria.replace(/\"/g, '&quot;')}"
+                                        data-preco="${precoNum}"
+                                        data-qtd="${qtdNum}">
+                                        <img src="${imgSrc}" alt="${nome.replace(/\"/g, '&quot;')}" style="width:100%;height:240px;object-fit:contain;background:#f8f9fa;padding:8px;border-top-left-radius:.375rem;border-top-right-radius:.375rem;">
+                                        <div class="card-body d-flex flex-column p-2">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <span class="badge bg-secondary">ID ${idProduto}</span>
+                                                <span class="badge ${qtdNum > 0 ? 'bg-success' : 'bg-danger'}">Qtd: ${qtdNum}</span>
+                                            </div>
+                                            <h6 class="card-title mb-1">${nome}</h6>
+                                            <p class="text-muted small mb-1" style="line-height:1.2;">${descricao || 'Sem descrição'}</p>
+                                            <p class="small mb-1"><strong>Categoria:</strong> ${categoria}</p>
+                                            <p class="mb-0 text-success fw-bold">R$ ${precoFmt}</p>
+                                        </div>
+                                    </div>
                                 `;
-                                tbody.appendChild(tr);
+                                cardsContainer.appendChild(cardCol);
                             });
                             habilitarSelecaoGrid();
                         } catch (err) {
                             console.error('Falha ao carregar estoque:', err);
-                            const tbody = document.getElementById('estoqueTable');
-                            tbody.innerHTML = `<tr><td colspan="6" class="text-danger">Erro ao carregar estoque</td></tr>`;
+                            const cardsContainer = document.getElementById('estoqueCards');
+                            const fallback = getCachedList('estoque');
+                            if (fallback) {
+                                fallback.forEach(p => {
+                                    const cardCol = document.createElement('div');
+                                    cardCol.className = 'col-12 col-sm-6 col-lg-4 col-xl-3';
+                                    const idProduto = (p.idproduto ?? p.idProduto ?? '');
+                                    const nome = (p.nome ?? '').toString();
+                                    const descricao = (p.descricao ?? '').toString();
+                                    const categoria = ((p.categoria ?? '').toString().trim() || 'Sem categoria');
+                                    const precoNum = Number(p.preco ?? 0);
+                                    const qtdNum = Number(p.qtd ?? 0);
+                                    const rawImg = (p.imagemUrl || p.imagem_url || '').toString().trim();
+                                    const imagemPadrao = '/assets/img/category_img_01.webp';
+                                    const imgPath = rawImg || imagemPadrao;
+                                    const imgSrc = !imgPath.startsWith('http')
+                                        ? `${window.location.origin}${imgPath.startsWith('/') ? '' : '/'}${imgPath}`
+                                        : imgPath;
+                                    const precoFmt = Number.isFinite(precoNum) ? precoNum.toFixed(2) : '0.00';
+                                    cardCol.innerHTML = `
+                                        <div class="card h-100 border-2 estoque-item-card"
+                                            style="width:100%;"
+                                            data-id-produto="${idProduto}"
+                                            data-nome="${nome.replace(/\"/g, '&quot;')}"
+                                            data-descricao="${descricao.replace(/\"/g, '&quot;')}"
+                                            data-categoria="${categoria.replace(/\"/g, '&quot;')}"
+                                            data-preco="${precoNum}"
+                                            data-qtd="${qtdNum}">
+                                            <img src="${imgSrc}" alt="${nome.replace(/\"/g, '&quot;')}" style="width:100%;height:240px;object-fit:contain;background:#f8f9fa;padding:8px;border-top-left-radius:.375rem;border-top-right-radius:.375rem;">
+                                            <div class="card-body d-flex flex-column p-2">
+                                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                                    <span class="badge bg-secondary">ID ${idProduto}</span>
+                                                    <span class="badge ${qtdNum > 0 ? 'bg-success' : 'bg-danger'}">Qtd: ${qtdNum}</span>
+                                                </div>
+                                                <h6 class="card-title mb-1">${nome}</h6>
+                                                <p class="text-muted small mb-1" style="line-height:1.2;">${descricao || 'Sem descrição'}</p>
+                                                <p class="small mb-1"><strong>Categoria:</strong> ${categoria}</p>
+                                                <p class="mb-0 text-success fw-bold">R$ ${precoFmt}</p>
+                                            </div>
+                                        </div>
+                                    `;
+                                    cardsContainer.appendChild(cardCol);
+                                });
+                                habilitarSelecaoGrid();
+                            } else {
+                                cardsContainer.innerHTML = `<div class="col-12"><div class="alert alert-danger mb-0">Erro ao carregar estoque</div></div>`;
+                            }
                         }
                     }
+
+                    window.__refreshEstoque = carregarCatalogo;
 
                     // Filtro
                     const input = document.getElementById('estoqueSearch');
@@ -996,10 +1127,17 @@
                     input.addEventListener('keyup', () => {
                         let texto = input.value.toLowerCase().replace(/[^0-9a-z]/gi, '');
                         const coluna = filtro.value;
-                        document.querySelectorAll('#estoqueTable tr').forEach(tr => {
-                            const cel = tr.querySelector(`[data-col="${coluna}"]`);
-                            const val = cel ? (cel.textContent || '').toLowerCase().replace(/[^0-9a-z]/gi,'') : '';
-                            tr.style.display = val.includes(texto) ? '' : 'none';
+                        document.querySelectorAll('#estoqueCards .estoque-item-card').forEach(card => {
+                            let val = '';
+                            if (coluna === 'idProduto') val = (card.dataset.idProduto || '').toLowerCase();
+                            if (coluna === 'nome') val = (card.dataset.nome || '').toLowerCase();
+                            if (coluna === 'descricao') val = (card.dataset.descricao || '').toLowerCase();
+                            if (coluna === 'categoria') val = (card.dataset.categoria || '').toLowerCase();
+                            if (coluna === 'preco') val = (card.dataset.preco || '').toLowerCase();
+                            if (coluna === 'qtd') val = (card.dataset.qtd || '').toLowerCase();
+                            val = val.replace(/[^0-9a-z]/gi, '');
+                            const col = card.closest('.col-12, .col-sm-6, .col-lg-4, .col-xl-3') || card.parentElement;
+                            col.style.display = val.includes(texto) ? '' : 'none';
                         });
                     });
 
@@ -1024,9 +1162,27 @@
                             const preco = Number(document.getElementById('estoquePreco').value || 0);
                             const idCategoria = Number(document.getElementById('estoqueCategoria').value || 0);
                             const novaQtd = Number(document.getElementById('estoqueQuantidade').value || 0);
+                            const imagemFile = document.getElementById('estoqueImagem')?.files?.[0] || null;
+
+                            let imagemBase64 = null;
+                            let imagemNome = null;
+                            if (imagemFile) {
+                                imagemBase64 = await new Promise((resolve, reject) => {
+                                    const reader = new FileReader();
+                                    reader.onload = () => resolve(reader.result);
+                                    reader.onerror = reject;
+                                    reader.readAsDataURL(imagemFile);
+                                });
+                                imagemNome = imagemFile.name;
+                            }
 
                             // 1) Atualiza dados básicos do produto
-                            await fetchAuthenticated(`/api/produtos/${id}`, 'PUT', { nome, descricao, preco, idCategoria });
+                            const payload = { nome, descricao, preco, idCategoria };
+                            if (imagemBase64) {
+                                payload.imagemBase64 = String(imagemBase64);
+                                payload.imagemNome = imagemNome;
+                            }
+                            await fetchAuthenticated(`/api/produtos/${id}`, 'PUT', payload);
 
                             // 2) Atualiza estoque (se houve mudança de quantidade)
                             const delta = novaQtd - atual;
@@ -1074,11 +1230,8 @@
                                                 </div>
                                         </div>
                                 </div>
-                                <div class="card p-0">
-                                        <table class="table table-striped mb-0" id="servicosTable">
-                                                <thead><tr><th>ID</th><th>Nome</th><th>Duração (min)</th><th>Valor (R$)</th><th>Foto</th></tr></thead>
-                                                <tbody></tbody>
-                                        </table>
+                                <div class="card p-3">
+                                    <div id="servicosCards" class="row" style="--bs-gutter-x:15px; --bs-gutter-y:15px;"></div>
                                 </div>
                                 <div class="modal fade" id="modalServico" tabindex="-1">
                                     <div class="modal-dialog modal-lg">
@@ -1132,28 +1285,90 @@
                         async function carregarServicos() {
                                 try {
                                         const lista = await fetchAuthenticated('/api/servicos', 'GET');
-                                        const tbody = document.querySelector('#servicosTable tbody');
-                                        tbody.innerHTML = '';
+                                        const cardsContainer = document.getElementById('servicosCards');
+                                        cardsContainer.innerHTML = '';
+                                setCachedList('servicos', lista || []);
                                         (lista || []).forEach(s => {
-                                                const tr = document.createElement('tr');
-                                                tr.style.cursor = 'pointer';
-                                                const img = s.foto ? `<img src="${s.foto}" alt="foto" style="height:40px;object-fit:cover;border-radius:4px;">` : '<span class="text-muted">?"</span>';
+                                                const cardCol = document.createElement('div');
+                                                cardCol.className = 'col-12 col-sm-6 col-lg-4 col-xl-3';
                                                 const valorFmt = parseFloat(s.valor || 0).toFixed(2);
-                                                tr.innerHTML = `<td data-col="idservico">${s.idservico}</td><td data-col="nome">${s.nome}</td><td data-col="duracaoestimada">${s.duracaoestimada}</td><td data-col="valor">${valorFmt}</td><td>${img}</td>`;
-                                                tr.addEventListener('click', () => {
-                                                    // limpar seleção anterior
-                                                    tbody.querySelectorAll('tr').forEach(r => r.classList.remove('table-active'));
-                                                    tr.classList.add('table-active');
+                                                const imagemPadrao = '/assets/img/category_img_01.webp';
+                                                const fotoPath = (s.foto || '').toString().trim() || imagemPadrao;
+                                                const fotoSrc = !fotoPath.startsWith('http')
+                                                    ? `${window.location.origin}${fotoPath.startsWith('/') ? '' : '/'}${fotoPath}`
+                                                    : fotoPath;
+                                                cardCol.innerHTML = `
+                                                    <div class="card h-100 border-2 servico-item-card"
+                                                        style="width:100%;"
+                                                        data-idservico="${s.idservico}"
+                                                        data-nome="${(s.nome || '').toString().replace(/\"/g, '&quot;')}"
+                                                        data-duracaoestimada="${s.duracaoestimada || ''}">
+                                                        <img src="${fotoSrc}" alt="${(s.nome || 'serviço').toString().replace(/\"/g, '&quot;')}" style="width:100%;height:240px;object-fit:contain;background:#f8f9fa;padding:8px;border-top-left-radius:.375rem;border-top-right-radius:.375rem;">
+                                                        <div class="card-body d-flex flex-column p-2">
+                                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                                <span class="badge bg-secondary">ID ${s.idservico}</span>
+                                                                <span class="badge bg-info text-dark">${s.duracaoestimada || 0} min</span>
+                                                            </div>
+                                                            <h6 class="card-title mb-1">${s.nome || ''}</h6>
+                                                            <p class="mb-0 text-success fw-bold">R$ ${valorFmt}</p>
+                                                        </div>
+                                                    </div>
+                                                `;
+                                                const card = cardCol.querySelector('.servico-item-card');
+                                                card.addEventListener('click', () => {
+                                                    cardsContainer.querySelectorAll('.servico-item-card').forEach(c => c.classList.remove('border-success', 'shadow'));
+                                                    card.classList.add('border-success', 'shadow');
                                                     servicoSelecionadoId = s.idservico;
                                                     document.getElementById('editServicoBtn').disabled = false;
                                                 });
-                                                tbody.appendChild(tr);
+                                                cardsContainer.appendChild(cardCol);
                                         });
                                 } catch(e) {
-                                        const tbody = document.querySelector('#servicosTable tbody');
-                                        tbody.innerHTML = `<tr><td colspan="4" class="text-danger">Erro ao carregar serviços</td></tr>`;
+                                        const cardsContainer = document.getElementById('servicosCards');
+                                        const fallback = getCachedList('servicos');
+                                        if (fallback) {
+                                            fallback.forEach(s => {
+                                                const cardCol = document.createElement('div');
+                                                cardCol.className = 'col-12 col-sm-6 col-lg-4 col-xl-3';
+                                                const valorFmt = parseFloat(s.valor || 0).toFixed(2);
+                                                const imagemPadrao = '/assets/img/category_img_01.webp';
+                                                const fotoPath = (s.foto || '').toString().trim() || imagemPadrao;
+                                                const fotoSrc = !fotoPath.startsWith('http')
+                                                    ? `${window.location.origin}${fotoPath.startsWith('/') ? '' : '/'}${fotoPath}`
+                                                    : fotoPath;
+                                                cardCol.innerHTML = `
+                                                    <div class="card h-100 border-2 servico-item-card"
+                                                        style="width:100%;"
+                                                        data-idservico="${s.idservico}"
+                                                        data-nome="${(s.nome || '').toString().replace(/\"/g, '&quot;')}"
+                                                        data-duracaoestimada="${s.duracaoestimada || ''}">
+                                                        <img src="${fotoSrc}" alt="${(s.nome || 'serviço').toString().replace(/\"/g, '&quot;')}" style="width:100%;height:240px;object-fit:contain;background:#f8f9fa;padding:8px;border-top-left-radius:.375rem;border-top-right-radius:.375rem;">
+                                                        <div class="card-body d-flex flex-column p-2">
+                                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                                <span class="badge bg-secondary">ID ${s.idservico}</span>
+                                                                <span class="badge bg-info text-dark">${s.duracaoestimada || 0} min</span>
+                                                            </div>
+                                                            <h6 class="card-title mb-1">${s.nome || ''}</h6>
+                                                            <p class="mb-0 text-success fw-bold">R$ ${valorFmt}</p>
+                                                        </div>
+                                                    </div>
+                                                `;
+                                                const card = cardCol.querySelector('.servico-item-card');
+                                                card.addEventListener('click', () => {
+                                                    cardsContainer.querySelectorAll('.servico-item-card').forEach(c => c.classList.remove('border-success', 'shadow'));
+                                                    card.classList.add('border-success', 'shadow');
+                                                    servicoSelecionadoId = s.idservico;
+                                                    document.getElementById('editServicoBtn').disabled = false;
+                                                });
+                                                cardsContainer.appendChild(cardCol);
+                                            });
+                                        } else {
+                                            cardsContainer.innerHTML = `<div class="col-12"><div class="alert alert-danger mb-0">Erro ao carregar serviços</div></div>`;
+                                        }
                                 }
                         }
+
+                        window.__refreshServicos = carregarServicos;
 
                         carregarServicos();
 
@@ -1221,10 +1436,14 @@
                         servInput.addEventListener('keyup', () => {
                                 const texto = servInput.value.toLowerCase().replace(/[^0-9a-z]/gi, '');
                                 const coluna = servFiltro.value;
-                                document.querySelectorAll('#servicosTable tbody tr').forEach(tr => {
-                                        const cel = tr.querySelector(`[data-col="${coluna}"]`);
-                                        const val = cel ? (cel.textContent || '').toLowerCase().replace(/[^0-9a-z]/gi,'') : '';
-                                        tr.style.display = val.includes(texto) ? '' : 'none';
+                            document.querySelectorAll('#servicosCards .servico-item-card').forEach(card => {
+                                let val = '';
+                                if (coluna === 'idservico') val = (card.dataset.idservico || '').toLowerCase();
+                                if (coluna === 'nome') val = (card.dataset.nome || '').toLowerCase();
+                                if (coluna === 'duracaoestimada') val = (card.dataset.duracaoestimada || '').toLowerCase();
+                                val = val.replace(/[^0-9a-z]/gi, '');
+                                const col = card.closest('.col-12, .col-sm-6, .col-lg-4') || card.parentElement;
+                                col.style.display = val.includes(texto) ? '' : 'none';
                                 });
                         });
                 }
@@ -1558,7 +1777,7 @@
                                     <select id="tipoRelatorio" class="form-select">
                                         <option value="financeiro">Relatório Financeiro</option>
                                         <option value="vendas">Relatório de Vendas</option>
-                                        <option value="servicos">Relatório de serviços</option>
+                                        <option value="servicos">Relatório de Serviços</option>
                                         <option value="estoque">Relatório de Estoque</option>
                                         <option value="eventos">Relatório de Eventos</option>
                                     </select>
@@ -1731,7 +1950,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="card bg-light p-3">
-                                                    <h6>serviços</h6>
+                                                    <h6>Serviços</h6>
                                                     <p class="mb-0"><strong>R$ ${dados.resumo.totalServicos.toFixed(2)}</strong></p>
                                                     <small>${dados.servicos.pagos} pagos de ${dados.servicos.quantidade}</small>
                                                 </div>
@@ -1745,14 +1964,14 @@
                                         </div>
                                         <h5>Vendas</h5>
                                         ${renderTabelaRelatorio('vendas', dados.vendas.dados)}
-                                        <h5 class="mt-4">serviços</h5>
+                                        <h5 class="mt-4">Serviços</h5>
                                         ${renderTabelaRelatorio('servicos', dados.servicos.dados)}
                                     `;
                                 } else {
                                     resumoHTML = `
                                         <p><strong>Total de registros:</strong> ${dados.registros || 0}</p>
                                         ${tipo === 'vendas' ? `<p><strong>Valor Total:</strong> R$ ${dados.total.toFixed(2)}</p>` : ''}
-                                        ${tipo === 'servicos' ? `<p><strong>serviços concluídos:</strong> ${dados.concluidos} de ${dados.registros}</p><p><strong>Total Pago:</strong> R$ ${dados.totalPagos.toFixed(2)}</p>` : ''}
+                                        ${tipo === 'servicos' ? `<p><strong>Serviços concluídos:</strong> ${dados.concluidos} de ${dados.registros}</p><p><strong>Total Pago:</strong> R$ ${dados.totalPagos.toFixed(2)}</p>` : ''}
                                         ${tipo === 'estoque' ? `<p><strong>Total Itens:</strong> ${dados.totalItens || 0}</p><p><strong>Valor do Estoque:</strong> R$ ${dados.valorEstoque.toFixed(2)}</p>` : ''}
                                         ${tipo === 'eventos' ? `<p><strong>Total de Inscritos:</strong> ${dados.totalInscritos || 0}</p>` : ''}
                                         <hr>
@@ -1830,7 +2049,7 @@
                         doc.setFontSize(14);
                         const tipoTitulo = {
                             'vendas': 'Relatório de Vendas',
-                            'servicos': 'Relatório de serviços',
+                            'servicos': 'Relatório de Serviços',
                             'estoque': 'Relatório de Estoque',
                             'eventos': 'Relatório de Eventos',
                             'financeiro': 'Relatório Financeiro'
@@ -1856,7 +2075,7 @@
                             doc.text(`(${dados.vendas.quantidade} registros)`, 70, startY);
                             startY += 6;
                             
-                            doc.text(`Total em serviços: R$ ${dados.resumo.totalServicos.toFixed(2)}`, 14, startY);
+                            doc.text(`Total em Serviços: R$ ${dados.resumo.totalServicos.toFixed(2)}`, 14, startY);
                             doc.text(`(${dados.servicos.pagos} pagos de ${dados.servicos.quantidade})`, 70, startY);
                             startY += 6;
                             
@@ -2018,6 +2237,174 @@
                         doc.save(nomeArquivo);
                     }
                 }
+                    else if (page === 'auditoria') {
+                        content.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2>Auditoria Global do Sistema</h2>
+                                <button class="btn btn-outline-success" id="refreshAuditoriaBtn">Atualizar</button>
+                            </div>
+
+                            <div class="card p-3 mb-3">
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Buscar</label>
+                                        <input id="auditQ" class="form-control" placeholder="ação, rota, mensagem, e-mail">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Nível</label>
+                                        <select id="auditNivel" class="form-select">
+                                            <option value="">Todos</option>
+                                            <option value="INFO">INFO</option>
+                                            <option value="WARN">WARN</option>
+                                            <option value="ERROR">ERROR</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Método</label>
+                                        <select id="auditMetodo" class="form-select">
+                                            <option value="">Todos</option>
+                                            <option value="GET">GET</option>
+                                            <option value="POST">POST</option>
+                                            <option value="PUT">PUT</option>
+                                            <option value="PATCH">PATCH</option>
+                                            <option value="DELETE">DELETE</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Status</label>
+                                        <input id="auditStatus" class="form-control" type="number" min="100" max="599" placeholder="ex: 401">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">ID Usuário</label>
+                                        <input id="auditUsuarioId" class="form-control" type="number" min="1" placeholder="ex: 5">
+                                    </div>
+                                </div>
+                                <div class="row g-2 mt-1">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Data inicial</label>
+                                        <input id="auditDe" class="form-control" type="datetime-local">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Data final</label>
+                                        <input id="auditAte" class="form-control" type="datetime-local">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Limite</label>
+                                        <input id="auditLimit" class="form-control" type="number" min="1" max="500" value="150">
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end gap-2">
+                                        <button id="auditFilterBtn" class="btn btn-success">Filtrar</button>
+                                        <button id="auditClearBtn" class="btn btn-outline-secondary">Limpar</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-striped mb-0" id="auditoriaTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Quando</th>
+                                                <th>Nível</th>
+                                                <th>Ação</th>
+                                                <th>Usuário</th>
+                                                <th>Método</th>
+                                                <th>Rota</th>
+                                                <th>Status</th>
+                                                <th>IP</th>
+                                                <th>Mensagem</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+
+                        const tbody = document.querySelector('#auditoriaTable tbody');
+
+                        const escapeHtml = (v) => String(v || '')
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;')
+                            .replace(/'/g, '&#39;');
+
+                        function buildAuditQuery() {
+                            const params = new URLSearchParams();
+                            const q = document.getElementById('auditQ').value.trim();
+                            const nivel = document.getElementById('auditNivel').value;
+                            const metodo = document.getElementById('auditMetodo').value;
+                            const statusCode = document.getElementById('auditStatus').value;
+                            const usuarioId = document.getElementById('auditUsuarioId').value;
+                            const de = document.getElementById('auditDe').value;
+                            const ate = document.getElementById('auditAte').value;
+                            const limit = document.getElementById('auditLimit').value;
+
+                            if (q) params.set('q', q);
+                            if (nivel) params.set('nivel', nivel);
+                            if (metodo) params.set('metodo', metodo);
+                            if (statusCode) params.set('statusCode', statusCode);
+                            if (usuarioId) params.set('usuarioId', usuarioId);
+                            if (de) params.set('de', de);
+                            if (ate) params.set('ate', ate);
+                            if (de || ate) params.set('tzOffset', String(new Date().getTimezoneOffset()));
+                            if (limit) params.set('limit', limit);
+                            return params.toString();
+                        }
+
+                        async function carregarAuditoria() {
+                            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Carregando logs...</td></tr>';
+                            try {
+                                const query = buildAuditQuery();
+                                const payload = await fetchAuthenticated(`/auditoria/logs${query ? `?${query}` : ''}`, 'GET');
+                                const logs = Array.isArray(payload?.data) ? payload.data : [];
+                                tbody.innerHTML = '';
+
+                                if (!logs.length) {
+                                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Nenhum log encontrado.</td></tr>';
+                                    return;
+                                }
+
+                                logs.forEach((log) => {
+                                    const created = log.criadoEm ? new Date(log.criadoEm).toLocaleString('pt-BR') : '-';
+                                    const usuario = log.usuarioEmail || (log.usuarioId ? `ID ${log.usuarioId}` : 'ANÔNIMO');
+                                    const msg = log.mensagem || '';
+                                    const tr = document.createElement('tr');
+                                    tr.innerHTML = `
+                                        <td>${escapeHtml(created)}</td>
+                                        <td>${escapeHtml(log.nivel)}</td>
+                                        <td>${escapeHtml(log.acao)}</td>
+                                        <td>${escapeHtml(usuario)}</td>
+                                        <td>${escapeHtml(log.metodo || '-')}</td>
+                                        <td title="${escapeHtml(log.rota || '')}">${escapeHtml(log.rota || '-')}</td>
+                                        <td>${escapeHtml(log.statusCode || '-')}</td>
+                                        <td>${escapeHtml(log.ip || '-')}</td>
+                                        <td title="${escapeHtml(msg)}">${escapeHtml(msg)}</td>
+                                    `;
+                                    tbody.appendChild(tr);
+                                });
+                            } catch (e) {
+                                tbody.innerHTML = `<tr><td colspan="9" class="text-danger text-center">Erro ao carregar auditoria: ${escapeHtml(e.message || e)}</td></tr>`;
+                            }
+                        }
+
+                        document.getElementById('refreshAuditoriaBtn').addEventListener('click', carregarAuditoria);
+                        document.getElementById('auditFilterBtn').addEventListener('click', carregarAuditoria);
+                        document.getElementById('auditClearBtn').addEventListener('click', () => {
+                            document.getElementById('auditQ').value = '';
+                            document.getElementById('auditNivel').value = '';
+                            document.getElementById('auditMetodo').value = '';
+                            document.getElementById('auditStatus').value = '';
+                            document.getElementById('auditUsuarioId').value = '';
+                            document.getElementById('auditDe').value = '';
+                            document.getElementById('auditAte').value = '';
+                            document.getElementById('auditLimit').value = '150';
+                            carregarAuditoria();
+                        });
+
+                        carregarAuditoria();
+                    }
                     else if (page === 'eventos') {
                         content.innerHTML = `
                             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -2233,6 +2620,7 @@
 
         // --- Inicialização e Listeners (DOM) ---
         document.addEventListener('DOMContentLoaded', () => {
+            initRealtimeUpdates();
             
             // 1. Inicializa o Dashboard
             loadPage('dashboard');
@@ -2260,7 +2648,7 @@
                     const idEdit = document.getElementById('funcIdEdit').value;
                     const dados = {
                         nome: document.getElementById('funcNome').value,
-                        login: document.getElementById('funcLogin').value,
+                        email: document.getElementById('funcLogin').value,
                         matricula: document.getElementById('funcMatricula').value,
                         tipoPerfil: document.getElementById('funcPerfil').value
                     };
@@ -2290,8 +2678,12 @@
             }
 
             // 4. Logout
-            document.getElementById('logoutButton').addEventListener('click', (e) => {
+            document.getElementById('logoutButton').addEventListener('click', async (e) => {
                 e.preventDefault();
+                const confirmar = typeof window.showStyledConfirm === 'function'
+                    ? await window.showStyledConfirm('Tem certeza que deseja sair do sistema?', { title: 'Sair' })
+                    : confirm('Tem certeza que deseja sair do sistema?');
+                if (!confirmar) return;
                 logout();
             });
         });

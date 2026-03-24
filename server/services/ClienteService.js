@@ -11,9 +11,9 @@ class ClienteService {
     async registrarNovoCliente(dados) {
         
         // 1. Validação de Duplicidade (RF013 / UC009 Fluxo Alternativo)
-        const usuarioExistente = await UsuarioRepository.findByLogin(dados.email);
+        const usuarioExistente = await UsuarioRepository.findByEmail(dados.email);
         if (usuarioExistente) { 
-            throw new Error('E-mail já cadastrado. Utilize outro login.'); 
+            throw new Error('E-mail já cadastrado.'); 
         }
 
         // 2. Criptografar a Senha (Correção de Segurança RNF001)
@@ -28,7 +28,6 @@ class ClienteService {
             dados.email, 
             senhaHash, // <--- Agora o hash está sendo passado
             dados.cpf, 
-            dados.email, 
             dados.telefone
         );
 

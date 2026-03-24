@@ -9,13 +9,12 @@ class ClienteRepository {
     async criarCliente(cliente) {
         // A SIMULAÇÃO FOI SUBSTITUÍDA PELA QUERY REAL
         const sql = `
-            INSERT INTO Usuario (nome, login, senha_hash, tipo_perfil, cpf, email, telefone)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO Usuario (nome, senha_hash, tipo_perfil, cpf, email, telefone)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING id;
         `;
         const params = [
             cliente.nome, 
-            cliente.login, 
             cliente.senhaHash, 
             'CLIENTE', // Tipo de perfil fixo para auto-registro
             cliente.cpf, 
@@ -30,7 +29,7 @@ class ClienteRepository {
     
     async listarClientes() {
         const sql = `
-            SELECT id, nome, login, cpf, email, telefone, tipo_perfil
+            SELECT id, nome, cpf, email, telefone, tipo_perfil
             FROM Usuario
             WHERE tipo_perfil = 'CLIENTE'
             ORDER BY nome;

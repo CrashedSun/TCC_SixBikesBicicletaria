@@ -107,6 +107,15 @@
     attach();
   }
 
+  // Atualização incremental: quando backend notificar alteração de catálogo,
+  // limpa cache local para próxima busca refletir apenas o que mudou.
+  window.addEventListener('sb:realtime', (ev) => {
+    const type = String(ev?.detail?.type || '').toLowerCase();
+    if (type.includes('produto') || type.includes('estoque') || type.includes('servico')) {
+      productsCache = null;
+    }
+  });
+
   // Export manual attach if needed
   window.attachProductSearch = attach;
 })();

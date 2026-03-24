@@ -7,7 +7,12 @@
     "start:backend": "node server/index.js",
     "start:frontend": "node public/server.js",
     "dev:backend": "node node_modules/nodemon/bin/nodemon.js server/index.js",
-    "dev:frontend": "node node_modules/nodemon/bin/nodemon.js public/server.js"
+    "dev:frontend": "node node_modules/nodemon/bin/nodemon.js public/server.js",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:restart": "docker compose down ; docker compose up -d"
   },
   "keywords": [],
   "author": "",

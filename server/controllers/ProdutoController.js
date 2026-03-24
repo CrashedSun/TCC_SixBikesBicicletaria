@@ -1,5 +1,8 @@
 // server/controllers/ProdutoController.js
 const ProdutoService = require('../services/ProdutoService');
+const RealtimeService = require('../services/RealtimeService');
+const fs = require('fs');
+const path = require('path');
 
 class ProdutoController {
     /** Rota: GET /api/produtos */
@@ -74,6 +77,7 @@ class ProdutoController {
                 return res.status(201).json({ id, message: "Produto cadastrado com sucesso.", imageUrl: publicUrl });
             }
 
+            RealtimeService.publish('produto.criado', { id, scope: 'estoque' });
             return res.status(201).json({ id, message: "Produto cadastrado com sucesso." }); 
         } catch(e) { return res.status(400).json({ error: e.message }); }
     }
@@ -83,6 +87,7 @@ class ProdutoController {
         const { id, tipo, qtd } = req.body;
         try {
             const result = await ProdutoService.movimentarEstoque(id, tipo, qtd);
+            RealtimeService.publish('estoque.movimentado', { id: Number(id), tipo, qtd, scope: 'estoque' });
             return res.status(200).json({ message: "Movimentação registrada com sucesso.", result });
         } catch(e) {
             return res.status(400).json({ error: e.message }); // Erro de estoque insuficiente
@@ -126,12 +131,47 @@ class ProdutoController {
     // Métodos CRUD restantes (Atualizar, Deletar)
     async atualizar(req, res) {
         try {
-            await ProdutoService.atualizarProduto(req.params.id, req.body);
+            const { imagemBase64, imagemNome, ...dadosProduto } = req.body;
+
+            const produto = await ProdutoService.atualizarProduto(req.params.id, dadosProduto);
+
+            if (imagemBase64) {
+                if (!imagemBase64.startsWith('data:image/')) {
+                    return res.status(400).json({ error: 'Formato de imagem inválido' });
+                }
+
+                let fileExtension = 'jpg';
+                const mimeMatch = imagemBase64.match(/^data:image\/(\w+);base64,/);
+                if (mimeMatch && mimeMatch[1]) {
+                    fileExtension = mimeMatch[1].toLowerCase() === 'jpeg' ? 'jpg' : mimeMatch[1].toLowerCase();
+                }
+
+                const fileName = `produto_${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExtension}`;
+                const uploadsDir = path.join(__dirname, '..', '..', 'public', 'assets', 'img', 'produtos');
+                const filePath = path.join(uploadsDir, fileName);
+
+                if (!fs.existsSync(uploadsDir)) {
+                    fs.mkdirSync(uploadsDir, { recursive: true });
+                }
+
+                const base64Data = imagemBase64.replace(/^data:image\/\w+;base64,/, '');
+                fs.writeFileSync(filePath, base64Data, { encoding: 'base64' });
+
+                const imagemUrl = `/assets/img/produtos/${fileName}`;
+                await ProdutoService.atualizarImagem(req.params.id, imagemUrl);
+                produto.imagemUrl = imagemUrl;
+            }
+
+            RealtimeService.publish('produto.atualizado', { id: Number(req.params.id), scope: 'estoque' });
+
             return res.status(200).json({ message: `Produto ${req.params.id} atualizado.` });
         } catch(e) {
             return res.status(400).json({ error: e.message });
         }
     }
-    async deletar(req, res) { return res.status(200).json({ message: `Produto ${req.params.id} deletado.` }); }
+    async deletar(req, res) {
+        RealtimeService.publish('produto.deletado', { id: Number(req.params.id), scope: 'estoque' });
+        return res.status(200).json({ message: `Produto ${req.params.id} deletado.` });
+    }
 }
 module.exports = new ProdutoController();

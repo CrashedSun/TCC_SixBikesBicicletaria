@@ -174,17 +174,19 @@ if (!localStorage.getItem("usuario")) {
 document.getElementById("userName").textContent =
     "Olá, " + localStorage.getItem("usuario");
 
-function logout() {
-    const confirmar = confirm("Tem certeza que deseja sair do sistema?");
-    if (confirmar) {
-        localStorage.removeItem("usuario");
-        localStorage.removeItem("userToken");
-        localStorage.removeItem("userProfile");
-        window.location.href = "login.html";
-    }
+async function logout() {
+    const confirmar = typeof window.showStyledConfirm === 'function'
+        ? await window.showStyledConfirm('Tem certeza que deseja sair do sistema?', { title: 'Sair' })
+        : confirm('Tem certeza que deseja sair do sistema?');
+    if (!confirmar) return;
+    localStorage.removeItem("usuario");
+    localStorage.removeItem("userToken");
+    localStorage.removeItem("userProfile");
+    window.location.href = "login.html";
 }
 
 function loadPage(page) {
+    window.__mecanicoCurrentPage = page;
     const content = document.getElementById('main-content');    
 
     if (page === 'dashboard') {
@@ -372,7 +374,7 @@ function loadPage(page) {
     loadAgendamentosAbertos();
     } else if (page === 'servicos') {
     content.innerHTML = `
-        <h2>Meus serviços</h2>
+        <h2>Meus Serviços</h2>
         <div class="mb-3 text-end">
             <button class="btn btn-primary" id="btnGerenciarServico" disabled>Gerenciar serviço</button>
         </div>
@@ -593,7 +595,10 @@ async function onFinalizarServico(e) {
     e.preventDefault();
     const id = window.selectedAgendamentoId;
     if (!id) { alert('Nenhum serviço selecionado.'); return; }
-    if (!confirm('Finalizar este serviço e enviar para pagamento?')) return;
+    const confirmar = typeof window.showStyledConfirm === 'function'
+        ? await window.showStyledConfirm('Finalizar este serviço e enviar para pagamento?', { title: 'Finalizar serviço', confirmText: 'Finalizar' })
+        : confirm('Finalizar este serviço e enviar para pagamento?');
+    if (!confirmar) return;
     try {
         await fetchAuth(`/agendamentos/${id}/finalizar`, { method: 'PUT' });
         alert('serviço finalizado com sucesso!');
@@ -664,6 +669,27 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             btnSubmit.hasListener = true;
         }
+    });
+
+    let mecanicoRealtimeTimer = null;
+    window.addEventListener('sb:realtime', (event) => {
+        const detail = event && event.detail ? event.detail : {};
+        const scopeList = Array.isArray(detail.scopes) ? detail.scopes : [];
+        const eventType = String(detail.eventType || '').toLowerCase();
+        const primaryScope = eventType.includes('.') ? eventType.split('.')[0] : '';
+        const scopes = new Set([...scopeList, primaryScope].filter(Boolean));
+        if (scopes.size === 0) return;
+
+        const currentPage = window.__mecanicoCurrentPage || 'dashboard';
+        const shouldReloadCurrentPage =
+            (currentPage === 'dashboard' && (scopes.has('agendamentos') || scopes.has('produtos') || scopes.has('estoque'))) ||
+            (currentPage === 'servicos' && (scopes.has('agendamentos') || scopes.has('produtos') || scopes.has('estoque') || scopes.has('servicos')));
+
+        if (!shouldReloadCurrentPage) return;
+        if (mecanicoRealtimeTimer) clearTimeout(mecanicoRealtimeTimer);
+        mecanicoRealtimeTimer = setTimeout(() => {
+            loadPage(currentPage);
+        }, 220);
     });
 });
 </script>

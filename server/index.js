@@ -1,11 +1,16 @@
 // server/index.js
 const path = require('path');
+const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: path.join(__dirname, '.env') }); 
 
 const db = require('./config/database'); 
 const authMiddleware = require('./middleware/authMiddleware');
+const UsuarioRepository = require('./repositories/UsuarioRepository');
+const AuditoriaRepository = require('./repositories/AuditoriaRepository');
+const RealtimeService = require('./services/RealtimeService');
 
 // Importar TODOS os Controllers necessários para todas as rotas
 const authController = require('./controllers/AuthController');
@@ -24,9 +29,228 @@ const eventoController = require('./controllers/EventoController');
 const app = express();
 const PORT = process.env.SERVER_PORT || 8080;
 
+process.on('unhandledRejection', async (reason) => {
+    const msg = reason && reason.message ? reason.message : String(reason);
+    console.error('[PROCESS] unhandledRejection:', msg);
+    try {
+        await AuditoriaRepository.create({
+            nivel: 'ERROR',
+            acao: 'SYSTEM_UNHANDLED_REJECTION',
+            recurso: 'SISTEMA',
+            mensagem: msg,
+            detalhes: { stack: reason && reason.stack ? reason.stack : null },
+        });
+    } catch (_) {}
+});
+
+process.on('uncaughtException', async (error) => {
+    console.error('[PROCESS] uncaughtException:', error.message);
+    try {
+        await AuditoriaRepository.create({
+            nivel: 'ERROR',
+            acao: 'SYSTEM_UNCAUGHT_EXCEPTION',
+            recurso: 'SISTEMA',
+            mensagem: error.message,
+            detalhes: { stack: error.stack || null },
+        });
+    } catch (_) {}
+});
+
 app.use(cors()); 
 // Aumenta o limite de JSON para permitir imagens em base64 no cadastro de produto
 app.use(express.json({ limit: '10mb' })); 
+
+function sanitizeAuditBody(value) {
+    if (value === null || value === undefined) return value;
+    if (Array.isArray(value)) return value.map(sanitizeAuditBody);
+    if (typeof value !== 'object') return value;
+
+    const maskedKeys = ['senha', 'novaSenha', 'senha_hash', 'password', 'token', 'authorization'];
+    const out = {};
+    Object.entries(value).forEach(([k, v]) => {
+        if (maskedKeys.includes(String(k))) {
+            out[k] = '***';
+        } else {
+            out[k] = sanitizeAuditBody(v);
+        }
+    });
+    return out;
+}
+
+function inferAuditAction(req) {
+    const method = (req.method || 'GET').toUpperCase();
+    if (req.path === '/api/login') return 'AUTH_LOGIN';
+    if (req.path.includes('/trocar-senha')) return 'AUTH_PASSWORD_CHANGE';
+    if (method === 'GET') return 'REQUEST_READ';
+    if (method === 'POST') return 'REQUEST_CREATE';
+    if (method === 'PUT' || method === 'PATCH') return 'REQUEST_UPDATE';
+    if (method === 'DELETE') return 'REQUEST_DELETE';
+    return 'REQUEST';
+}
+
+function inferAuditResource(pathname = '') {
+    if (pathname.startsWith('/api/produtos') || pathname.startsWith('/api/estoque')) return 'ESTOQUE';
+    if (pathname.startsWith('/api/servicos')) return 'SERVICOS';
+    if (pathname.startsWith('/api/agendamentos')) return 'AGENDAMENTOS';
+    if (pathname.startsWith('/api/reservas')) return 'RESERVAS';
+    if (pathname.startsWith('/api/tickets')) return 'TICKETS';
+    if (pathname.startsWith('/api/eventos')) return 'EVENTOS';
+    if (pathname.startsWith('/api/clientes')) return 'CLIENTES';
+    if (pathname.startsWith('/api/funcionarios')) return 'FUNCIONARIOS';
+    if (pathname.startsWith('/api/usuarios')) return 'USUARIOS';
+    if (pathname.startsWith('/api/relatorios')) return 'RELATORIOS';
+    if (pathname.startsWith('/api/login')) return 'AUTH';
+    return 'SISTEMA';
+}
+
+function normalizeAuditDateFilter(inputValue, isEndRange = false, tzOffsetMinutes = null) {
+    if (!inputValue) return null;
+    const raw = String(inputValue).trim();
+    if (!raw) return null;
+
+    const hasTimezone = /[zZ]|[+\-]\d{2}:?\d{2}$/.test(raw);
+    let parsed;
+
+    if (hasTimezone) {
+        parsed = new Date(raw);
+        if (Number.isNaN(parsed.getTime())) return null;
+    } else {
+        const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/);
+        if (!match) return null;
+
+        const [, y, mo, d, h, mi, s = '0', ms = '0'] = match;
+        const baseMs = Date.UTC(
+            Number(y),
+            Number(mo) - 1,
+            Number(d),
+            Number(h),
+            Number(mi),
+            Number(s),
+            Number(ms.padEnd(3, '0'))
+        );
+
+        const offset = Number.isFinite(Number(tzOffsetMinutes)) ? Number(tzOffsetMinutes) : 0;
+        parsed = new Date(baseMs + (offset * 60000));
+    }
+
+    if (isEndRange && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(raw)) {
+        parsed = new Date(parsed.getTime() + 59999);
+    }
+
+    return parsed.toISOString().replace('T', ' ').slice(0, 23);
+}
+
+async function resolveAuditActor(req) {
+    if (req.user?.id) {
+        return {
+            usuarioId: Number(req.user.id),
+            usuarioPerfil: req.user.perfil || null,
+            usuarioEmail: req.user.email || null,
+        };
+    }
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return { usuarioId: null, usuarioPerfil: null, usuarioEmail: null };
+
+    try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        return {
+            usuarioId: Number(decoded.id) || null,
+            usuarioPerfil: decoded.perfil || null,
+            usuarioEmail: null,
+        };
+    } catch (_) {
+        return { usuarioId: null, usuarioPerfil: null, usuarioEmail: null };
+    }
+}
+
+// Captura o payload de resposta para enriquecer logs de erro.
+app.use((req, res, next) => {
+    const originalJson = res.json.bind(res);
+    res.json = (body) => {
+        res.locals.__responseBody = body;
+        return originalJson(body);
+    };
+    next();
+});
+
+// Auditoria global de requests/respostas (todos os usuários, incluindo login e erros).
+app.use((req, res, next) => {
+    const requestId = crypto.randomUUID();
+    req.requestId = requestId;
+    const startedAt = Date.now();
+
+    res.on('finish', async () => {
+        if (!req.path || !req.path.startsWith('/api/')) return;
+        if (req.path.startsWith('/api/realtime/stream')) return;
+        if (req.path === '/api/login' && req.__loginAuditHandled) return;
+
+        const status = res.statusCode || 0;
+        const level = status >= 500 ? 'ERROR' : status >= 400 ? 'WARN' : 'INFO';
+        const actor = await resolveAuditActor(req);
+        const responseBody = res.locals.__responseBody || {};
+
+        try {
+            await AuditoriaRepository.create({
+                requestId,
+                nivel: level,
+                acao: inferAuditAction(req),
+                recurso: inferAuditResource(req.path),
+                metodo: req.method,
+                rota: req.originalUrl || req.path,
+                statusCode: status,
+                usuarioId: actor.usuarioId,
+                usuarioPerfil: actor.usuarioPerfil,
+                usuarioEmail: actor.usuarioEmail,
+                ip: req.ip,
+                userAgent: req.get('user-agent') || null,
+                mensagem: responseBody.error || responseBody.message || null,
+                detalhes: {
+                    requestId,
+                    durationMs: Date.now() - startedAt,
+                    query: sanitizeAuditBody(req.query || {}),
+                    body: sanitizeAuditBody(req.body || {}),
+                },
+            });
+        } catch (e) {
+            console.warn('[AUDITORIA] Falha ao registrar log:', e.message);
+        }
+    });
+
+    next();
+});
+
+// Trigger genérico: qualquer mutação bem-sucedida publica escopo afetado para atualização parcial no frontend.
+app.use((req, res, next) => {
+    res.on('finish', () => {
+        if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return;
+        if (res.statusCode >= 400) return;
+        if (!req.path || !req.path.startsWith('/api/')) return;
+        if (req.path.startsWith('/api/realtime/stream')) return;
+        if (req.path.startsWith('/api/login')) return;
+
+        let scope = null;
+        if (req.path.startsWith('/api/produtos') || req.path.startsWith('/api/estoque')) scope = 'estoque';
+        else if (req.path.startsWith('/api/servicos')) scope = 'servicos';
+        else if (req.path.startsWith('/api/agendamentos')) scope = 'agendamentos';
+        else if (req.path.startsWith('/api/reservas')) scope = 'reservas';
+        else if (req.path.startsWith('/api/tickets')) scope = 'tickets';
+        else if (req.path.startsWith('/api/eventos')) scope = 'eventos';
+        else if (req.path.startsWith('/api/clientes')) scope = 'clientes';
+        else if (req.path.startsWith('/api/funcionarios')) scope = 'funcionarios';
+        else if (req.path.startsWith('/api/usuarios')) scope = 'usuarios';
+
+        if (scope) {
+            RealtimeService.publish(`${scope}.changed`, {
+                scope,
+                method: req.method,
+                path: req.path
+            });
+        }
+    });
+    next();
+});
 
 // --- ROTAS ABERTAS (Acesso Público) ---
 app.post('/api/login', authController.handleLogin); // UC001
@@ -145,6 +369,36 @@ app.delete('/api/servicos/:id', authMiddleware(ADMIN_ROLES), servicosController.
 app.get('/api/produtos/public', produtoController.listarTodos);
 app.get('/api/produtos/:id/public', produtoController.buscarPorId);
 
+// SSE de atualizações incrementais (frontend atualiza apenas blocos afetados)
+app.get('/api/realtime/stream', async (req, res) => {
+    const token = req.query.token;
+    try {
+        let context = { perfil: 'PUBLICO' };
+        if (token) {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const user = await UsuarioRepository.findById(decoded.id);
+            if (!user || user.ativo === false) {
+                return res.status(403).json({ error: 'Usuário inválido ou inativo.' });
+            }
+            context = { userId: user.id, perfil: user.tipoPerfil };
+        }
+
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders?.();
+
+        const unsubscribe = RealtimeService.subscribe(res, context);
+
+        req.on('close', () => {
+            unsubscribe();
+            res.end();
+        });
+    } catch (e) {
+        return res.status(401).json({ error: 'Token inválido ou expirado.' });
+    }
+});
+
 // Rota para usuário alterar sua própria senha (primeiro acesso ou mudança normal)
 app.put('/api/usuarios/me/trocar-senha', authMiddleware(ANY_USER), authController.changePassword);
 
@@ -153,6 +407,61 @@ app.get('/api/usuarios/me', authMiddleware(ANY_USER), authController.getUserInfo
 
 // Rota para atualizar dados básicos do usuário autenticado
 app.put('/api/usuarios/me', authMiddleware(ANY_USER), authController.updateMyBasicInfo);
+
+// Auditoria global (somente gerente/proprietário)
+app.get('/api/auditoria/logs', authMiddleware(ADMIN_ROLES), async (req, res) => {
+    try {
+        const tzOffset = Number(req.query.tzOffset);
+        const de = normalizeAuditDateFilter(req.query.de, false, tzOffset);
+        const ate = normalizeAuditDateFilter(req.query.ate, true, tzOffset);
+
+        const data = await AuditoriaRepository.list({
+            limit: req.query.limit,
+            offset: req.query.offset,
+            nivel: req.query.nivel,
+            metodo: req.query.metodo,
+            statusCode: req.query.statusCode,
+            usuarioId: req.query.usuarioId,
+            acao: req.query.acao,
+            rota: req.query.rota,
+            q: req.query.q,
+            de,
+            ate,
+        });
+
+        return res.status(200).json({ success: true, data });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message || 'Falha ao consultar logs de auditoria.' });
+    }
+});
+
+// Consulta de processos de banco (ativos/histórico/duplicados), para observabilidade operacional.
+app.get('/api/processos/db', authMiddleware(ADMIN_ROLES), async (req, res) => {
+    try {
+        const limit = Number(req.query.limit || 50);
+        const type = req.query.type ? String(req.query.type).toUpperCase() : null;
+
+        const [pgProcesses, duplicatePgProcesses] = await Promise.all([
+            db.getDatabaseProcesses(),
+            db.getDuplicateDatabaseProcesses(),
+        ]);
+
+        res.json({
+            success: true,
+            data: {
+                ativosApi: db.getActiveProcesses(),
+                historicoApi: db.getProcessHistory(limit, type),
+                processosPostgres: pgProcesses,
+                processosDuplicadosPostgres: duplicatePgProcesses,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Falha ao consultar processos de banco.',
+        });
+    }
+});
 
 // =====================================================
 // BACKEND PURO (API) — NÃO SERVE ARQUIVOS ESTÁTICOS
@@ -163,28 +472,12 @@ app.listen(PORT, '0.0.0.0', async () => {
     console.log(`[BACKEND] API rodando em http://0.0.0.0:${PORT}`);
     try { await db.query('SELECT 1+1 AS result'); console.log('Conexão com PostgreSQL OK.'); } 
     catch (e) { console.error('Falha ao conectar ao PostgreSQL.'); }
-    // Migração leve: garantir coluna de vínculo com agendamento em itemagendamento
-    try {
-        await db.query("ALTER TABLE itemagendamento ADD COLUMN IF NOT EXISTS idagendamento BIGINT REFERENCES agendamento(id) ON DELETE CASCADE;");
-    } catch (e) {
-        console.warn('Aviso: não foi possível aplicar migração leve de itemagendamento:', e.message);
-    }
-    // Migração: adiciona colunas de pagamento em agendamento
-    try {
-        await db.query("ALTER TABLE agendamento ADD COLUMN IF NOT EXISTS metodopagamento VARCHAR(50);");
-        await db.query("ALTER TABLE agendamento ADD COLUMN IF NOT EXISTS datapagamento TIMESTAMP;");
-        // Atualiza constraint de status para incluir PAGO
-        await db.query("ALTER TABLE agendamento DROP CONSTRAINT IF EXISTS agendamento_status_check;");
-        await db.query("ALTER TABLE agendamento ADD CONSTRAINT agendamento_status_check CHECK (status IN ('ABERTO', 'EM ANDAMENTO', 'PARA PAGAMENTO', 'PAGO', 'CONCLUIDO', 'CANCELADO'));");
-    } catch (e) {
-        console.warn('Aviso: não foi possível adicionar colunas de pagamento em agendamento:', e.message);
-    }
 
-    // Migração: garante a coluna prazoretirada em reserva
     try {
-        await db.query("ALTER TABLE reserva ADD COLUMN IF NOT EXISTS prazoretirada TIMESTAMP WITHOUT TIME ZONE;");
+        await AuditoriaRepository.ensureTable();
+        console.log('Tabela de auditoria pronta.');
     } catch (e) {
-        console.warn('Aviso: não foi possível adicionar coluna prazoretirada em reserva:', e.message);
+        console.error('Falha ao garantir tabela de auditoria:', e.message);
     }
 
     // Job: expirar reservas com prazo vencido ao iniciar e a cada hora

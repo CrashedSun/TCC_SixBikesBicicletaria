@@ -149,8 +149,10 @@ class ReservaRepository {
                 throw e;
             }
         }
-        const sql = 'UPDATE reserva SET statuspagamento = $2, metodopagamento = $3, idatendente = $4 WHERE idreserva = $1';
-        await db.query(sql, [idReserva, statusPagamento, metodoPagamento, idAtendente]);
+        const sql = `UPDATE reserva SET statuspagamento = $2, metodopagamento = $3, idatendente = $4,
+            status = CASE WHEN $5 = 'PAGO' THEN 'PAGA' ELSE status END
+            WHERE idreserva = $1`;
+        await db.query(sql, [idReserva, statusPagamento, metodoPagamento, idAtendente, statusPagamento]);
         return true;
     }
 
@@ -179,7 +181,7 @@ class ReservaRepository {
     async expirarVencidas() {
         // Busca reservas ATIVAS com prazo expirado
         const { rows: vencidas } = await db.query(
-            `SELECT idreserva FROM reserva WHERE status = 'ATIVA' AND prazoretirada IS NOT NULL AND prazoretirada < NOW()`
+            `SELECT idreserva FROM reserva WHERE status = 'ATIVA' AND statuspagamento <> 'PAGO' AND prazoretirada IS NOT NULL AND prazoretirada < NOW()`
         );
         if (!vencidas.length) return 0;
 

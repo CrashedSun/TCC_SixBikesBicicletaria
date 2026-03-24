@@ -57,7 +57,7 @@
             <form id="loginForm"> 
                 <div class="mb-3">
                     <label for="email" class="form-label">E-mail</label>
-                    <input type="email" class="form-control" id="email" name="email" placeholder="Seu@email.com" required>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="seu@email.com" required>
                 </div>
                 <div class="mb-3">
                     <label for="senha" class="form-label">Senha</label>
@@ -139,8 +139,8 @@
             }
             changePassStatus.textContent = 'Atualizando...';
             changePassStatus.style.color = '#555';
-            const { login, senha } = window._pendingFirstLogin;
-            performLogin(login, senha, nova); // Segundo passo com novaSenha
+            const { email, senha } = window._pendingFirstLogin;
+            performLogin(email, senha, nova); // Segundo passo com novaSenha
         });
     </script>
 </body>

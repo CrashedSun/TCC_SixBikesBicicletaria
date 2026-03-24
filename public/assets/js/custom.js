@@ -1,7 +1,33 @@
 (() => {
+	if (typeof window.installStyledPopupSystem === 'function') {
+		window.installStyledPopupSystem();
+	}
+
+	const CACHE_KEY_CATS = 'cache:public:footer:categorias';
+	const CACHE_TTL = 5 * 60 * 1000;
+
 	function getApiBaseUrl() {
 		if (window.API_BASE_URL) return window.API_BASE_URL;
 		return window.location.protocol + '//' + window.location.hostname + ':8080/api';
+	}
+
+	function getCachedCategories() {
+		try {
+			const raw = localStorage.getItem(CACHE_KEY_CATS);
+			if (!raw) return null;
+			const parsed = JSON.parse(raw);
+			if (!Array.isArray(parsed?.data)) return null;
+			if (Date.now() - (parsed.ts || 0) > CACHE_TTL) return null;
+			return parsed.data;
+		} catch (_) {
+			return null;
+		}
+	}
+
+	function setCachedCategories(data) {
+		try {
+			localStorage.setItem(CACHE_KEY_CATS, JSON.stringify({ ts: Date.now(), data }));
+		} catch (_) {}
 	}
 
 	function findFooterProductsList() {
@@ -33,6 +59,13 @@
 		const list = findFooterProductsList();
 		if (!list) return;
 
+		const cached = getCachedCategories();
+		if (cached && cached.length > 0) {
+			list.innerHTML = '';
+			cached.forEach((nome) => list.appendChild(buildCategoryItem(nome)));
+			return;
+		}
+
 		try {
 			let validNames = [];
 
@@ -60,6 +93,7 @@
 			}
 
 			if (validNames.length === 0) return;
+			setCachedCategories(validNames);
 
 			list.innerHTML = '';
 			validNames.forEach((nome) => {
@@ -71,4 +105,11 @@
 	}
 
 	document.addEventListener('DOMContentLoaded', loadFooterCategories);
+	window.addEventListener('sb:realtime', (ev) => {
+		const type = String(ev?.detail?.type || '').toLowerCase();
+		if (type.includes('produto') || type.includes('estoque') || type.includes('servico') || type.includes('categoria')) {
+			try { localStorage.removeItem(CACHE_KEY_CATS); } catch (_) {}
+			loadFooterCategories();
+		}
+	});
 })();

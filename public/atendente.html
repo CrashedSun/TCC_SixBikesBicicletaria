@@ -184,6 +184,84 @@ if (!localStorage.getItem("usuario")) {
 }
 document.getElementById("userName").textContent = "Olá, " + localStorage.getItem("usuario");
 
+async function logout() {
+    const confirmar = typeof window.showStyledConfirm === 'function'
+        ? await window.showStyledConfirm('Tem certeza que deseja sair do sistema?', { title: 'Sair' })
+        : confirm('Tem certeza que deseja sair do sistema?');
+    if (!confirmar) return;
+    localStorage.removeItem("usuario");
+    localStorage.removeItem("userToken");
+    localStorage.removeItem("userProfile");
+    window.location.href = "login.html";
+}
+
+async function escolherMetodoPagamento(titulo = 'Marcar como Pago') {
+    return new Promise((resolve) => {
+        const modalId = 'modalMetodoPagamentoAtendente';
+        let modalEl = document.getElementById(modalId);
+        if (!modalEl) {
+            modalEl = document.createElement('div');
+            modalEl.className = 'modal fade';
+            modalEl.id = modalId;
+            modalEl.tabIndex = -1;
+            modalEl.setAttribute('aria-hidden', 'true');
+            modalEl.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header" style="background:#7ed957; color:white;">
+                            <h5 class="modal-title" id="metodoPagamentoTitulo"></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <label for="metodoPagamentoSelect" class="form-label">Selecione o método de pagamento</label>
+                            <select id="metodoPagamentoSelect" class="form-select">
+                                <option value="PIX">PIX</option>
+                                <option value="DINHEIRO">DINHEIRO</option>
+                                <option value="CREDITO">CREDITO</option>
+                                <option value="DEBITO">DEBITO</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-action="cancelar">Cancelar</button>
+                            <button type="button" class="btn btn-success" data-action="confirmar">Confirmar Pagamento</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalEl);
+        }
+
+        const bsModal = new bootstrap.Modal(modalEl);
+        const titleEl = modalEl.querySelector('#metodoPagamentoTitulo');
+        const select = modalEl.querySelector('#metodoPagamentoSelect');
+        const cancelBtn = modalEl.querySelector('[data-action="cancelar"]');
+        const confirmBtn = modalEl.querySelector('[data-action="confirmar"]');
+
+        titleEl.textContent = titulo;
+
+        let resolved = false;
+        const onHidden = () => {
+            if (!resolved) resolve(null);
+            modalEl.removeEventListener('hidden.bs.modal', onHidden);
+        };
+        modalEl.addEventListener('hidden.bs.modal', onHidden);
+
+        cancelBtn.onclick = () => {
+            resolved = true;
+            resolve(null);
+            bsModal.hide();
+        };
+        confirmBtn.onclick = () => {
+            resolved = true;
+            resolve(select.value || 'PIX');
+            bsModal.hide();
+        };
+
+        select.value = 'PIX';
+        bsModal.show();
+    });
+}
+
 
 /**
  * Função principal para carregar o conteúdo de cada página/menu.
@@ -191,6 +269,7 @@ document.getElementById("userName").textContent = "Olá, " + localStorage.getIte
 // CÓDIGO RESTAURADO E COMPLETO PARA A FUNÇÃO loadPage:
 
 function loadPage(page) {
+    window.__atendenteCurrentPage = page;
     const content = document.getElementById('main-content');    
     
     // Simulação de carregamento (em um projeto real, esta Função faria um fetchAuthenticated)
@@ -539,12 +618,12 @@ function loadPage(page) {
                 tbody.querySelectorAll('button[data-pagar]').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const id = btn.dataset.pagar;
-                        const metodo = prompt('Informe Método de pagamento: PIX, DINHEIRO, CREDITO, DEBITO', 'PIX');
+                        const metodo = await escolherMetodoPagamento();
                         if (!metodo) return;
                         btn.disabled = true;
                         try {
                             await fetchAuthenticated(`/api/agendamentos/${id}/pagar`, 'PUT', { metodoPagamento: metodo });
-                            alert('Agendamento marcado como pago.');
+                            alert(`Agendamento marcado como pago via ${metodo}.`);
                             carregarAgendamentosParaPagamento();
                         } catch (e) {
                             alert('Erro ao marcar como pago: ' + (e.message || ''));
@@ -579,68 +658,6 @@ function loadPage(page) {
         if (btnRecarregar) {
             btnRecarregar.addEventListener('click', carregarAgendamentosParaPagamento);
         }
-    }
-
-        /* ================= TICKETS ================== */
-        else if (page === 'tickets') {
-                content.innerHTML = `
-                        <h2>Tickets</h2>
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <div class="card p-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h5 class="fw-bold mb-0">Abertos</h5>
-                                        <span class="badge bg-warning" id="countAbertos">0</span>
-                                    </div>
-                                    <table class="table table-striped mb-0">
-                                        <thead>
-                                            <tr><th>ID</th><th>Nome</th><th>Título</th><th>Ações</th></tr>
-                                        </thead>
-                                        <tbody id="ticketsAbertos"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card p-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h5 class="fw-bold mb-0">Assumidos</h5>
-                                        <span class="badge bg-info" id="countAssumidos">0</span>
-                                    </div>
-                                    <table class="table table-striped mb-0">
-                                        <thead>
-                                            <tr><th>ID</th><th>Título</th><th>Status</th><th>Ações</th></tr>
-                                        </thead>
-                                        <tbody id="ticketsAssumidos"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Modal Detalhes Ticket -->
-                        <div class="modal fade" id="ticketDetalhesModal" tabindex="-1">
-                            <div class="modal-dialog modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Detalhes do Ticket</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body" id="ticketDetalhesBody">
-                                        <p><strong>ID:</strong> <span id="detID"></span></p>
-                                        <p><strong>Nome:</strong> <span id="detNome"></span></p>
-                                        <p><strong>Email:</strong> <span id="detEmail"></span></p>
-                                        <p><strong>Título:</strong> <span id="detTitulo"></span></p>
-                                        <p><strong>Mensagem:</strong></p>
-                                        <p id="detMensagem" style="white-space:pre-wrap;"></p>
-                                        <p><strong>Status:</strong> <span id="detStatus"></span></p>
-                                        <p><strong>Data Abertura:</strong> <span id="detData"></span></p>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                `;
 
                 async function carregarAbertos(){
                     try{
@@ -1188,7 +1205,7 @@ function loadPage(page) {
                 tbody.querySelectorAll('button[data-pagar]').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const id = btn.dataset.pagar;
-                        const metodo = prompt('Informe Método de pagamento: PIX, DINHEIRO, CREDITO, DEBITO', 'PIX');
+                        const metodo = await escolherMetodoPagamento('Marcar Reserva como Paga');
                         if (!metodo) return;
                         try {
                             await fetchAuthenticated(`/api/reservas/${id}/pagar`, 'PUT', { metodoPagamento: metodo });
@@ -1203,7 +1220,10 @@ function loadPage(page) {
                 tbody.querySelectorAll('button[data-cancelar]').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const id = btn.dataset.cancelar;
-                        if (!confirm('Confirmar cancelamento da reserva?')) return;
+                        const confirmar = typeof window.showStyledConfirm === 'function'
+                            ? await window.showStyledConfirm('Confirmar cancelamento da reserva?', { title: 'Cancelar reserva', confirmText: 'Cancelar reserva' })
+                            : confirm('Confirmar cancelamento da reserva?');
+                        if (!confirmar) return;
                         try {
                             await fetchAuthenticated(`/api/reservas/${id}/cancelar`, 'PUT');
                             alert('Reserva cancelada.');
@@ -1248,7 +1268,7 @@ function loadPage(page) {
                 const clientes = res?.data || res || [];
                 const matches = clientes.filter(c => {
                     const nome = (c.nome || '').toLowerCase();
-                    const email = (c.login || c.email || '').toLowerCase();
+                    const email = (c.email || '').toLowerCase();
                     const termoLower = termo.toLowerCase();
                     return nome.includes(termoLower) || email.includes(termoLower);
                 });
@@ -1261,7 +1281,7 @@ function loadPage(page) {
                 resultados.innerHTML = matches.map(c => `
                     <button class="list-group-item list-group-item-action" data-cliente-id="${c.id}" data-cliente-nome="${c.nome}">
                         <strong>${c.nome}</strong><br>
-                        <small class="text-muted">CPF: ${c.cpf || '-'} | Email: ${c.email || c.login || '-'}</small>
+                        <small class="text-muted">CPF: ${c.cpf || '-'} | Email: ${c.email || '-'}</small>
                     </button>
                 `).join('');
 
@@ -1689,6 +1709,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if(typeof checkAndShowChangePasswordModal !== 'undefined') {
         checkAndShowChangePasswordModal();
     }
+
+    let atendenteRealtimeTimer = null;
+    window.addEventListener('sb:realtime', (event) => {
+        const detail = event && event.detail ? event.detail : {};
+        const scopeList = Array.isArray(detail.scopes) ? detail.scopes : [];
+        const eventType = String(detail.eventType || '').toLowerCase();
+        const primaryScope = eventType.includes('.') ? eventType.split('.')[0] : '';
+        const scopes = new Set([...scopeList, primaryScope].filter(Boolean));
+        if (scopes.size === 0) return;
+
+        const currentPage = window.__atendenteCurrentPage || 'dashboard';
+        const shouldReloadCurrentPage =
+            (currentPage === 'dashboard') ||
+            (currentPage === 'estoque' && (scopes.has('produtos') || scopes.has('estoque') || scopes.has('servicos'))) ||
+            (currentPage === 'agendamentos' && (scopes.has('agendamentos') || scopes.has('reservas'))) ||
+            (currentPage === 'clientes' && scopes.has('clientes')) ||
+            (currentPage === 'reservas' && (scopes.has('reservas') || scopes.has('agendamentos'))) ||
+            (currentPage === 'tickets' && scopes.has('tickets'));
+
+        if (!shouldReloadCurrentPage) return;
+        if (atendenteRealtimeTimer) clearTimeout(atendenteRealtimeTimer);
+        atendenteRealtimeTimer = setTimeout(() => {
+            loadPage(currentPage);
+        }, 220);
+    });
 });
 </script>
 

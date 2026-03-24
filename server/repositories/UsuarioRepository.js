@@ -8,16 +8,16 @@ const UsuarioModel = require('../models/UsuarioModel');
  */
 class UsuarioRepository {
     
-    usuarioColumns = 'id, nome, login, senha_hash, tipo_perfil, cpf, email, telefone, matricula, ativo, trocar_senha';
+    usuarioColumns = 'id, nome, senha_hash, tipo_perfil, cpf, email, telefone, matricula, ativo, trocar_senha';
 
     /**
-     * Busca um usuário pelo login para autenticação (UC001).
+     * Busca um usuário pelo e-mail para autenticação (UC001).
      */
-    async findByLogin(login) {
-        const sql = `SELECT ${this.usuarioColumns} FROM usuario WHERE login = $1`;
+    async findByEmail(email) {
+        const sql = `SELECT ${this.usuarioColumns} FROM usuario WHERE email = $1`;
         
         try {
-            const result = await db.query(sql, [login]); // <--- Conexão Real
+            const result = await db.query(sql, [((email || '') + '').trim().toLowerCase()]); // <--- Conexão Real
             
             if (result.rows.length === 0) return null;
             
@@ -27,11 +27,10 @@ class UsuarioRepository {
             return new UsuarioModel(
                 userDB.id,
                 userDB.nome,
-                userDB.login,
+                userDB.email,
                 userDB.senha_hash,
                 userDB.tipo_perfil,
                 userDB.cpf,
-                userDB.email,
                 userDB.telefone,
                 userDB.matricula,
                 (userDB.ativo === undefined ? true : !!userDB.ativo),
@@ -56,11 +55,10 @@ class UsuarioRepository {
             return new UsuarioModel(
                 userDB.id,
                 userDB.nome,
-                userDB.login,
+                userDB.email,
                 userDB.senha_hash,
                 userDB.tipo_perfil,
                 userDB.cpf,
-                userDB.email,
                 userDB.telefone,
                 userDB.matricula,
                 (userDB.ativo === undefined ? true : !!userDB.ativo),
@@ -83,11 +81,10 @@ class UsuarioRepository {
             return result.rows.map(userDB => new UsuarioModel(
                 userDB.id,
                 userDB.nome,
-                userDB.login,
+                userDB.email,
                 userDB.senha_hash,
                 userDB.tipo_perfil,
                 userDB.cpf,
-                userDB.email,
                 userDB.telefone,
                 userDB.matricula,
                 // Alguns bancos podem usar 'ativo' como string/boolean
@@ -149,18 +146,18 @@ class UsuarioRepository {
     
     /**
      * Insere um novo funcionário na tabela usuario e retorna o id criado.
-     * Recebe um objeto com: nome, login, senha_hash, tipo_perfil, cpf?, email?, telefone?, matricula?
+     * Recebe um objeto com: nome, email, senha_hash, tipo_perfil, cpf?, telefone?, matricula?
      */
     async createFuncionario(dados) {
-        const sql = `INSERT INTO usuario (nome, login, senha_hash, tipo_perfil, cpf, email, telefone, matricula, ativo, trocar_senha)
-                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8, true, true) RETURNING id`;
+        const sql = `INSERT INTO usuario (nome, senha_hash, tipo_perfil, cpf, email, telefone, matricula, ativo, trocar_senha)
+                     VALUES ($1,$2,$3,$4,$5,$6,$7, true, true) RETURNING id`;
+        const email = ((dados.email || '') + '').trim().toLowerCase();
         const params = [
             dados.nome,
-            dados.login,
             dados.senha_hash,
             dados.tipo_perfil,
             dados.cpf || null,
-            dados.email || null,
+            email,
             dados.telefone || null,
             dados.matricula || null
         ];
@@ -169,9 +166,9 @@ class UsuarioRepository {
             return result.rows[0].id;
         } catch (error) {
             console.error('ERRO AO CRIAR FUNCIONARIO:', error.message);
-            // Rejeita duplicidade de login/matricula com uma mensagem clara
+            // Rejeita duplicidade de email/matricula com uma mensagem clara
             if (error.code === '23505') { // unique_violation
-                throw new Error('Login ou matrícula já cadastrado.');
+                throw new Error('E-mail ou matrícula já cadastrado.');
             }
             throw new Error('Falha ao criar funcionário.');
         }
@@ -183,8 +180,9 @@ class UsuarioRepository {
         if (!tipoPerfil) {
             throw new Error('tipo_perfil é obrigatório para atualização.');
         }
-        const sql = `UPDATE usuario SET nome = $2, login = $3, matricula = $4, tipo_perfil = $5 WHERE id = $1`;
-        const params = [id, dados.nome, dados.login, dados.matricula, tipoPerfil];
+        const email = ((dados.email || '') + '').trim().toLowerCase();
+        const sql = `UPDATE usuario SET nome = $2, email = $3, matricula = $4, tipo_perfil = $5 WHERE id = $1`;
+        const params = [id, dados.nome, email, dados.matricula, tipoPerfil];
         try {
             const result = await db.query(sql, params);
             if (result.rowCount === 0) throw new Error('Funcionário não encontrado.');
@@ -192,7 +190,7 @@ class UsuarioRepository {
         } catch (error) {
             console.error('ERRO AO ATUALIZAR FUNCIONARIO:', error.message);
             if (error.code === '23505') {
-                throw new Error('Login ou matrícula já cadastrado.');
+                throw new Error('E-mail ou matrícula já cadastrado.');
             }
             throw new Error('Falha ao atualizar funcionário.');
         }

@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sixbikes-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bicicletaria_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "23471946"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./criaçãodb.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bicicletaria_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sixbikes-app:latest
+    container_name: sixbikes-backend
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      SERVER_PORT: 8080
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    command: ["npm", "run", "start:backend"]
+
+  frontend:
+    image: sixbikes-app:latest
+    container_name: sixbikes-frontend
+    restart: unless-stopped
+    environment:
+      FRONTEND_PORT: 3000
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    command: ["npm", "run", "start:frontend"]
+
+volumes:
+  postgres_data:

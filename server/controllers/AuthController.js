@@ -1,5 +1,6 @@
 // server/controllers/AuthController.js
 const AuthService = require('../services/AuthService');
+const AuditoriaRepository = require('../repositories/AuditoriaRepository');
 
 class AuthController {
     /**
@@ -7,11 +8,31 @@ class AuthController {
      * Efetua o login do usuário e retorna o token de acesso.
      */
     async handleLogin(req, res) {
-        const { login, senha, novaSenha } = req.body;
-        if (!login || !senha) { return res.status(400).json({ error: 'Login e senha são obrigatórios.' }); }
+        const { email, senha, novaSenha } = req.body;
+        if (!email || !senha) { return res.status(400).json({ error: 'E-mail e senha são obrigatórios.' }); }
 
         try {
-            const authData = await AuthService.authenticate(login, senha);
+            const authData = await AuthService.authenticate(email, senha);
+
+            try {
+                await AuditoriaRepository.create({
+                    requestId: req.requestId,
+                    nivel: 'INFO',
+                    acao: 'AUTH_LOGIN_SUCCESS',
+                    recurso: 'AUTH',
+                    metodo: req.method,
+                    rota: req.originalUrl || req.path,
+                    statusCode: 200,
+                    usuarioId: Number(authData.id) || null,
+                    usuarioPerfil: authData.perfil || null,
+                    usuarioEmail: (email || '').toString().trim().toLowerCase(),
+                    ip: req.ip,
+                    userAgent: req.get('user-agent') || null,
+                    mensagem: 'Login realizado com sucesso.',
+                    detalhes: { trocarSenha: !!authData.trocarSenha },
+                });
+                req.__loginAuditHandled = true;
+            } catch (_) {}
 
             // Se for primeiro acesso e veio nova senha válida, realiza troca imediata
             if (authData.trocarSenha === true && novaSenha && novaSenha.length >= 6) {
@@ -26,6 +47,25 @@ class AuthController {
 
             return res.status(200).json(authData);
         } catch (error) {
+            try {
+                await AuditoriaRepository.create({
+                    requestId: req.requestId,
+                    nivel: 'WARN',
+                    acao: 'AUTH_LOGIN_FAILED',
+                    recurso: 'AUTH',
+                    metodo: req.method,
+                    rota: req.originalUrl || req.path,
+                    statusCode: 401,
+                    usuarioEmail: (email || '').toString().trim().toLowerCase(),
+                    ip: req.ip,
+                    userAgent: req.get('user-agent') || null,
+                    mensagem: error.message || 'Falha ao autenticar.',
+                    detalhes: {
+                        motivo: (error.message || '').toLowerCase().includes('credenciais') ? 'SENHA_OU_EMAIL_INVALIDO' : 'AUTH_ERROR'
+                    },
+                });
+                req.__loginAuditHandled = true;
+            } catch (_) {}
             return res.status(401).json({ error: error.message || 'Falha ao autenticar.' });
         }
     }
@@ -73,7 +113,6 @@ class AuthController {
                 perfil: usuario.tipoPerfil,
                 trocarSenha: usuario.trocarSenha,
                 // Campos adicionais para preencher perfil
-                login: usuario.login,
                 email: usuario.email || null,
                 cpf: usuario.cpf || null,
                 telefone: usuario.telefone || null,

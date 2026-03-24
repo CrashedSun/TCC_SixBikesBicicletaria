@@ -77,44 +77,94 @@
     <!-- Start Content Page -->
     <div class="container-fluid bg-light py-5">
         <div class="col-md-6 m-auto text-center">
-            <h1 class="h1">Contato</h1>
-            <p>
-                Ficou com alguma duvida? Mande uma mensagem pra gente, responderemos em breve.
-            </p>
+            <h1 class="h1">Atendimento Virtual</h1>
+            <p>Converse com nosso assistente e tire suas dúvidas na hora.</p>
         </div>
     </div>
 
-    <!-- Start Contact -->
+    <!-- Start Chatbot -->
     <div class="container py-5">
-        <div class="row py-5">
-            <form class="col-md-9 m-auto" method="post" role="form" id="ticketForm">
-                <div class="row">
-                    <div class="form-group col-md-6 mb-3">
-                        <label for="inputname">Nome</label>
-                        <input type="text" class="form-control mt-1" id="name" name="name" placeholder="Nome" required>
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card shadow-sm border-0" style="border-radius:16px; overflow:hidden;">
+                    <!-- Chat Header -->
+                    <div class="card-header d-flex align-items-center gap-3 py-3" style="background:#198754;">
+                        <div class="rounded-circle bg-white d-flex align-items-center justify-content-center" style="width:42px;height:42px;flex-shrink:0;">
+                            <i class="fa fa-bicycle text-success" style="font-size:20px;"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-white" style="line-height:1.2;">SixBikes Assistente</div>
+                            <small class="text-white-50">Online agora</small>
+                        </div>
+                        <span class="ms-auto badge bg-white text-success">🟢 Ativo</span>
                     </div>
-                    <div class="form-group col-md-6 mb-3">
-                        <label for="inputemail">Email</label>
-                        <input type="email" class="form-control mt-1" id="email" name="email" placeholder="Email" required>
+
+                    <!-- Chat Messages -->
+                    <div id="chatMessages" class="p-3 bg-white" style="height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
+                        <!-- Mensagem de boas-vindas -->
+                        <div class="d-flex justify-content-start">
+                            <div class="chat-bubble bot px-3 py-2">
+                                <p>Olá! 👋 Seja bem-vindo à <strong>SixBikes Bicicletaria</strong>!<br>Como posso te ajudar hoje?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Input -->
+                    <div class="card-footer bg-white border-top p-3">
+                        <div class="input-group">
+                            <input type="text" id="chatInput" class="form-control border-end-0" placeholder="Digite sua mensagem..." style="border-radius:24px 0 0 24px; border-color:#dee2e6;">
+                            <button id="sendBtn" class="btn btn-success px-3" style="border-radius:0 24px 24px 0;" title="Enviar">
+                                <i class="fa fa-paper-plane"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label for="inputsubject">Título</label>
-                    <input type="text" class="form-control mt-1" id="subject" name="subject" placeholder="Título" required>
-                </div>
-                <div class="mb-3">
-                    <label for="inputmessage">Mensagem</label>
-                    <textarea class="form-control mt-1" id="message" name="message" placeholder="Digite sua mensagem" rows="8" required></textarea>
-                </div>
-                <div class="row">
-                    <div class="col text-end mt-2">
-                        <button type="submit" class="btn btn-success btn-lg px-3">Enviar</button>
-                    </div>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
-    <!-- End Contact -->
+    <!-- End Chatbot -->
+
+    <style>
+        .chat-bubble { max-width: 80%; word-break: break-word; }
+        .chat-bubble.bot { background: #f1f3f5; color: #212529; border-radius: 4px 18px 18px 18px; }
+        .chat-bubble.user { background: #198754; color: #fff; border-radius: 18px 4px 18px 18px; margin-left:auto; }
+        .chat-bubble p { margin: 0; }
+        #chatMessages::-webkit-scrollbar { width: 5px; }
+        #chatMessages::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 10px; }
+    </style>
+
+    <script>
+    (function() {
+        const messages = document.getElementById('chatMessages');
+        const input = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function scrollBaixo() {
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function addMsg(texto, tipo) {
+            const wrap = document.createElement('div');
+            wrap.className = `d-flex ${tipo === 'user' ? 'justify-content-end' : 'justify-content-start'}`;
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${tipo} px-3 py-2`;
+            bubble.innerHTML = `<p>${texto}</p>`;
+            wrap.appendChild(bubble);
+            messages.appendChild(wrap);
+            scrollBaixo();
+        }
+
+        function handleInput() {
+            const texto = input.value.trim();
+            if (!texto) return;
+            input.value = '';
+            addMsg(texto, 'user');
+        }
+
+        sendBtn.addEventListener('click', handleInput);
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') handleInput(); });
+    })();
+    </script>
 
 
     <!-- Footer -->
@@ -218,36 +268,6 @@
             });
         });
     </script>
-    <script src="assets/js/auth.js"></script>
-        <script>
-            // Envia ticket de suporte para o backend (requer login)
-            document.getElementById('ticketForm').addEventListener('submit', async function(ev){
-                ev.preventDefault();
-                const btn = this.querySelector('button[type="submit"]');
-                btn.disabled = true;
-                try {
-                    const token = localStorage.getItem('userToken');
-                    if(!token){
-                        alert('Você precisa estar logado para abrir um ticket.');
-                        window.location.href = 'login.html';
-                        return;
-                    }
-                    const payload = {
-                        nome: document.getElementById('name').value.trim(),
-                        email: document.getElementById('email').value.trim(),
-                        titulo: document.getElementById('subject').value.trim(),
-                        mensagem: document.getElementById('message').value.trim()
-                    };
-                    const data = await fetchAuthenticated('/tickets','POST', payload);
-                    alert(data.message || 'Ticket enviado com sucesso.');
-                    this.reset();
-                } catch(e){
-                    alert(e.message || 'Falha ao enviar ticket.');
-                } finally {
-                    btn.disabled = false;
-                }
-            });
-        </script>
 </body>
 
 </html>

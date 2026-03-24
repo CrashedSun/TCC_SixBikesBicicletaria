@@ -34,7 +34,7 @@ class InscricaoEventoRepository {
   }
 
   async listarPorEvento(idEvento) {
-    const sql = `SELECT ie.idinscricao, ie.datainscricao, u.id, u.nome, u.login as email
+    const sql = `SELECT ie.idinscricao, ie.datainscricao, u.id, u.nome, u.email
                  FROM inscricaoevento ie
                  JOIN usuario u ON ie.idcliente = u.id
                  WHERE ie.idevento = $1

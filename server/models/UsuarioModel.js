@@ -7,16 +7,15 @@ class UsuarioModel {
     /**
      * @param {string} tipoPerfil - Deve ser um valor do domínio: {“CLIENTE”, “ATENDENTE”, “MECANICO”, “GERENTE”, “PROPRIETARIO”}[cite: 717].
      */
-    constructor(id, nome, login, senhaHash, tipoPerfil, cpf, email, telefone, matricula, ativo = true, trocarSenha = false) {
+    constructor(id, nome, email, senhaHash, tipoPerfil, cpf, telefone, matricula, ativo = true, trocarSenha = false) {
         this.id = id;
         this.nome = nome;
-        this.login = login;
+        this.email = email;
         this.senhaHash = senhaHash;
         this.tipoPerfil = tipoPerfil ? tipoPerfil.toUpperCase() : 'CLIENTE'; 
         
         // Atributos do Cliente
         this.cpf = cpf;
-        this.email = email;
         this.telefone = telefone;
         
         // Atributos do Funcionário

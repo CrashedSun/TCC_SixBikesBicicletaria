@@ -34,7 +34,7 @@
         <div class="flex-fill">
           <ul class="nav navbar-nav d-flex justify-content-between mx-lg-auto">
             <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="servicos.html">serviços</a></li>
+            <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
             <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
             <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
           </ul>
@@ -80,7 +80,7 @@
       <div>
         <h3 id="profileName" class="mb-1">USUÁRIO</h3>
         <div class="small text-muted" id="profileRole">Perfil: -</div>
-        <div class="small text-muted" id="profileLogin">Login: -</div>
+        <div class="small text-muted" id="profileLogin">E-mail: -</div>
       </div>
       <div class="ms-auto">
         <button id="btnLogout" class="btn btn-outline-danger btn-sm">Sair</button>
@@ -146,7 +146,7 @@
         <div class="d-flex flex-wrap gap-2 mb-3">
           <button class="btn btn-success btn-sm" data-historico="reservas-pendentes">Reservas Pendentes</button>
           <button class="btn btn-outline-success btn-sm" data-historico="reservas-todas">Todas as Reservas</button>
-          <button class="btn btn-success btn-sm" data-historico="servicos-pendentes">serviços Pendentes</button>
+          <button class="btn btn-success btn-sm" data-historico="servicos-pendentes">Serviços Pendentes</button>
           <button class="btn btn-outline-success btn-sm" data-historico="servicos-todos">Todos os serviços</button>
         </div>
         <div id="historicoResultado" class="small text-muted">Clique em um Botão acima para visualizar.</div>
@@ -199,7 +199,7 @@
         // Campos Disponíveis a partir do AuthController.getUserInfo + possivel ext
         document.getElementById('profileName').textContent = me.nome || 'USUÁRIO';
         document.getElementById('profileRole').textContent = 'Perfil: ' + (me.perfil || perfil);
-        document.getElementById('profileLogin').textContent = 'Login: ' + (me.login || '-') + ' | ID: ' + (me.id || '-');
+        document.getElementById('profileLogin').textContent = 'E-mail: ' + (me.email || '-') + ' | ID: ' + (me.id || '-');
         document.getElementById('nome').value = me.nome || '';
         // Preenche direto do backend; email e tipoPerfil permanecem somente leitura
         document.getElementById('email').value = me.email || '';
@@ -315,6 +315,7 @@
             const statusBadge = r.status === 'EXPIRADA'
               ? `<span class="badge bg-danger">${r.status}</span>`
               : r.status === 'ATIVA' ? `<span class="badge bg-success">${r.status}</span>`
+              : r.status === 'PAGA' ? `<span class="badge bg-primary">${r.status}</span>`
               : `<span class="badge bg-secondary">${r.status}</span>`;
             tbody.innerHTML += `<tr class="${rowClass}"><td>${r.idreserva}</td><td>${formatDate(r.datareserva)}</td><td>${formatDate(r.prazoretirada)}</td><td>${statusBadge}</td><td>${r.statuspagamento}</td><td>${formatMoney(r.totalreserva)}</td></tr>`;
           });

@@ -14,9 +14,15 @@ class FuncionarioService {
             throw new Error('Perfil de funcionário inválido.');
         }
 
+        const email = ((dados.email || '') + '').trim().toLowerCase();
+
         // Validações básicas
-        if (!dados.nome || !dados.login || !dados.senha) {
-            throw new Error('Campos obrigatórios ausentes (nome, login, senha).');
+        if (!dados.nome || !email || !dados.senha) {
+            throw new Error('Campos obrigatórios ausentes (nome, email, senha).');
+        }
+
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+            throw new Error('E-mail inválido para o funcionário.');
         }
 
         // Hash da senha
@@ -26,11 +32,10 @@ class FuncionarioService {
         // Monta objeto para persistência
         const toCreate = {
             nome: dados.nome,
-            login: dados.login,
             senha_hash: senhaHash,
             tipo_perfil: perfil,
             cpf: dados.cpf || null,
-            email: dados.email || null,
+            email,
             telefone: dados.telefone || null,
             matricula: dados.matricula || null,
             trocar_senha: true
@@ -55,10 +60,15 @@ class FuncionarioService {
     }
 
     async atualizarFuncionario(id, dados) {
-        if (!dados.nome || !dados.login || !dados.tipoPerfil) {
+        const email = ((dados.email || '') + '').trim().toLowerCase();
+        if (!dados.nome || !email || !dados.tipoPerfil) {
             throw new Error('Dados incompletos para atualização.');
         }
-        await UsuarioRepository.updateFuncionario(id, dados);
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+            throw new Error('E-mail inválido para atualização do funcionário.');
+        }
+
+        await UsuarioRepository.updateFuncionario(id, { ...dados, email });
         // Se senha fornecida, atualiza separadamente e marca trocar_senha como true
         if(dados.senha){
             const senha_hash = await bcrypt.hash(dados.senha, 10);
