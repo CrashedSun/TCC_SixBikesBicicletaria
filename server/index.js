@@ -10,6 +10,8 @@ const db = require('./config/database');
 const authMiddleware = require('./middleware/authMiddleware');
 const UsuarioRepository = require('./repositories/UsuarioRepository');
 const AuditoriaRepository = require('./repositories/AuditoriaRepository');
+const PasswordResetRepository = require('./repositories/PasswordResetRepository');
+const SiteConfigService = require('./services/SiteConfigService');
 const RealtimeService = require('./services/RealtimeService');
 
 // Importar TODOS os Controllers necessários para todas as rotas
@@ -25,9 +27,15 @@ const reservaController = require('./controllers/ReservaController');
 const reservaService = require('./services/ReservaService');
 const servicosController = require('./controllers/ServicosController');
 const eventoController = require('./controllers/EventoController');
+const siteConfigController = require('./controllers/SiteConfigController');
 
 const app = express();
 const PORT = process.env.SERVER_PORT || 8080;
+
+// Fuso horário do Brasil: UTC-3 (Brasília Time)
+// Horário de verão: UTC-2
+// Offset positivo (180) para aplicar em subtrações SQL
+const BRAZIL_TIMEZONE_OFFSET_MINUTES = 180;
 
 process.on('unhandledRejection', async (reason) => {
     const msg = reason && reason.message ? reason.message : String(reason);
@@ -56,9 +64,32 @@ process.on('uncaughtException', async (error) => {
     } catch (_) {}
 });
 
-app.use(cors()); 
+// CORS com credenciais permitidas
+app.use(cors({
+    origin: '*',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 // Aumenta o limite de JSON para permitir imagens em base64 no cadastro de produto
 app.use(express.json({ limit: '10mb' })); 
+
+// Middleware para adicionar headers CORS explícitos para imagens
+app.use('/assets/img', (req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Cache-Control', 'public, max-age=86400');
+    next();
+}, express.static(path.join(process.cwd(), 'public', 'assets', 'img')));
+// Compatibilidade com links legados
+app.use('/uploads', (req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Cache-Control', 'public, max-age=86400');
+    next();
+}, express.static(path.join(process.cwd(), 'public', 'assets', 'img')));
 
 function sanitizeAuditBody(value) {
     if (value === null || value === undefined) return value;
@@ -130,14 +161,14 @@ function normalizeAuditDateFilter(inputValue, isEndRange = false, tzOffsetMinute
         );
 
         const offset = Number.isFinite(Number(tzOffsetMinutes)) ? Number(tzOffsetMinutes) : 0;
-        parsed = new Date(baseMs + (offset * 60000));
+        parsed = new Date(baseMs - (offset * 60000));
     }
 
     if (isEndRange && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(raw)) {
         parsed = new Date(parsed.getTime() + 59999);
     }
 
-    return parsed.toISOString().replace('T', ' ').slice(0, 23);
+    return parsed.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 async function resolveAuditActor(req) {
@@ -240,6 +271,7 @@ app.use((req, res, next) => {
         else if (req.path.startsWith('/api/clientes')) scope = 'clientes';
         else if (req.path.startsWith('/api/funcionarios')) scope = 'funcionarios';
         else if (req.path.startsWith('/api/usuarios')) scope = 'usuarios';
+        else if (req.path.startsWith('/api/site-config')) scope = 'site-config';
 
         if (scope) {
             RealtimeService.publish(`${scope}.changed`, {
@@ -254,11 +286,15 @@ app.use((req, res, next) => {
 
 // --- ROTAS ABERTAS (Acesso Público) ---
 app.post('/api/login', authController.handleLogin); // UC001
+app.post('/api/auth/recuperar-senha/solicitar', authController.requestPasswordReset);
+app.post('/api/auth/recuperar-senha/confirmar', authController.confirmPasswordReset);
 app.post('/api/clientes/registro', clienteController.handleRegistro); // RF013
 // Tickets: criação exige usuário logado (apenas CLIENTE)
 app.post('/api/tickets', authMiddleware(['CLIENTE']), ticketController.handleNewTicket);
 // Catálogo público de produtos (acesso sem autenticação)
 app.get('/api/produtos/public', produtoController.listarTodos);
+// Configuracoes publicas da home/rodape
+app.get('/api/site-config/public', siteConfigController.getPublic);
 
 // --- ROTAS RESTRITAS (Usam authMiddleware) ---
 const ALL_EMPLOYEES = ['ATENDENTE', 'MECANICO', 'GERENTE', 'PROPRIETARIO'];
@@ -348,6 +384,9 @@ app.put('/api/funcionarios/:id/bloquear', authMiddleware(['GERENTE', 'PROPRIETAR
 // ** Eventos (UC008) **
 app.get('/api/eventos', authMiddleware(ADMIN_ROLES), eventoController.listar);
 app.post('/api/eventos', authMiddleware(ADMIN_ROLES), eventoController.criar);
+// Configuracao do site (somente proprietario)
+app.get('/api/site-config', authMiddleware(OWNER_ROLES), siteConfigController.getForOwner);
+app.put('/api/site-config', authMiddleware(OWNER_ROLES), siteConfigController.update);
 // Catálogo público de eventos (cliente pode visualizar sem login)
 app.get('/api/eventos/public', eventoController.listar);
 // Inscrição do cliente em evento
@@ -386,13 +425,26 @@ app.get('/api/realtime/stream', async (req, res) => {
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders?.();
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('X-Accel-Buffering', 'no');
+        if (res.flushHeaders) {
+            res.flushHeaders();
+        }
 
         const unsubscribe = RealtimeService.subscribe(res, context);
 
         req.on('close', () => {
             unsubscribe();
-            res.end();
+            if (!res.writableEnded) {
+                res.end();
+            }
+        });
+        
+        req.on('error', () => {
+            unsubscribe();
+            if (!res.writableEnded) {
+                res.end();
+            }
         });
     } catch (e) {
         return res.status(401).json({ error: 'Token inválido ou expirado.' });
@@ -411,9 +463,9 @@ app.put('/api/usuarios/me', authMiddleware(ANY_USER), authController.updateMyBas
 // Auditoria global (somente gerente/proprietário)
 app.get('/api/auditoria/logs', authMiddleware(ADMIN_ROLES), async (req, res) => {
     try {
-        const tzOffset = Number(req.query.tzOffset);
-        const de = normalizeAuditDateFilter(req.query.de, false, tzOffset);
-        const ate = normalizeAuditDateFilter(req.query.ate, true, tzOffset);
+        // Sempre usa fuso horário do Brasil (UTC-3 = -180 minutos)
+        const de = normalizeAuditDateFilter(req.query.de, false, BRAZIL_TIMEZONE_OFFSET_MINUTES);
+        const ate = normalizeAuditDateFilter(req.query.ate, true, BRAZIL_TIMEZONE_OFFSET_MINUTES);
 
         const data = await AuditoriaRepository.list({
             limit: req.query.limit,
@@ -478,6 +530,20 @@ app.listen(PORT, '0.0.0.0', async () => {
         console.log('Tabela de auditoria pronta.');
     } catch (e) {
         console.error('Falha ao garantir tabela de auditoria:', e.message);
+    }
+
+    try {
+        await PasswordResetRepository.ensureTable();
+        console.log('Tabela de recuperação de senha pronta.');
+    } catch (e) {
+        console.error('Falha ao garantir tabela de recuperação de senha:', e.message);
+    }
+
+    try {
+        await SiteConfigService.ensureTable();
+        console.log('Tabela de configuracao do site pronta.');
+    } catch (e) {
+        console.error('Falha ao garantir tabela de configuracao do site:', e.message);
     }
 
     // Job: expirar reservas com prazo vencido ao iniciar e a cada hora

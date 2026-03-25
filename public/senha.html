@@ -103,17 +103,18 @@
     </nav>
 <!-- End Header -->
 
-    <!-- Tela de Login -->
+    <!-- Tela de Recuperação -->
     <div class="container">
         <div class="login-box">
             <h2 class="text-success text-center">Esqueceu a senha?</h2>
-            <form action="dashboard.html" method="post">
+            <form id="resetRequestForm">
                 <div class="mb-3">
                     <label for="email" class="form-label">Informe o e-mail para recuperar</label>
                     <input type="email" class="form-control" id="email" name="email" placeholder="Seu@email.com" required>
                 </div>
+                <div id="resetRequestStatus" class="small mb-2"></div>
                 <div class="d-grid">
-                    <button type="submit" class="btn btn-success">Enviar</button>
+                    <button type="submit" class="btn btn-success" id="resetRequestBtn">Enviar</button>
                 </div>
             </form>
         </div>
@@ -122,6 +123,49 @@
     <!-- Scripts -->
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/auth.js"></script>
+    <script>
+        const form = document.getElementById('resetRequestForm');
+        const btn = document.getElementById('resetRequestBtn');
+        const statusEl = document.getElementById('resetRequestStatus');
+        let isSubmitting = false;
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (isSubmitting) return;
+
+            const email = document.getElementById('email').value.trim();
+            if (!email) return;
+
+            isSubmitting = true;
+            btn.disabled = true;
+            statusEl.style.color = '#666';
+            statusEl.textContent = 'Enviando solicitação...';
+
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/recuperar-senha/solicitar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.error || 'Falha ao solicitar recuperação de senha.');
+                }
+
+                statusEl.style.color = '#2d8f53';
+                statusEl.textContent = data.message || 'Se o e-mail existir, você receberá instruções para redefinir a senha.';
+                form.reset();
+            } catch (error) {
+                statusEl.style.color = '#b42318';
+                statusEl.textContent = error.message || 'Erro ao solicitar recuperação de senha.';
+            } finally {
+                setTimeout(() => {
+                    isSubmitting = false;
+                    btn.disabled = false;
+                }, 1500);
+            }
+        });
+    </script>
 </body>
 
 </html>

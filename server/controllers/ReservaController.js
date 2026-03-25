@@ -1,5 +1,9 @@
 const ReservaService = require('../services/ReservaService');
 
+// Fuso horário do Brasil: UTC-3 (Brasília Time)
+// Offset positivo (180) para aplicar em subtrações SQL
+const BRAZIL_TIMEZONE_OFFSET_MINUTES = 180;
+
 class ReservaController {
   // Cliente finaliza reserva (cria cabeçalho + itens) / Atendente cria reserva de balcão
   async criar(req, res) {
@@ -87,7 +91,8 @@ class ReservaController {
 
   async listarHoje(req, res) {
     try {
-      const lista = await ReservaService.listarHoje();
+      // Sempre usa fuso horário do Brasil (UTC-3 = -180 minutos)
+      const lista = await ReservaService.listarHoje(BRAZIL_TIMEZONE_OFFSET_MINUTES);
       return res.status(200).json(lista);
     } catch (e) { return res.status(500).json({ error: e.message }); }
   }

@@ -178,7 +178,7 @@ class AgendamentoRepository {
     }
 
     // Lista agendamentos cuja dataAgendada é hoje (visão gerencial)
-    async findHoje() {
+    async findHoje(tzOffsetMinutes = 0) {
         const sql = `
             SELECT a.id, a.idservico, s.nome AS servico_nome, s.duracaoestimada, s.valor,
                    a.status, a.datacriacao, a.dataAgendada, a.observacoes,
@@ -186,10 +186,10 @@ class AgendamentoRepository {
             FROM agendamento a
             JOIN servicos s ON s.idservico = a.idservico
             JOIN usuario u ON u.id = a.idcliente
-            WHERE DATE(a.dataAgendada) = CURRENT_DATE
+            WHERE DATE(a.dataAgendada - ($1::int || ' minutes')::interval) = DATE(CURRENT_DATE::timestamp - ($1::int || ' minutes')::interval)
               AND a.status <> 'CANCELADO'
             ORDER BY a.dataAgendada ASC, a.datacriacao DESC;`;
-        const res = await db.query(sql);
+        const res = await db.query(sql, [Number(tzOffsetMinutes)]);
         return res.rows;
     }
     

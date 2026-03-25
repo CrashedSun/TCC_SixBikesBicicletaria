@@ -156,9 +156,15 @@
                     container.innerHTML = '<div class="col-12 text-center"><p class="text-muted">Nenhum evento cadastrado.</p></div>';
                     return;
                 }
+                const eventosOrdenados = [...data].sort((a, b) => {
+                    const da = String(a.data || '9999-12-31');
+                    const db = String(b.data || '9999-12-31');
+                    if (da === db) return Number(a.idevento || 0) - Number(b.idevento || 0);
+                    return da.localeCompare(db);
+                });
                 container.innerHTML = '';
                 const token = localStorage.getItem('userToken');
-                data.forEach(ev => {
+                eventosOrdenados.forEach(ev => {
                     const col = document.createElement('div');
                     col.className = 'col-md-4';
                     const dataStr = ev.data ? new Date(ev.data + 'T00:00:00').toLocaleDateString('pt-BR') : '-';

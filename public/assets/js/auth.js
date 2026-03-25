@@ -245,7 +245,8 @@ function invalidateApiCacheByScope(scope) {
         eventos: ['/eventos'],
         clientes: ['/clientes'],
         funcionarios: ['/funcionarios'],
-        usuarios: ['/usuarios']
+        usuarios: ['/usuarios'],
+        'site-config': ['/site-config']
     };
 
     const related = prefixes[scope] || [];
@@ -277,6 +278,7 @@ function inferScopeFromRealtimeEvent(evt) {
     if (t.startsWith('cliente.')) return 'clientes';
     if (t.startsWith('funcionario.')) return 'funcionarios';
     if (t.startsWith('usuario.')) return 'usuarios';
+    if (t.startsWith('site-config.') || t.startsWith('siteconfig.')) return 'site-config';
     return null;
 }
 
@@ -293,7 +295,7 @@ function checkRestrictedAccess() {
     const path = window.location.pathname;
 
     // Páginas públicas que não requerem token (nunca redirecionam)
-    const publicPages = ['login.html', 'registro.html', 'index.html', 'contato.html', 'produtos.html', 'servicos.html', 'eventos.html', 'shop-single.html', 'carrinho.html', 'produto-unico.html', 'senha.html'];
+    const publicPages = ['login.html', 'registro.html', 'index.html', 'contato.html', 'produtos.html', 'servicos.html', 'eventos.html', 'shop-single.html', 'carrinho.html', 'produto-unico.html', 'senha.html', 'redefinir-senha.html'];
     const currentPage = path.split('/').pop();
     
     // Se for página pública, não faz nada
@@ -401,6 +403,7 @@ async function fetchAuthenticated(url, method = 'GET', body = null) {
                 : pathNoBase.startsWith('/clientes') ? 'clientes'
                 : pathNoBase.startsWith('/funcionarios') ? 'funcionarios'
                 : pathNoBase.startsWith('/usuarios') ? 'usuarios'
+                : pathNoBase.startsWith('/site-config') ? 'site-config'
                 : null;
             if (scopeByPath) invalidateApiCacheByScope(scopeByPath);
         }

@@ -82,6 +82,74 @@ class AuthController {
         }
     }
 
+    async requestPasswordReset(req, res) {
+        const email = ((req.body && req.body.email) || '').toString().trim();
+        if (!email) {
+            return res.status(400).json({ error: 'E-mail é obrigatório.' });
+        }
+
+        try {
+            const result = await AuthService.requestPasswordReset(email, {
+                ip: req.ip,
+                userAgent: req.get('user-agent') || null,
+            });
+
+            try {
+                await AuditoriaRepository.create({
+                    requestId: req.requestId,
+                    nivel: 'INFO',
+                    acao: 'AUTH_PASSWORD_RESET_REQUEST',
+                    recurso: 'AUTH',
+                    metodo: req.method,
+                    rota: req.originalUrl || req.path,
+                    statusCode: 200,
+                    usuarioEmail: email.toLowerCase(),
+                    ip: req.ip,
+                    userAgent: req.get('user-agent') || null,
+                    mensagem: result && result.deduped ? 'Solicitação suprimida por duplicidade/cooldown.' : 'Solicitação de recuperação recebida.',
+                });
+            } catch (_) {}
+
+            return res.status(200).json({
+                message: 'Se o e-mail existir, você receberá instruções para redefinir a senha.'
+            });
+        } catch (error) {
+            return res.status(500).json({ error: error.message || 'Falha ao processar recuperação de senha.' });
+        }
+    }
+
+    async confirmPasswordReset(req, res) {
+        const token = ((req.body && req.body.token) || '').toString();
+        const senha = ((req.body && req.body.senha) || '').toString();
+
+        if (!token || !senha) {
+            return res.status(400).json({ error: 'Token e nova senha são obrigatórios.' });
+        }
+
+        try {
+            await AuthService.confirmPasswordReset(token, senha);
+
+            try {
+                await AuditoriaRepository.create({
+                    requestId: req.requestId,
+                    nivel: 'INFO',
+                    acao: 'AUTH_PASSWORD_RESET_CONFIRM',
+                    recurso: 'AUTH',
+                    metodo: req.method,
+                    rota: req.originalUrl || req.path,
+                    statusCode: 200,
+                    ip: req.ip,
+                    userAgent: req.get('user-agent') || null,
+                    mensagem: 'Senha redefinida com sucesso por token de recuperação.',
+                });
+            } catch (_) {}
+
+            return res.status(200).json({ message: 'Senha redefinida com sucesso.' });
+        } catch (error) {
+            return res.status(400).json({ error: error.message || 'Token inválido ou expirado.' });
+        }
+    }
+
     /**
      * Atualiza dados básicos do usuário autenticado: nome, cpf, telefone.
      */

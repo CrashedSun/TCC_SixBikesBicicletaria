@@ -36,7 +36,7 @@ class ReservaService {
     return det;
   }
 
-  async listarHoje() { return await ReservaRepository.listarHoje(); }
+  async listarHoje(tzOffsetMinutes = 0) { return await ReservaRepository.listarHoje(tzOffsetMinutes); }
 
   async expirarVencidas() { return await ReservaRepository.expirarVencidas(); }
 }

@@ -133,7 +133,8 @@ class ProdutoController {
         try {
             const { imagemBase64, imagemNome, ...dadosProduto } = req.body;
 
-            const produto = await ProdutoService.atualizarProduto(req.params.id, dadosProduto);
+            await ProdutoService.atualizarProduto(req.params.id, dadosProduto);
+            let imagemUrl = null;
 
             if (imagemBase64) {
                 if (!imagemBase64.startsWith('data:image/')) {
@@ -157,14 +158,13 @@ class ProdutoController {
                 const base64Data = imagemBase64.replace(/^data:image\/\w+;base64,/, '');
                 fs.writeFileSync(filePath, base64Data, { encoding: 'base64' });
 
-                const imagemUrl = `/assets/img/produtos/${fileName}`;
+                imagemUrl = `/assets/img/produtos/${fileName}`;
                 await ProdutoService.atualizarImagem(req.params.id, imagemUrl);
-                produto.imagemUrl = imagemUrl;
             }
 
             RealtimeService.publish('produto.atualizado', { id: Number(req.params.id), scope: 'estoque' });
 
-            return res.status(200).json({ message: `Produto ${req.params.id} atualizado.` });
+            return res.status(200).json({ message: `Produto ${req.params.id} atualizado.`, imagemUrl });
         } catch(e) {
             return res.status(400).json({ error: e.message });
         }

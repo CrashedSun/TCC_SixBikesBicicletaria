@@ -126,8 +126,8 @@ class AgendamentoService {
         return { status: "CONCLUIDO" };
     }
 
-    async listarHoje() {
-        return await AgendamentoRepository.findHoje();
+    async listarHoje(tzOffsetMinutes = 0) {
+        return await AgendamentoRepository.findHoje(tzOffsetMinutes);
     }
 }
 module.exports = new AgendamentoService();

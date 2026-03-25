@@ -212,38 +212,17 @@
     <script>
     // Helper para normalizar URLs de imagens
     function normalizeImageUrl(imagePath) {
-        const backendBase = `${window.location.protocol}//${window.location.hostname}:8080`;
-        const defaultImage = `${backendBase}/assets/img/category_img_01.webp`;
-
-        if (!imagePath || typeof imagePath !== 'string') return defaultImage;
-
+        if (!imagePath || typeof imagePath !== 'string') return '/assets/img/category_img_01.webp';
+        
         const path = imagePath.toString().trim();
-        if (!path) return defaultImage;
-        if (path.startsWith('data:')) return path;
-
-        // Se vier URL absoluta antiga (ex.: porta 3000), converte para backend 8080.
-        if (path.startsWith('http://') || path.startsWith('https://')) {
-            try {
-                const parsed = new URL(path);
-                const isImagePath = parsed.pathname.startsWith('/assets/') || parsed.pathname.startsWith('/uploads/');
-                const sameHostLike = (
-                    parsed.hostname === window.location.hostname ||
-                    (parsed.hostname === 'localhost' && window.location.hostname === '127.0.0.1') ||
-                    (parsed.hostname === '127.0.0.1' && window.location.hostname === 'localhost')
-                );
-
-                if (isImagePath && sameHostLike && parsed.port !== '8080') {
-                    return `${backendBase}${parsed.pathname}${parsed.search}`;
-                }
-                return path;
-            } catch (_) {
-                return defaultImage;
-            }
-        }
-
-        // Se é caminho relativo (com ou sem /), aponta para backend.
-        const cleanPath = path.startsWith('/') ? path : `/${path}`;
-        return `${backendBase}${cleanPath}`;
+        if (!path) return '/assets/img/category_img_01.webp';
+        
+        // Se já é URL completa, retorna assim
+        if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        
+        // Se é caminho relativo (com ou sem /), aponta para backend
+        const cleanPath = path.startsWith('/') ? path : '/' + path;
+        return `${window.location.protocol}//${window.location.hostname}:8080${cleanPath}`;
     }
     </script>
 
@@ -1086,7 +1065,7 @@
                                 const imagemPadrao = '/assets/img/category_img_01.webp';
                                 const imgPath = rawImg || imagemPadrao;
                                 const imgSrc = !imgPath.startsWith('http')
-                                    ? normalizeImageUrl(imgPath)
+                                    ? `${window.location.origin}${imgPath.startsWith('/') ? '' : '/'}${imgPath}`
                                     : imgPath;
                                 const precoFmt = Number.isFinite(precoNum) ? precoNum.toFixed(2) : '0.00';
 
@@ -1133,7 +1112,7 @@
                                     const imagemPadrao = '/assets/img/category_img_01.webp';
                                     const imgPath = rawImg || imagemPadrao;
                                     const imgSrc = !imgPath.startsWith('http')
-                                        ? normalizeImageUrl(imgPath)
+                                        ? `${window.location.origin}${imgPath.startsWith('/') ? '' : '/'}${imgPath}`
                                         : imgPath;
                                     const precoFmt = Number.isFinite(precoNum) ? precoNum.toFixed(2) : '0.00';
                                     cardCol.innerHTML = `
@@ -1343,7 +1322,7 @@
                                                 const imagemPadrao = '/assets/img/category_img_01.webp';
                                                 const fotoPath = (s.foto || '').toString().trim() || imagemPadrao;
                                                 const fotoSrc = !fotoPath.startsWith('http')
-                                                    ? normalizeImageUrl(fotoPath)
+                                                    ? `${window.location.origin}${fotoPath.startsWith('/') ? '' : '/'}${fotoPath}`
                                                     : fotoPath;
                                                 cardCol.innerHTML = `
                                                     <div class="card h-100 border-2 servico-item-card"
@@ -1382,7 +1361,7 @@
                                                 const imagemPadrao = '/assets/img/category_img_01.webp';
                                                 const fotoPath = (s.foto || '').toString().trim() || imagemPadrao;
                                                 const fotoSrc = !fotoPath.startsWith('http')
-                                                    ? normalizeImageUrl(fotoPath)
+                                                    ? `${window.location.origin}${fotoPath.startsWith('/') ? '' : '/'}${fotoPath}`
                                                     : fotoPath;
                                                 cardCol.innerHTML = `
                                                     <div class="card h-100 border-2 servico-item-card"

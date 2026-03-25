@@ -156,8 +156,9 @@ class ReservaRepository {
         return true;
     }
 
-    async listarHoje() {
-        // Usa prazoRetirada se existir; caso contrário, considera datareserva (criação)
+    async listarHoje(tzOffsetMinutes = 0) {
+        // Exibe reservas ativas cujo "hoje" (Brasil) está dentro da janela de validade.
+        // Janela: de datareserva até prazoretirada (ou datareserva + 3 dias quando nulo).
         const sql = `
             SELECT r.idreserva AS idReserva, r.idcliente AS idCliente, r.datareserva AS dataReserva,
                    r.prazoretirada AS prazoRetirada, r.status, r.statuspagamento AS statusPagamento,
@@ -167,14 +168,14 @@ class ReservaRepository {
               FROM reserva r
               JOIN usuario u ON u.id = r.idcliente
          LEFT JOIN itemreserva ir ON ir.idreserva = r.idreserva
-             WHERE r.status <> 'CANCELADA'
-               AND (
-                     (r.prazoretirada IS NOT NULL AND DATE(r.prazoretirada) = CURRENT_DATE)
-                  OR (r.prazoretirada IS NULL AND DATE(r.datareserva) = CURRENT_DATE)
-               )
+             WHERE r.status = 'ATIVA'
+               AND DATE(r.datareserva - ($1::int || ' minutes')::interval)
+                   <= DATE(CURRENT_DATE::timestamp - ($1::int || ' minutes')::interval)
+               AND DATE(COALESCE(r.prazoretirada, r.datareserva + INTERVAL '3 days') - ($1::int || ' minutes')::interval)
+                   >= DATE(CURRENT_DATE::timestamp - ($1::int || ' minutes')::interval)
           GROUP BY r.idreserva, r.idcliente, r.datareserva, r.prazoretirada, r.status, r.statuspagamento, r.metodopagamento, r.idatendente, u.nome
           ORDER BY COALESCE(r.prazoretirada, r.datareserva) DESC;`;
-        const { rows } = await db.query(sql);
+        const { rows } = await db.query(sql, [Number(tzOffsetMinutes)]);
         return rows;
     }
 

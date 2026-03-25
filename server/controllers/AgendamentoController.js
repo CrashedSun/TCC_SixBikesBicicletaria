@@ -1,5 +1,10 @@
 // server/controllers/AgendamentoController.js
 const AgendamentoService = require('../services/AgendamentoService');
+
+// Fuso horário do Brasil: UTC-3 (Brasília Time)
+// Offset positivo (180) para aplicar em subtrações SQL
+const BRAZIL_TIMEZONE_OFFSET_MINUTES = 180;
+
 class AgendamentoController {
     /** * Rota: POST /api/agendamentos/solicitar (UC006)
      * Cliente agenda serviço.
@@ -125,7 +130,8 @@ class AgendamentoController {
 
     async listarHoje(req, res) {
         try {
-            const lista = await AgendamentoService.listarHoje();
+            // Sempre usa fuso horário do Brasil (UTC-3 = -180 minutos)
+            const lista = await AgendamentoService.listarHoje(BRAZIL_TIMEZONE_OFFSET_MINUTES);
             return res.status(200).json(lista);
         } catch (e) {
             return res.status(400).json({ error: e.message });

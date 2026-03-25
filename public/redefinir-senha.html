@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>Redefinir Senha - SixBikes</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="apple-touch-icon" href="assets/img/apple-icon.png">
+    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.ico">
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/templatemo.css">
+    <link rel="stylesheet" href="assets/css/custom.css">
+
+    <style>
+        body { background-color: #f8f9fa; }
+        .reset-box {
+            max-width: 460px;
+            margin: 80px auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+        }
+        .btn-success { background-color: #59ab6e; border-color: #59ab6e; }
+        .btn-success:hover { background-color: #46915a; border-color: #46915a; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="reset-box">
+            <h2 class="text-success text-center mb-3">Redefinir senha</h2>
+            <p class="small text-muted">Digite sua nova senha para concluir a recuperação.</p>
+
+            <form id="resetConfirmForm">
+                <div class="mb-3">
+                    <label class="form-label" for="novaSenha">Nova senha</label>
+                    <input type="password" class="form-control" id="novaSenha" minlength="6" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="confirmarSenha">Confirmar nova senha</label>
+                    <input type="password" class="form-control" id="confirmarSenha" minlength="6" required>
+                </div>
+
+                <div id="resetConfirmStatus" class="small mb-2"></div>
+
+                <div class="d-grid">
+                    <button id="resetConfirmBtn" type="submit" class="btn btn-success">Redefinir senha</button>
+                </div>
+                <div class="mt-3 text-center">
+                    <a href="login.html" class="text-decoration-none">Voltar ao login</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        const form = document.getElementById('resetConfirmForm');
+        const btn = document.getElementById('resetConfirmBtn');
+        const statusEl = document.getElementById('resetConfirmStatus');
+        const token = new URLSearchParams(window.location.search).get('token');
+
+        let isSubmitting = false;
+
+        if (!token) {
+            statusEl.style.color = '#b42318';
+            statusEl.textContent = 'Token ausente. Solicite um novo link de recuperação.';
+            btn.disabled = true;
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (isSubmitting || !token) return;
+
+            const senha = document.getElementById('novaSenha').value;
+            const confirmar = document.getElementById('confirmarSenha').value;
+
+            if (!senha || senha.length < 6) {
+                statusEl.style.color = '#b42318';
+                statusEl.textContent = 'A senha deve ter no mínimo 6 caracteres.';
+                return;
+            }
+            if (senha !== confirmar) {
+                statusEl.style.color = '#b42318';
+                statusEl.textContent = 'As senhas não coincidem.';
+                return;
+            }
+
+            isSubmitting = true;
+            btn.disabled = true;
+            statusEl.style.color = '#666';
+            statusEl.textContent = 'Redefinindo senha...';
+
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/recuperar-senha/confirmar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, senha })
+                });
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Falha ao redefinir senha.');
+                }
+
+                statusEl.style.color = '#2d8f53';
+                statusEl.textContent = data.message || 'Senha redefinida com sucesso. Redirecionando...';
+                form.reset();
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1800);
+            } catch (error) {
+                statusEl.style.color = '#b42318';
+                statusEl.textContent = error.message || 'Erro ao redefinir senha.';
+                isSubmitting = false;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

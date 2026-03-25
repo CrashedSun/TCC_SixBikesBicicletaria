@@ -26,7 +26,7 @@
   <!-- Header -->
   <nav class="navbar navbar-expand-lg navbar-light shadow">
     <div class="container d-flex justify-content-between align-items-center">
-      <a class="navbar-brand text-success logo h1 align-self-center" href="index.html">SixBikes Bicicletaria</a>
+      <a class="navbar-brand text-success logo h1 align-self-center" href="index.html" id="cfgCompanyNameTop">SixBikes Bicicletaria</a>
       <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#templatemo_main_nav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -36,6 +36,7 @@
             <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
             <li class="nav-item"><a class="nav-link" href="servicos.html">Serviços</a></li>
             <li class="nav-item"><a class="nav-link" href="produtos.html">Produtos</a></li>
+            <li class="nav-item"><a class="nav-link" href="eventos.html">Eventos</a></li>
             <li class="nav-item"><a class="nav-link" href="contato.html">Contato</a></li>
           </ul>
         </div>
@@ -168,19 +169,92 @@
     </div>
   </div>
 
-  <!-- Footer (simplificado) -->
-  <footer class="bg-dark text-light py-4 mt-5">
-    <div class="container text-center small">
-      SixBikes Bicicletaria &copy; 2025
-    </div>
+  <!-- Footer -->
+  <footer class="bg-dark" id="tempaltemo_footer">
+      <div class="container">
+          <div class="row">
+
+              <div class="col-md-4 pt-5">
+                  <h2 class="h2 text-success border-bottom pb-3 border-light logo" id="cfgCompanyNameFooter">SixBikes Bicicletaria</h2>
+                  <ul class="list-unstyled text-light footer-link-list">
+                      <li>
+                          <i class="fas fa-map-marker-alt fa-fw"></i>
+                          <span id="cfgFooterAddress">Endereço</span>
+                      </li>
+                      <li>
+                          <i class="fa fa-phone fa-fw"></i>
+                          <a class="text-decoration-none" href="tel:010-020-0340" id="cfgFooterPhone">(11) 99999-9999</a>
+                      </li>
+                      <li>
+                          <i class="fa fa-envelope fa-fw"></i>
+                          <a class="text-decoration-none" href="mailto:atendimento@sixbikes.com" id="cfgFooterEmail">atendimento@sixbikes.com</a>
+                      </li>
+                  </ul>
+              </div>
+
+              <div class="col-md-4 pt-5">
+                  <h2 class="h2 text-light border-bottom pb-3 border-light">Produtos</h2>
+                  <ul class="list-unstyled text-light footer-link-list">
+                      <li><a class="text-decoration-none" href="produtos.html?categoria=1">Categoria 1</a></li>
+                      <li><a class="text-decoration-none" href="produtos.html?categoria=2">Categoria 2</a></li>
+                      <li><a class="text-decoration-none" href="produtos.html?categoria=3">Categoria 3</a></li>
+                      <li><a class="text-decoration-none" href="produtos.html?categoria=4">Categoria 4</a></li>
+                      <li><a class="text-decoration-none" href="produtos.html?categoria=5">Categoria 5</a></li>
+                      <li><a class="text-decoration-none" href="produtos.html?categoria=6">Categoria 6</a></li>
+                      <li><a class="text-decoration-none" href="produtos.html?categoria=7">Categoria 7</a></li>
+                  </ul>
+              </div>
+
+              <div class="col-md-4 pt-5">
+                  <h2 class="h2 text-light border-bottom pb-3 border-light">Abas</h2>
+                  <ul class="list-unstyled text-light footer-link-list">
+                      <li><a class="text-decoration-none" href="index.html">Home</a></li>
+                      <li><a class="text-decoration-none" href="servicos.html">Serviços</a></li>
+                      <li><a class="text-decoration-none" href="produtos.html">Produtos</a></li>
+                      <li><a class="text-decoration-none" href="eventos.html">Eventos</a></li>
+                      <li><a class="text-decoration-none" href="contato.html">Contato</a></li>
+                  </ul>
+              </div>
+
+          </div>
+
+          <div class="row text-light mb-4">
+              <div class="col-12 mb-3">
+                  <div class="w-100 my-3 border-top border-light"></div>
+              </div>
+              <div class="col-auto me-auto">
+                  <ul class="list-inline text-left footer-icons">
+                      <li class="list-inline-item border border-light rounded-circle text-center">
+                          <a class="text-light text-decoration-none" target="_blank" href="http://facebook.com/" id="cfgSocialFacebook"><i class="fab fa-facebook-f fa-lg fa-fw"></i></a>
+                      </li>
+                      <li class="list-inline-item border border-light rounded-circle text-center">
+                          <a class="text-light text-decoration-none" target="_blank" href="https://www.instagram.com/" id="cfgSocialInstagram"><i class="fab fa-instagram fa-lg fa-fw"></i></a>
+                      </li>
+                      <li class="list-inline-item border border-light rounded-circle text-center">
+                          <a class="text-light text-decoration-none" target="_blank" href="https://twitter.com/" id="cfgSocialTwitter"><i class="fab fa-twitter fa-lg fa-fw"></i></a>
+                      </li>
+                      <li class="list-inline-item border border-light rounded-circle text-center">
+                          <a class="text-light text-decoration-none" target="_blank" href="https://www.linkedin.com/" id="cfgSocialLinkedin"><i class="fab fa-linkedin fa-lg fa-fw"></i></a>
+                      </li>
+                  </ul>
+              </div>
+          </div>
+      </div>
+
+      <div class="w-100 bg-black py-3">     
+      </div>
+
   </footer>
+  <!-- Fim Footer -->
 
   <script src="assets/js/jquery-1.11.0.min.js"></script>
   <script src="assets/js/jquery-migrate-1.2.1.min.js"></script>
   <script src="assets/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/templatemo.js"></script>
+  <script src="assets/js/custom.js"></script>
   <script src="assets/js/search.js"></script>
-  <script src="assets/js/cart.js"></script>
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/cart.js"></script>
   <script>
     function updateCartCount(){
       if(window.Cart){ const el=document.getElementById('cart-count'); if(el) el.textContent = Cart.count(); }
@@ -336,7 +410,24 @@
           lista.forEach(s => {
             const raw = s.dataagendada || s.dataAgendada;
             const horario = raw ? new Date(raw).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : '-';
-            tbody.innerHTML += `<tr><td>${s.id}</td><td>${s.servico_nome||'-'}</td><td>${formatDate(raw)}</td><td>${horario}</td><td>${s.status}</td><td>${formatMoney(s.valor)}</td></tr>`;
+            const status = String(s.status || '').toUpperCase();
+            const rowClass = status === 'CANCELADO'
+              ? 'table-danger'
+              : status === 'EM ANDAMENTO'
+                ? 'table-warning'
+                : status === 'CONCLUIDO'
+                  ? 'table-primary'
+                  : '';
+            const statusBadge = status === 'ABERTO'
+              ? '<span class="badge bg-success">ABERTO</span>'
+              : status === 'EM ANDAMENTO'
+                ? '<span class="badge bg-warning text-dark">EM ANDAMENTO</span>'
+                : status === 'CONCLUIDO'
+                  ? '<span class="badge bg-primary">CONCLUIDO</span>'
+                  : status === 'CANCELADO'
+                    ? '<span class="badge bg-danger">CANCELADO</span>'
+                    : `<span class="badge bg-secondary">${status || '-'}</span>`;
+            tbody.innerHTML += `<tr class="${rowClass}"><td>${s.id}</td><td>${s.servico_nome||'-'}</td><td>${formatDate(raw)}</td><td>${horario}</td><td>${statusBadge}</td><td>${formatMoney(s.valor)}</td></tr>`;
           });
           document.getElementById('historicoResultado').textContent = '';
           tabela.classList.remove('d-none');

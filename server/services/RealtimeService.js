@@ -1,28 +1,36 @@
 const clients = new Set();
 
 function subscribe(res, context = {}) {
-  clients.add({ res, context });
+  const client = { res, context, alive: true };
+  clients.add(client);
 
   // Handshake event for client bootstrap
-  res.write(`event: connected\n`);
-  res.write(`data: ${JSON.stringify({ ok: true, ts: Date.now() })}\n\n`);
+  try {
+    res.write(`event: connected\n`);
+    res.write(`data: ${JSON.stringify({ ok: true, ts: Date.now() })}\n\n`);
+  } catch (e) {
+    client.alive = false;
+    clients.delete(client);
+    return () => {};
+  }
 
   const heartbeat = setInterval(() => {
+    if (!client.alive) {
+      clearInterval(heartbeat);
+      return;
+    }
     try {
       res.write(`: heartbeat ${Date.now()}\n\n`);
-    } catch (_) {
+    } catch (e) {
       clearInterval(heartbeat);
+      client.alive = false;
     }
   }, 30000);
 
   return () => {
     clearInterval(heartbeat);
-    for (const item of clients) {
-      if (item.res === res) {
-        clients.delete(item);
-        break;
-      }
-    }
+    client.alive = false;
+    clients.delete(client);
   };
 }
 
@@ -34,13 +42,21 @@ function publish(type, payload = {}) {
   };
   const data = `data: ${JSON.stringify(event)}\n\n`;
 
-  for (const { res } of clients) {
+  for (const client of clients) {
+    if (!client.alive) continue;
     try {
-      res.write(data);
-    } catch (_) {
-      // Ignore broken clients; they will be cleaned up on close.
+      client.res.write(data);
+    } catch (e) {
+      client.alive = false;
     }
   }
+  
+  // Cleanup dead clients periodically
+  clients.forEach(client => {
+    if (!client.alive) {
+      clients.delete(client);
+    }
+  });
 }
 
 module.exports = {

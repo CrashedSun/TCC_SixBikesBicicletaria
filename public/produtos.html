@@ -461,6 +461,38 @@
             let activeCategoryId = null;
             let activeSort = '';             // '', 'az', 'za', 'preco-asc', 'preco-desc'
 
+            function normalizeImageUrl(imagePath) {
+                const backendBase = `${window.location.protocol}//${window.location.hostname}:8080`;
+                const fallback = `${backendBase}/assets/img/category_img_01.webp`;
+
+                if (!imagePath || typeof imagePath !== 'string') return fallback;
+                const path = imagePath.trim();
+                if (!path) return fallback;
+                if (path.startsWith('data:')) return path;
+
+                if (path.startsWith('http://') || path.startsWith('https://')) {
+                    try {
+                        const parsed = new URL(path);
+                        const isLocalImagePath = parsed.pathname.startsWith('/assets/') || parsed.pathname.startsWith('/uploads/');
+                        const sameHostLike = (
+                            parsed.hostname === window.location.hostname ||
+                            (parsed.hostname === 'localhost' && window.location.hostname === '127.0.0.1') ||
+                            (parsed.hostname === '127.0.0.1' && window.location.hostname === 'localhost')
+                        );
+
+                        if (isLocalImagePath && sameHostLike && parsed.port !== '8080') {
+                            return `${backendBase}${parsed.pathname}${parsed.search}`;
+                        }
+                        return path;
+                    } catch (_) {
+                        return fallback;
+                    }
+                }
+
+                const clean = path.startsWith('/') ? path : `/${path}`;
+                return `${backendBase}${clean}`;
+            }
+
             function resolveRequestedCategory(categorias) {
                 activeCategoryId = null;
                 if (!initialCategoryParam) return null;
@@ -678,7 +710,8 @@
                     if (Number.isNaN(priceNum)) priceNum = 0;
                     const priceFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(priceNum);
                     const estoque = product.qtd ?? product.quantidade ?? product.quantidadeAtual ?? 0;
-                    const imageUrl = product.imagemUrl || 'assets/img/category_img_01.webp';
+                    const rawImage = (product.imagemUrl || product.imagem_url || '').toString();
+                    const imageUrl = normalizeImageUrl(rawImage);
                     const card = template.content.cloneNode(true);
                     card.querySelector('.product-name').textContent = product.nome ?? `Produto ${id}`;
                     card.querySelector('.product-stock').textContent = `Em Estoque: ${estoque}`;

@@ -23,7 +23,7 @@
 <!-- Header -->
     <nav class="navbar navbar-expand-lg navbar-light shadow">
         <div class="container d-flex justify-content-between align-items-center">
-            <a class="navbar-brand text-success logo h1 align-self-center" href="index.html">SixBikes Bicicletaria</a>
+            <a class="navbar-brand text-success logo h1 align-self-center" href="index.html" id="cfgCompanyNameTop">SixBikes Bicicletaria</a>
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#templatemo_main_nav" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -54,6 +54,18 @@
     </nav>
 <!-- End Header -->
 
+<!-- Próximo Evento Strip -->
+    <section class="next-event-strip" id="next-event-banner">
+        <div class="container next-event-strip-inner">
+            <p class="next-event-kicker mb-0">Próximo Evento</p>
+            <h2 class="next-event-title mb-0" id="next-event-name">Carregando evento...</h2>
+            <p class="next-event-meta mb-0" id="next-event-date">Aguarde um instante.</p>
+            <p class="next-event-meta mb-0" id="next-event-slots"></p>
+            <a class="btn btn-sm next-event-cta" href="eventos.html">Ver todos os eventos</a>
+        </div>
+    </section>
+<!-- End Próximo Evento Strip -->
+
 <!-- Modal -->
     <div class="modal fade bg-white" id="templatemo_search" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
@@ -80,15 +92,13 @@
                 <div class="container">
                     <div class="row p-5">
                         <div class="mx-auto col-md-8 col-lg-6 order-lg-last">
-                            <img class="img-fluid" src="./assets/img/banner_img_01.png" alt="">
+                            <img class="img-fluid" src="./assets/img/banner_img_01.png" alt="Banner" id="cfgHeroImage">
                         </div>
                         <div class="col-lg-6 mb-0 d-flex align-items-center">
                             <div class="text-align-left align-self-center">
-                                <h1 class="h1 text-success"><b>SixBikes</b> Bicicletaria</h1>
-                                <h3 class="h2">Agende um servico conosco</h3>
-                                <p>
-                                    Aqui você encontra qualidade.
-                                </p>
+                                <h1 class="h1 text-success" id="cfgHeroTitle"><b>SixBikes</b> Bicicletaria</h1>
+                                <h3 class="h2" id="cfgHeroSubtitle">Agende um servico conosco</h3>
+                                <p id="cfgHeroDescription">Aqui você encontra qualidade.</p>
                             </div>
                         </div>
                     </div>
@@ -109,7 +119,7 @@
                     </p>
                 </div>
             </div>
-            <div class="row" id="featured-servicos-row">
+            <div class="row recommendation-track" id="featured-servicos-row">
                 <!-- serviços carregados dinamicamente -->
             </div>
         </div>
@@ -126,7 +136,7 @@
                 </p>
             </div>
         </div>
-        <div class="row" id="featured-products-row">
+        <div class="row recommendation-track" id="featured-products-row">
             <!-- Produtos carregados dinamicamente -->
         </div>
     </section>
@@ -137,16 +147,16 @@
         <div class="container">
             <div class="row align-items-center py-5">
                 <div class="col-md-8 text-white">
-                    <h1>Sobre nós</h1>
-                    <p>
+                    <h1 id="cfgAboutTitle">Sobre nós</h1>
+                    <p id="cfgAboutText1">
                         Somos especializados em facilitar a vida dos ciclistas. No nosso site, você pode agendar serviços para sua bike e reservar produtos como Peças e Acessórios, para retirá-los prontos na nossa bicicletaria.
                     </p>
-                    <p>
+                    <p id="cfgAboutText2">
                         Com atendimento rápido, serviços de qualidade e a conveniência de compras sem espera, garantimos a melhor experiência para você pedalar com segurança e conforto.
                     </p>
                 </div>
                 <div class="col-md-4">
-                    <img src="assets/img/about-hero.svg" alt="About Hero">
+                    <img src="assets/img/about-hero.svg" alt="About Hero" id="cfgAboutImage">
                 </div>
             </div>
         </div>
@@ -159,19 +169,19 @@
             <div class="row">
 
                 <div class="col-md-4 pt-5">
-                    <h2 class="h2 text-success border-bottom pb-3 border-light logo">SixBikes Bicicletaria</h2>
+                    <h2 class="h2 text-success border-bottom pb-3 border-light logo" id="cfgCompanyNameFooter">SixBikes Bicicletaria</h2>
                     <ul class="list-unstyled text-light footer-link-list">
                         <li>
                             <i class="fas fa-map-marker-alt fa-fw"></i>
-                            Endereço
+                            <span id="cfgFooterAddress">Endereço</span>
                         </li>
                         <li>
                             <i class="fa fa-phone fa-fw"></i>
-                            <a class="text-decoration-none" href="tel:010-020-0340">(11) 99999-9999</a>
+                            <a class="text-decoration-none" href="tel:010-020-0340" id="cfgFooterPhone">(11) 99999-9999</a>
                         </li>
                         <li>
                             <i class="fa fa-envelope fa-fw"></i>
-                            <a class="text-decoration-none" href="mailto:atendimento@sixbikes.com">atendimento@sixbikes.com</a>
+                            <a class="text-decoration-none" href="mailto:atendimento@sixbikes.com" id="cfgFooterEmail">atendimento@sixbikes.com</a>
                         </li>
                     </ul>
                 </div>
@@ -209,16 +219,16 @@
                 <div class="col-auto me-auto">
                     <ul class="list-inline text-left footer-icons">
                         <li class="list-inline-item border border-light rounded-circle text-center">
-                            <a class="text-light text-decoration-none" target="_blank" href="http://facebook.com/"><i class="fab fa-facebook-f fa-lg fa-fw"></i></a>
+                            <a class="text-light text-decoration-none" target="_blank" href="http://facebook.com/" id="cfgSocialFacebook"><i class="fab fa-facebook-f fa-lg fa-fw"></i></a>
                         </li>
                         <li class="list-inline-item border border-light rounded-circle text-center">
-                            <a class="text-light text-decoration-none" target="_blank" href="https://www.instagram.com/"><i class="fab fa-instagram fa-lg fa-fw"></i></a>
+                            <a class="text-light text-decoration-none" target="_blank" href="https://www.instagram.com/" id="cfgSocialInstagram"><i class="fab fa-instagram fa-lg fa-fw"></i></a>
                         </li>
                         <li class="list-inline-item border border-light rounded-circle text-center">
-                            <a class="text-light text-decoration-none" target="_blank" href="https://twitter.com/"><i class="fab fa-twitter fa-lg fa-fw"></i></a>
+                            <a class="text-light text-decoration-none" target="_blank" href="https://twitter.com/" id="cfgSocialTwitter"><i class="fab fa-twitter fa-lg fa-fw"></i></a>
                         </li>
                         <li class="list-inline-item border border-light rounded-circle text-center">
-                            <a class="text-light text-decoration-none" target="_blank" href="https://www.linkedin.com/"><i class="fab fa-linkedin fa-lg fa-fw"></i></a>
+                            <a class="text-light text-decoration-none" target="_blank" href="https://www.linkedin.com/" id="cfgSocialLinkedin"><i class="fab fa-linkedin fa-lg fa-fw"></i></a>
                         </li>
                     </ul>
                 </div>
@@ -247,11 +257,208 @@
                 if(el) el.textContent = Cart.count();
             }
         }
+
+        function normalizeImageUrl(imagePath) {
+            const backendBase = `${window.location.protocol}//${window.location.hostname}:8080`;
+            const fallback = `${backendBase}/assets/img/category_img_01.webp`;
+
+            if (!imagePath || typeof imagePath !== 'string') return fallback;
+            const path = imagePath.trim();
+            if (!path) return fallback;
+            if (path.startsWith('data:')) return path;
+
+            if (path.startsWith('http://') || path.startsWith('https://')) {
+                try {
+                    const parsed = new URL(path);
+                    const isLocalImagePath = parsed.pathname.startsWith('/assets/') || parsed.pathname.startsWith('/uploads/');
+                    const sameHostLike = (
+                        parsed.hostname === window.location.hostname ||
+                        (parsed.hostname === 'localhost' && window.location.hostname === '127.0.0.1') ||
+                        (parsed.hostname === '127.0.0.1' && window.location.hostname === 'localhost')
+                    );
+
+                    if (isLocalImagePath && sameHostLike && parsed.port !== '8080') {
+                        return `${backendBase}${parsed.pathname}${parsed.search}`;
+                    }
+                    return path;
+                } catch (_) {
+                    return fallback;
+                }
+            }
+
+            const clean = path.startsWith('/') ? path : `/${path}`;
+            return `${backendBase}${clean}`;
+        }
+
+        function setTextById(id, value) {
+            const el = document.getElementById(id);
+            if (!el || value === undefined || value === null || value === '') return;
+            el.textContent = String(value);
+        }
+
+        function setImageSrcById(id, value) {
+            const el = document.getElementById(id);
+            if (!el || !value) return;
+            el.src = normalizeImageUrl(String(value));
+        }
+
+        function setLinkById(id, value) {
+            const el = document.getElementById(id);
+            if (!el || !value) return;
+            el.href = String(value);
+        }
+
+        function applySiteConfig(cfg) {
+            if (!cfg || typeof cfg !== 'object') return;
+
+            setTextById('cfgCompanyNameTop', cfg.companyName);
+            setTextById('cfgCompanyNameFooter', cfg.companyName);
+
+            setTextById('cfgHeroTitle', cfg.heroTitle);
+            setTextById('cfgHeroSubtitle', cfg.heroSubtitle);
+            setTextById('cfgHeroDescription', cfg.heroDescription);
+            setImageSrcById('cfgHeroImage', cfg.heroImageUrl);
+
+            setTextById('cfgAboutTitle', cfg.aboutTitle);
+            setTextById('cfgAboutText1', cfg.aboutText1);
+            setTextById('cfgAboutText2', cfg.aboutText2);
+            setImageSrcById('cfgAboutImage', cfg.aboutImageUrl);
+
+            setTextById('cfgFooterAddress', cfg.footerAddress);
+
+            const phoneEl = document.getElementById('cfgFooterPhone');
+            if (phoneEl && cfg.footerPhone) {
+                const rawPhone = String(cfg.footerPhone);
+                const digits = rawPhone.replace(/\D/g, '');
+                phoneEl.textContent = rawPhone;
+                if (digits) phoneEl.href = `tel:${digits}`;
+            }
+
+            const emailEl = document.getElementById('cfgFooterEmail');
+            if (emailEl && cfg.footerEmail) {
+                const email = String(cfg.footerEmail);
+                emailEl.textContent = email;
+                emailEl.href = `mailto:${email}`;
+            }
+
+            setLinkById('cfgSocialFacebook', cfg.socialFacebook);
+            setLinkById('cfgSocialInstagram', cfg.socialInstagram);
+            setLinkById('cfgSocialTwitter', cfg.socialTwitter);
+            setLinkById('cfgSocialLinkedin', cfg.socialLinkedin);
+        }
+
+        const SITE_CONFIG_CACHE_KEY = 'cache:site-config:public:v1';
+
+        function getCachedSiteConfig() {
+            try {
+                const raw = localStorage.getItem(SITE_CONFIG_CACHE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                return parsed && typeof parsed === 'object' ? parsed : null;
+            } catch (_) {
+                return null;
+            }
+        }
+
+        function setCachedSiteConfig(cfg) {
+            try {
+                localStorage.setItem(SITE_CONFIG_CACHE_KEY, JSON.stringify(cfg || {}));
+            } catch (_) {}
+        }
+
+        function clearCachedSiteConfig() {
+            try {
+                localStorage.removeItem(SITE_CONFIG_CACHE_KEY);
+            } catch (_) {}
+        }
+
+        async function fetchAndApplySiteConfig(force = false) {
+            const cached = getCachedSiteConfig();
+            if (!force && cached) {
+                applySiteConfig(cached);
+                return;
+            }
+
+            const base = window.API_BASE_URL || (window.location.protocol + '//' + window.location.hostname + ':8080/api');
+            const cfgResp = await fetch(`${base}/site-config/public`);
+            if (!cfgResp.ok) throw new Error(`Falha ao carregar configuracao (${cfgResp.status})`);
+            const cfg = await cfgResp.json();
+            setCachedSiteConfig(cfg);
+            applySiteConfig(cfg);
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             updateCartCount();
             window.addEventListener('storage', (e) => {
                 if(e.key === 'sixbikes_cart') updateCartCount();
             });
+
+            // Atualiza cache da home apenas quando houver trigger de alteração
+            window.addEventListener('sb:realtime', async (ev) => {
+                const scope = ev?.detail?.payload?.scope || '';
+                const type = String(ev?.detail?.type || '').toLowerCase();
+                if (scope === 'site-config' || type.startsWith('site-config.')) {
+                    clearCachedSiteConfig();
+                    try {
+                        await fetchAndApplySiteConfig(true);
+                    } catch (e) {
+                        console.warn('Falha ao recarregar configuracao via trigger:', e.message);
+                    }
+                }
+            });
+
+            // Carrega configuracoes editaveis da home/rodape
+            try {
+                await fetchAndApplySiteConfig(false);
+            } catch (e) {
+                console.warn('Falha ao carregar configuracao do site:', e.message);
+            }
+
+            // Carrega destaque do próximo evento (hoje ou futuro)
+            try {
+                const base = window.API_BASE_URL || (window.location.protocol + '//' + window.location.hostname + ':8080/api');
+                const respEventos = await fetch(`${base}/eventos/public`);
+                const eventos = await respEventos.json();
+                const nameEl = document.getElementById('next-event-name');
+                const dateEl = document.getElementById('next-event-date');
+                const slotsEl = document.getElementById('next-event-slots');
+
+                if (!respEventos.ok || !Array.isArray(eventos) || eventos.length === 0) {
+                    nameEl.textContent = 'Nenhum evento agendado no momento';
+                    dateEl.textContent = 'Em breve teremos novidades para a comunidade ciclista.';
+                    slotsEl.textContent = '';
+                } else {
+                    const hojeISO = new Date().toISOString().split('T')[0];
+                    const proximos = eventos
+                        .filter(ev => String(ev.data || '') >= hojeISO)
+                        .sort((a, b) => String(a.data).localeCompare(String(b.data)));
+
+                    const proximo = proximos[0] || null;
+                    if (!proximo) {
+                        nameEl.textContent = 'Nenhum evento futuro disponível';
+                        dateEl.textContent = 'Acompanhe a página de eventos para novas datas.';
+                        slotsEl.textContent = '';
+                    } else {
+                        const dataFmt = new Date(`${proximo.data}T00:00:00`).toLocaleDateString('pt-BR');
+                        const vagasDisp = Number(proximo.vagasdisponiveis || 0);
+                        const vagasTotais = Number(proximo.vagastotal || 0);
+                        nameEl.textContent = proximo.nome || 'Evento SixBikes';
+                        dateEl.textContent = `Data: ${dataFmt}`;
+                        slotsEl.textContent = vagasTotais > 0
+                            ? `Vagas disponíveis: ${vagasDisp}/${vagasTotais}`
+                            : 'Vagas limitadas';
+                    }
+                }
+            } catch (e) {
+                const nameEl = document.getElementById('next-event-name');
+                const dateEl = document.getElementById('next-event-date');
+                const slotsEl = document.getElementById('next-event-slots');
+                if (nameEl && dateEl && slotsEl) {
+                    nameEl.textContent = 'Confira nossos próximos eventos';
+                    dateEl.textContent = 'Não foi possível carregar os dados agora.';
+                    slotsEl.textContent = '';
+                }
+            }
 
             // Carrega os 3 primeiros produtos em ordem alfabética
             try {
@@ -263,8 +470,8 @@
                     const row = document.getElementById('featured-products-row');
                     top3.forEach((p, index) => {
                         const col = document.createElement('div');
-                        col.className = 'col-12 col-md-4 p-5 mt-3';
-                        const img = p.imagemUrl || './assets/img/category_img_01.webp';
+                        col.className = 'col-12 col-md-4 p-5 mt-3 recommendation-item';
+                        const img = normalizeImageUrl((p.imagemUrl || p.imagem_url || '').toString());
                         const id = p.id || p.idProduto || p.idproduto || '';
                         const link = `shop-single.html?id=${encodeURIComponent(id)}`;
                         const priceNum = typeof p.preco === 'number' ? p.preco : parseFloat(String(p.preco || '0').replace(',', '.'));
@@ -319,9 +526,9 @@
                     });
                     // Adiciona Botão "Ver mais"
                     const btnCol = document.createElement('p');
-                    btnCol.className = 'text-center';
+                    btnCol.className = 'text-center reco-more-link';
                     btnCol.innerHTML = '<a class="btn btn-success" href="produtos.html">Ver mais</a>';
-                    row.appendChild(btnCol);
+                    row.insertAdjacentElement('afterend', btnCol);
                 }
             } catch (e) {
                 console.warn('Falha ao carregar produtos:', e.message);
@@ -337,8 +544,8 @@
                     const row = document.getElementById('featured-servicos-row');
                     top3.forEach((s, index) => {
                         const col = document.createElement('div');
-                        col.className = 'col-12 col-md-4 mb-4';
-                        const img = s.foto || './assets/img/feature_prod_01.jpeg';
+                        col.className = 'col-12 col-md-4 mb-4 recommendation-item';
+                        const img = normalizeImageUrl((s.foto || '').toString());
                         const valorFmt = parseFloat(s.valor || 0).toFixed(2);
                         const nomeEscaped = (s.nome || '').replace(/"/g, '&quot;');
                         const totalVendido = Number(s.totalVendido || 0);
@@ -380,9 +587,9 @@
                         });
                     });
                     const btnCol = document.createElement('p');
-                    btnCol.className = 'text-center';
+                    btnCol.className = 'text-center reco-more-link';
                     btnCol.innerHTML = '<a class="btn btn-success" href="servicos.html">Ver mais</a>';
-                    row.appendChild(btnCol);
+                    row.insertAdjacentElement('afterend', btnCol);
                 }
             } catch (e) {
                 console.warn('Falha ao carregar serviços:', e.message);
