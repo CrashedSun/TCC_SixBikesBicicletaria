@@ -96,6 +96,25 @@ function saveImageFromBase64(base64Input, originalName, prefix) {
 }
 
 class SiteConfigController {
+    async getChatConfig(req, res) {
+        try {
+            const data = await SiteConfigService.getChatConfig();
+            return res.status(200).json(data);
+        } catch (e) {
+            return res.status(500).json({ error: e.message || 'Falha ao carregar configuração de chat.' });
+        }
+    }
+
+    async updateChatConfig(req, res) {
+        try {
+            const enabled = Boolean(req.body?.atendimentoChatHabilitado);
+            const data = await SiteConfigService.updateChatConfig(enabled);
+            return res.status(200).json({ message: 'Configuração de chat atualizada.', ...data });
+        } catch (e) {
+            return res.status(400).json({ error: e.message || 'Falha ao atualizar configuração de chat.' });
+        }
+    }
+
     async getPublic(req, res) {
         try {
             const config = await SiteConfigService.getPublicConfig();

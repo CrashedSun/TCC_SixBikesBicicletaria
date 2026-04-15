@@ -103,8 +103,11 @@
                     <div id="chatMessages" class="p-3 bg-white" style="height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
                         <!-- Mensagem de boas-vindas -->
                         <div class="d-flex justify-content-start">
-                            <div class="chat-bubble bot px-3 py-2">
-                                <p>Olá! 👋 Seja bem-vindo à <strong>SixBikes Bicicletaria</strong>!<br>Como posso te ajudar hoje?</p>
+                            <div class="chat-wrap left">
+                                <div class="chat-meta">Sistema (BOT) • agora</div>
+                                <div class="chat-bubble system">
+                                    <p>Olá! 👋 Seja bem-vindo à <strong>SixBikes Bicicletaria</strong>!<br>Descreva seu assunto para iniciar o atendimento.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -125,9 +128,15 @@
     <!-- End Chatbot -->
 
     <style>
-        .chat-bubble { max-width: 80%; word-break: break-word; }
-        .chat-bubble.bot { background: #f1f3f5; color: #212529; border-radius: 4px 18px 18px 18px; }
-        .chat-bubble.user { background: #198754; color: #fff; border-radius: 18px 4px 18px 18px; margin-left:auto; }
+        .chat-wrap { max-width: 82%; word-break: break-word; display: flex; flex-direction: column; gap: 4px; }
+        .chat-wrap.left { align-items: flex-start; }
+        .chat-wrap.right { align-items: flex-end; margin-left: auto; }
+        .chat-meta { font-size: 11px; color: #6c757d; font-weight: 600; }
+        .chat-bubble { border-radius: 14px; padding: 8px 12px; }
+        .chat-bubble.client { background: #e9ecef; color: #212529; border-top-left-radius: 4px; }
+        .chat-bubble.staff { background: #198754; color: #fff; border-top-right-radius: 4px; }
+        .chat-bubble.manager { background: #ff9800; color: #fff; border-top-right-radius: 4px; }
+        .chat-bubble.system { background: #f8f9fa; color: #6c757d; border: 1px dashed #d9dee3; }
         .chat-bubble p { margin: 0; }
         #chatMessages::-webkit-scrollbar { width: 5px; }
         #chatMessages::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 10px; }
@@ -138,31 +147,465 @@
         const messages = document.getElementById('chatMessages');
         const input = document.getElementById('chatInput');
         const sendBtn = document.getElementById('sendBtn');
+        const API_BASE = `${window.location.protocol}//${window.location.hostname}:8080/api`;
+
+        let atendimentoHabilitado = true;
+        let currentTicketId = null;
+        let currentChatToken = null;
+        let refreshTimer = null;
+        let lastMessageId = 0;
+        let creatingTicket = false;
+        let kbMode = true;
+        let conhecimentoItems = [];
+        const KB_PAGE_SIZE = 5;
+        let currentTicketStatus = null;
+        const CLOSED_TICKET_MESSAGE_REGEX = /foi encerrado por/i;
+        const REOPENED_TICKET_MESSAGE_REGEX = /foi reaberto por/i;
 
         function scrollBaixo() {
             messages.scrollTop = messages.scrollHeight;
         }
 
-        function addMsg(texto, tipo) {
+        function formatHour(dateStr) {
+            const d = dateStr ? new Date(dateStr) : new Date();
+            return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function addMsg(texto, tipo, nome = '', createdAt = null, cargoLabel = '') {
             const wrap = document.createElement('div');
-            wrap.className = `d-flex ${tipo === 'user' ? 'justify-content-end' : 'justify-content-start'}`;
+            const isRight = tipo === 'user';
+            wrap.className = `d-flex ${isRight ? 'justify-content-end' : 'justify-content-start'}`;
+
+            const content = document.createElement('div');
+            content.className = `chat-wrap ${isRight ? 'right' : 'left'}`;
+
+            const meta = document.createElement('div');
+            meta.className = 'chat-meta';
+            const metaCargo = String(cargoLabel || '').toUpperCase() ||
+                (tipo === 'user' ? 'CLIENTE' : (tipo === 'staff' ? 'ATENDENTE' : (tipo === 'manager' ? 'GERENTE' : 'SISTEMA')));
+            meta.textContent = `${nome || 'Sistema'} (${metaCargo}) • ${formatHour(createdAt)}`;
+
             const bubble = document.createElement('div');
-            bubble.className = `chat-bubble ${tipo} px-3 py-2`;
+            const bubbleClass = tipo === 'user' ? 'client' : (tipo === 'manager' ? 'manager' : (tipo === 'staff' ? 'staff' : 'system'));
+            bubble.className = `chat-bubble ${bubbleClass}`;
             bubble.innerHTML = `<p>${texto}</p>`;
-            wrap.appendChild(bubble);
+
+            content.appendChild(meta);
+            content.appendChild(bubble);
+            wrap.appendChild(content);
             messages.appendChild(wrap);
             scrollBaixo();
         }
 
-        function handleInput() {
+        function endpoint(path) {
+            return `${API_BASE}${path}`;
+        }
+
+        async function apiFetch(path, method = 'GET', body = null, useAuth = false) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (useAuth) {
+                const token = localStorage.getItem('userToken');
+                if (token) headers.Authorization = `Bearer ${token}`;
+            }
+            if (currentChatToken) headers['X-Ticket-Token'] = currentChatToken;
+
+            const res = await fetch(endpoint(path), {
+                method,
+                headers,
+                body: body ? JSON.stringify(body) : null,
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || data.message || 'Falha na requisição');
+            return data;
+        }
+
+        async function loadConfig() {
+            try {
+                const cfg = await apiFetch('/config/chat');
+                atendimentoHabilitado = Boolean(cfg.atendimentoChatHabilitado);
+                if (!atendimentoHabilitado) {
+                    input.disabled = true;
+                    sendBtn.disabled = true;
+                    addMsg('Atendimento por chat está indisponível no momento. Tente novamente mais tarde.', 'system', 'Sistema');
+                }
+            } catch (_) {
+                atendimentoHabilitado = true;
+            }
+        }
+
+        async function carregarConhecimento() {
+            try {
+                const items = await apiFetch('/conhecimento/publico');
+                conhecimentoItems = Array.isArray(items) ? items.filter(i => i.ativo !== false) : [];
+                exibirKB();
+            } catch (_) {
+                // Se falhar, continua sem KB
+            }
+        }
+
+        function renderKbPage(container, pageIndex = 0) {
+            container.innerHTML = '';
+            const totalItems = conhecimentoItems.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / KB_PAGE_SIZE));
+            const currentPage = Math.min(Math.max(0, pageIndex), totalPages - 1);
+            const startIndex = currentPage * KB_PAGE_SIZE;
+            const endIndex = Math.min(startIndex + KB_PAGE_SIZE, totalItems);
+
+            for (let idx = startIndex; idx < endIndex; idx++) {
+                const item = conhecimentoItems[idx];
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-outline-success btn-sm w-100 mb-2';
+                btn.textContent = `${idx + 1}. ${item.titulo}`;
+                btn.onclick = () => exibirDetalhesKB(item);
+                container.appendChild(btn);
+            }
+
+            const hasPrev = currentPage > 0;
+            const hasNext = endIndex < totalItems;
+            if (hasPrev || hasNext) {
+                const controls = document.createElement('div');
+                controls.className = 'd-flex gap-2 mt-2';
+
+                if (hasPrev) {
+                    const btnVoltar = document.createElement('button');
+                    btnVoltar.className = 'btn btn-outline-secondary btn-sm flex-grow-1';
+                    btnVoltar.textContent = 'Voltar';
+                    btnVoltar.onclick = () => renderKbPage(container, currentPage - 1);
+                    controls.appendChild(btnVoltar);
+                }
+
+                if (hasNext) {
+                    const btnMais = document.createElement('button');
+                    btnMais.className = 'btn btn-outline-secondary btn-sm flex-grow-1';
+                    btnMais.textContent = 'Ver mais';
+                    btnMais.onclick = () => renderKbPage(container, currentPage + 1);
+                    controls.appendChild(btnMais);
+                }
+
+                container.appendChild(controls);
+            }
+        }
+
+        function exibirKB() {
+            messages.innerHTML = '';
+            addMsg('Olá! 👋 Bem-vindo à SixBikes Bicicletaria! Veja se encontra sua resposta abaixo ou fale com nosso atendente.', 'system', 'Sistema');
+            
+            if (conhecimentoItems.length === 0) {
+                addMsg('Nenhuma resposta pré-cadastrada disponível. Clique no botão abaixo para falar com um atendente.', 'system', 'Sistema');
+            } else {
+                const kbList = document.createElement('div');
+                kbList.className = 'mt-1';
+                messages.appendChild(kbList);
+                renderKbPage(kbList, 0);
+            }
+
+            const divAtendente = document.createElement('div');
+            divAtendente.className = 'mt-3 pt-3 border-top';
+            const btnAtendente = document.createElement('button');
+            btnAtendente.className = 'btn btn-success w-100';
+            btnAtendente.textContent = '💬 Falar com um Atendente';
+            btnAtendente.onclick = abrirTicket;
+            divAtendente.appendChild(btnAtendente);
+            messages.appendChild(divAtendente);
+            scrollBaixo();
+        }
+
+        function exibirKBPosEncerramento() {
+            const existing = document.getElementById('kb-pos-encerramento');
+            if (existing) existing.remove();
+
+            const section = document.createElement('div');
+            section.id = 'kb-pos-encerramento';
+            section.className = 'mt-3 pt-3 border-top';
+
+            const title = document.createElement('div');
+            title.className = 'fw-semibold mb-2 text-success';
+            title.textContent = 'Você pode iniciar um novo atendimento ou consultar respostas rápidas:';
+            section.appendChild(title);
+
+            if (conhecimentoItems.length === 0) {
+                const empty = document.createElement('small');
+                empty.className = 'text-muted d-block mb-2';
+                empty.textContent = 'Nenhuma resposta pré-cadastrada disponível no momento.';
+                section.appendChild(empty);
+            } else {
+                const kbList = document.createElement('div');
+                kbList.className = 'mt-1';
+                section.appendChild(kbList);
+                renderKbPage(kbList, 0);
+            }
+
+            const btnAtendente = document.createElement('button');
+            btnAtendente.className = 'btn btn-success w-100 mt-1';
+            btnAtendente.textContent = '💬 Iniciar novo atendimento';
+            btnAtendente.onclick = abrirTicket;
+            section.appendChild(btnAtendente);
+
+            messages.appendChild(section);
+            scrollBaixo();
+        }
+
+        function exibirDetalhesKB(item) {
+            messages.innerHTML = '';
+            const backBtn = document.createElement('button');
+            backBtn.className = 'btn btn-sm btn-outline-secondary mb-3';
+            backBtn.textContent = '← Voltar';
+            backBtn.onclick = exibirKB;
+            messages.appendChild(backBtn);
+
+            addMsg(`${item.titulo}`, 'staff', 'Sistema', null, 'SISTEMA');
+            addMsg(item.descricao, 'staff', 'Sistema', null, 'SISTEMA');
+
+            const divAcoes = document.createElement('div');
+            divAcoes.className = 'mt-3 d-flex gap-2';
+            const btnBack = document.createElement('button');
+            btnBack.className = 'btn btn-sm btn-outline-secondary flex-grow-1';
+            btnBack.textContent = '← Voltar';
+            btnBack.onclick = exibirKB;
+            const btnAtendente = document.createElement('button');
+            btnAtendente.className = 'btn btn-sm btn-success flex-grow-1';
+            btnAtendente.textContent = 'Falar com Atendente';
+            btnAtendente.onclick = abrirTicket;
+            divAcoes.appendChild(btnBack);
+            divAcoes.appendChild(btnAtendente);
+            messages.appendChild(divAcoes);
+            scrollBaixo();
+        }
+
+        async function abrirTicket() {
+            kbMode = false;
+            input.disabled = false;
+            sendBtn.disabled = false;
+            messages.innerHTML = '';
+            addMsg('Perfeito! Digite sua mensagem e um atendente responderá em breve. 🙂', 'system', 'Sistema');
+            input.focus();
+        }
+
+        function mapTipoToUi(tipo) {
+            const t = String(tipo || '').toUpperCase();
+            if (t === 'CLIENTE') return 'user';
+            if (t === 'ATENDENTE') return 'staff';
+            if (t === 'GERENTE' || t === 'PROPRIETARIO') return 'manager';
+            return 'system';
+        }
+
+        function isClosedTicketMessage(message) {
+            if (!message) return false;
+            const tipo = String(message.tipo_usuario || '').toUpperCase();
+            const conteudo = String(message.conteudo || '').trim();
+            return tipo === 'SISTEMA' && CLOSED_TICKET_MESSAGE_REGEX.test(conteudo);
+        }
+
+        function isReopenedTicketMessage(message) {
+            if (!message) return false;
+            const tipo = String(message.tipo_usuario || '').toUpperCase();
+            const conteudo = String(message.conteudo || '').trim();
+            return tipo === 'SISTEMA' && REOPENED_TICKET_MESSAGE_REGEX.test(conteudo);
+        }
+
+        function applyClosedTicketFlow() {
+            currentTicketStatus = 'FECHADO';
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+            }
+            kbMode = true;
+            input.disabled = true;
+            sendBtn.disabled = true;
+            exibirKBPosEncerramento();
+        }
+
+        function applyReopenedTicketFlow() {
+            currentTicketStatus = 'ABERTO';
+            kbMode = false;
+            input.disabled = false;
+            sendBtn.disabled = false;
+            const kbSection = document.getElementById('kb-pos-encerramento');
+            if (kbSection) kbSection.remove();
+        }
+
+        async function refreshMessages() {
+            if (!currentTicketId) return;
+            try {
+                const list = await apiFetch(`/tickets/${currentTicketId}/mensagens`, 'GET', null, true);
+                const ordered = Array.isArray(list) ? list : [];
+                messages.innerHTML = '';
+                ordered.forEach((m) => {
+                    const tipoUi = mapTipoToUi(m.tipo_usuario);
+                    const cargoOriginal = String(m.tipo_usuario || '').toUpperCase();
+                    addMsg(m.conteudo, tipoUi, m.nome_remetente || 'Usuário', m.criado_em, cargoOriginal);
+                    if (Number(m.id) > lastMessageId) lastMessageId = Number(m.id);
+                });
+                if (typeof window.clearUnreadTicket === 'function') {
+                    window.clearUnreadTicket(currentTicketId);
+                }
+
+                const ultimaMensagem = ordered.length ? ordered[ordered.length - 1] : null;
+                if (isClosedTicketMessage(ultimaMensagem)) {
+                    applyClosedTicketFlow();
+                } else if (isReopenedTicketMessage(ultimaMensagem)) {
+                    applyReopenedTicketFlow();
+                }
+            } catch (_) {
+                // polling silencioso
+            }
+        }
+
+        function startPolling() {
+            if (refreshTimer) clearInterval(refreshTimer);
+            refreshMessages();
+            refreshTimer = setInterval(refreshMessages, 2500);
+        }
+
+        async function createTicket(firstText) {
+            const nomeLocal = localStorage.getItem('usuario') || 'Cliente';
+            const payload = {
+                assunto_resumido: firstText.slice(0, 255),
+                mensagemInicial: firstText,
+                nome: nomeLocal,
+            };
+            const data = await apiFetch('/tickets/iniciar-chat', 'POST', payload, true);
+            currentTicketId = data.idTicket;
+            currentChatToken = data.chatToken;
+            currentTicketStatus = 'ABERTO';
+            addMsg(`Ticket #${currentTicketId} aberto. Um atendente responderá em breve.`, 'system', 'Sistema');
+            if (typeof window.clearUnreadTicket === 'function') {
+                window.clearUnreadTicket(currentTicketId);
+            }
+            startPolling();
+        }
+
+        async function resumeExistingChat() {
+            if (currentTicketId) return;
+            try {
+                const meusTickets = await apiFetch('/tickets/meus', 'GET', null, true);
+                const tickets = Array.isArray(meusTickets) ? meusTickets : [];
+                if (!tickets.length) return;
+                const ticketPreferencial =
+                    tickets.find((t) => ['ABERTO', 'EM ATENDIMENTO'].includes(String(t.status || '').toUpperCase())) ||
+                    tickets[0];
+
+                currentTicketId = ticketPreferencial.id || ticketPreferencial.idticket || ticketPreferencial.idTicket || null;
+                currentTicketStatus = String(ticketPreferencial.status || '').toUpperCase() || null;
+                currentChatToken = null;
+                kbMode = false;
+                input.disabled = false;
+                sendBtn.disabled = false;
+                if (currentTicketId) {
+                    if (currentTicketStatus === 'FECHADO') {
+                        addMsg(`Continuando o histórico do ticket #${currentTicketId} (fechado).`, 'system', 'Sistema');
+                    } else {
+                        addMsg(`Continuando o ticket #${currentTicketId}.`, 'system', 'Sistema');
+                    }
+                    if (typeof window.clearUnreadTicket === 'function') {
+                        window.clearUnreadTicket(currentTicketId);
+                    }
+                    startPolling();
+                }
+            } catch (_) {
+                // Silencioso: se o usuário não estiver autenticado, o chat continua público.
+            }
+        }
+
+        async function handleInput() {
             const texto = input.value.trim();
             if (!texto) return;
+            if (!atendimentoHabilitado || kbMode) return;
             input.value = '';
-            addMsg(texto, 'user');
+
+            if (currentTicketId && currentTicketStatus === 'FECHADO') {
+                addMsg('Este ticket foi fechado. Vou abrir um novo atendimento com sua mensagem.', 'system', 'Sistema');
+                currentTicketId = null;
+                currentChatToken = null;
+                currentTicketStatus = null;
+            }
+
+            if (!currentTicketId && !creatingTicket) {
+                try {
+                    creatingTicket = true;
+                    addMsg(texto, 'user', localStorage.getItem('usuario') || 'Cliente', new Date().toISOString());
+                    const nomeLocal = localStorage.getItem('usuario') || 'Cliente';
+                    const payload = {
+                        assunto_resumido: texto.slice(0, 255),
+                        mensagemInicial: texto,
+                        nome: nomeLocal,
+                    };
+                    const data = await apiFetch('/tickets/iniciar-chat', 'POST', payload, true);
+                    currentTicketId = data.idTicket;
+                    currentChatToken = data.chatToken;
+                    currentTicketStatus = 'ABERTO';
+                    addMsg(`Ticket #${currentTicketId} aberto. Um atendente responderá em breve.`, 'system', 'Sistema');
+                    startPolling();
+                } catch (e) {
+                    addMsg(e.message || 'Falha ao iniciar atendimento.', 'system', 'Sistema');
+                } finally {
+                    creatingTicket = false;
+                }
+                return;
+            }
+
+            try {
+                await apiFetch(`/tickets/${currentTicketId}/mensagens`, 'POST', { conteudo: texto }, true);
+                await refreshMessages();
+            } catch (e) {
+                addMsg(e.message || 'Falha ao enviar mensagem.', 'system', 'Sistema');
+            }
         }
 
         sendBtn.addEventListener('click', handleInput);
         input.addEventListener('keydown', e => { if (e.key === 'Enter') handleInput(); });
+        
+        // Inicialização
+        input.disabled = true;
+        sendBtn.disabled = true;
+        loadConfig().then(() => {
+            carregarConhecimento();
+            resumeExistingChat();
+        });
+        
+        // Listener para notificações em tempo real
+        let clientRealtimeTimer = null;
+        window.addEventListener('sb:realtime', (event) => {
+            const detail = event && event.detail ? event.detail : {};
+            const eventType = String(detail.type || detail.eventType || '').toLowerCase();
+            
+            if (eventType === 'ticket.message.novo' && currentTicketId) {
+                const payload = detail.payload || {};
+                const ticketId = payload.idTicket;
+                
+                // Notificar apenas se é mensagem do atendente ('ATENDENTE') para este ticket
+                if (String(ticketId) === String(currentTicketId) && payload.tipo_usuario === 'ATENDENTE') {
+                    if (NotificationSystem) {
+                        NotificationSystem.showMessageAlert(ticketId, payload.nome_remetente || 'Atendente', payload.conteudo || '...');
+                    }
+                    if (typeof window.clearUnreadTicket === 'function') {
+                        window.clearUnreadTicket(ticketId);
+                    }
+                    // Recarregar mensagens após pequeno delay
+                    if (clientRealtimeTimer) clearTimeout(clientRealtimeTimer);
+                    clientRealtimeTimer = setTimeout(() => {
+                        refreshMessages().catch(() => {});
+                    }, 500);
+                }
+            } else if (eventType === 'ticket.fechado' && currentTicketId) {
+                const payload = detail.payload || {};
+                const ticketId = payload.idTicket;
+                if (String(ticketId) === String(currentTicketId)) {
+                    refreshMessages().catch(() => {
+                        applyClosedTicketFlow();
+                    });
+                }
+            } else if (eventType === 'ticket.reaberto' && currentTicketId) {
+                const payload = detail.payload || {};
+                const ticketId = payload.idTicket;
+                if (String(ticketId) === String(currentTicketId)) {
+                    refreshMessages().catch(() => {
+                        applyReopenedTicketFlow();
+                        addMsg(payload.conteudo || `O ticket número #${currentTicketId} foi reaberto.`, 'system', 'Sistema');
+                    });
+                }
+            }
+        });
     })();
     </script>
 
@@ -255,6 +698,7 @@
     <!-- End Script -->
     <script src="assets/js/cart.js"></script>
     <script src="assets/js/auth.js"></script>
+    <script src="assets/js/notifications.js"></script>
     <script>
         function updateCartCount(){
             if(window.Cart){

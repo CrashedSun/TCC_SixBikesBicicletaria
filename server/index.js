@@ -13,6 +13,7 @@ const AuditoriaRepository = require('./repositories/AuditoriaRepository');
 const PasswordResetRepository = require('./repositories/PasswordResetRepository');
 const SiteConfigService = require('./services/SiteConfigService');
 const RealtimeService = require('./services/RealtimeService');
+const TicketService = require('./services/TicketService');
 
 // Importar TODOS os Controllers necessários para todas as rotas
 const authController = require('./controllers/AuthController');
@@ -22,6 +23,7 @@ const produtoController = require('./controllers/ProdutoController');
 const agendamentoController = require('./controllers/AgendamentoController'); 
 const vendaController = require('./controllers/VendaController'); 
 const ticketController = require('./controllers/TicketController'); 
+const conhecimentoTicketController = require('./controllers/ConhecimentoTicketController');
 const relatorioController = require('./controllers/RelatorioController'); 
 const reservaController = require('./controllers/ReservaController');
 const reservaService = require('./services/ReservaService');
@@ -69,10 +71,39 @@ app.use(cors({
     origin: '*',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Ticket-Token']
 }));
 // Aumenta o limite de JSON para permitir imagens em base64 no cadastro de produto
 app.use(express.json({ limit: '10mb' })); 
+
+const publicChatLimiter = new Map();
+function publicChatRateLimit(req, res, next) {
+    const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+    const now = Date.now();
+    const windowMs = 60 * 1000;
+    const maxRequests = 12;
+    const cooldownMs = 10 * 1000;
+
+    const current = publicChatLimiter.get(ip) || { count: 0, startedAt: now, lastAt: 0 };
+    if (now - current.startedAt > windowMs) {
+        current.count = 0;
+        current.startedAt = now;
+    }
+
+    if (now - current.lastAt < cooldownMs) {
+        return res.status(429).json({ error: 'Aguarde alguns segundos antes de iniciar outro chat.' });
+    }
+
+    current.count += 1;
+    current.lastAt = now;
+    publicChatLimiter.set(ip, current);
+
+    if (current.count > maxRequests) {
+        return res.status(429).json({ error: 'Limite temporário de abertura de chat excedido. Tente novamente em instantes.' });
+    }
+
+    next();
+}
 
 // Middleware para adicionar headers CORS explícitos para imagens
 app.use('/assets/img', (req, res, next) => {
@@ -295,6 +326,10 @@ app.post('/api/tickets', authMiddleware(['CLIENTE']), ticketController.handleNew
 app.get('/api/produtos/public', produtoController.listarTodos);
 // Configuracoes publicas da home/rodape
 app.get('/api/site-config/public', siteConfigController.getPublic);
+app.get('/api/config/chat', siteConfigController.getChatConfig);
+app.post('/api/tickets/iniciar-chat', publicChatRateLimit, ticketController.iniciarChat.bind(ticketController));
+app.get('/api/tickets/:id/mensagens', ticketController.listarMensagens.bind(ticketController));
+app.post('/api/tickets/:id/mensagens', ticketController.enviarMensagem.bind(ticketController));
 
 // --- ROTAS RESTRITAS (Usam authMiddleware) ---
 const ALL_EMPLOYEES = ['ATENDENTE', 'MECANICO', 'GERENTE', 'PROPRIETARIO'];
@@ -341,9 +376,22 @@ app.get('/api/vendas', authMiddleware(ADMIN_ROLES), vendaController.listarVendas
 // ** 3.c Tickets de Suporte (Atendente) **
 app.get('/api/tickets/abertos', authMiddleware(['ATENDENTE', ...ADMIN_ROLES]), ticketController.listarAbertos);
 app.get('/api/tickets/assumidos', authMiddleware(['ATENDENTE', ...ADMIN_ROLES]), ticketController.listarAssumidos);
+app.get('/api/tickets/meus-assumidos', authMiddleware(['ATENDENTE', ...ADMIN_ROLES]), ticketController.listarAssumidos);
+app.get('/api/tickets/dashboard', authMiddleware(ADMIN_ROLES), ticketController.listarDashboard);
+app.get('/api/tickets/meus', authMiddleware(['CLIENTE']), ticketController.listarMeus);
 app.get('/api/tickets/:id', authMiddleware(['ATENDENTE', ...ADMIN_ROLES]), ticketController.obterDetalhes);
 app.put('/api/tickets/:id/assumir', authMiddleware(['ATENDENTE', ...ADMIN_ROLES]), ticketController.assumir);
 app.put('/api/tickets/:id/fechar', authMiddleware(['ATENDENTE', ...ADMIN_ROLES]), ticketController.fechar);
+app.put('/api/tickets/:id/reabrir', authMiddleware(ADMIN_ROLES), ticketController.reabrir);
+
+// Configuração de chat e Knowledge Base (proprietário)
+app.put('/api/config/chat', authMiddleware(OWNER_ROLES), siteConfigController.updateChatConfig);
+app.get('/api/conhecimento/publico', conhecimentoTicketController.listar);
+app.get('/api/conhecimento', authMiddleware(OWNER_ROLES), conhecimentoTicketController.listar);
+app.get('/api/conhecimento/:id', authMiddleware(OWNER_ROLES), conhecimentoTicketController.obter);
+app.post('/api/conhecimento', authMiddleware(OWNER_ROLES), conhecimentoTicketController.criar);
+app.put('/api/conhecimento/:id', authMiddleware(OWNER_ROLES), conhecimentoTicketController.atualizar);
+app.delete('/api/conhecimento/:id', authMiddleware(OWNER_ROLES), conhecimentoTicketController.remover);
 // Cliente cria a reserva com itens / Atendente cria reserva de balcão
 app.post('/api/reservas', authMiddleware(['CLIENTE', 'ATENDENTE', ...ADMIN_ROLES]), reservaController.criar);
 // Cliente lista suas próprias reservas
@@ -544,6 +592,13 @@ app.listen(PORT, '0.0.0.0', async () => {
         console.log('Tabela de configuracao do site pronta.');
     } catch (e) {
         console.error('Falha ao garantir tabela de configuracao do site:', e.message);
+    }
+
+    try {
+        await TicketService.ensureSchema();
+        console.log('Schema do novo sistema de tickets pronto.');
+    } catch (e) {
+        console.error('Falha ao garantir schema de tickets:', e.message);
     }
 
     // Job: expirar reservas com prazo vencido ao iniciar e a cada hora

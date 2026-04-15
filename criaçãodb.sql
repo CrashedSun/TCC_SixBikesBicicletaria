@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS ItemReserva (
 CREATE TABLE IF NOT EXISTS Ticket (             
     idTicket BIGSERIAL PRIMARY KEY,             
     idCliente INT,                              
-    idFuncionarioResposta INT,                  
+    idFuncionarioResposta BIGINT,                
     mensagem TEXT NOT NULL,                     
     nome VARCHAR(100),                          
     email VARCHAR(100),                         
@@ -169,6 +169,40 @@ CREATE TABLE IF NOT EXISTS Ticket (
     FOREIGN KEY (idFuncionarioResposta) REFERENCES Usuario (id),
     CHECK (status IN ('ABERTO', 'EM ATENDIMENTO', 'FECHADO'))
 );
+
+ALTER TABLE Ticket
+    ADD COLUMN IF NOT EXISTS assunto_resumido VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS id_atendente BIGINT REFERENCES Usuario(id),
+    ADD COLUMN IF NOT EXISTS data_assumido TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS data_fechado TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS nivel_prioridade VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS tipo_ticket VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS tempo_resposta_min INT;
+
+CREATE TABLE IF NOT EXISTS MensagemTicket (
+    idMensagem BIGSERIAL PRIMARY KEY,
+    idTicket BIGINT NOT NULL REFERENCES Ticket(idTicket) ON DELETE CASCADE,
+    idUsuario BIGINT REFERENCES Usuario(id),
+    nome_remetente VARCHAR(120) NOT NULL,
+    tipo_usuario VARCHAR(30) NOT NULL,
+    conteudo TEXT NOT NULL,
+    criado_em TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ConhecimentoTicket (
+    idConhecimento BIGSERIAL PRIMARY KEY,
+    titulo VARCHAR(255) NOT NULL,
+    descricao TEXT NOT NULL,
+    tags VARCHAR(500),
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    criado_em TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_ticket_status ON Ticket(status);
+CREATE INDEX IF NOT EXISTS idx_ticket_atendente ON Ticket(id_atendente);
+CREATE INDEX IF NOT EXISTS idx_mensagem_ticket_id ON MensagemTicket(idTicket, criado_em);
+CREATE INDEX IF NOT EXISTS idx_conhecimento_ticket_ativo ON ConhecimentoTicket(ativo);
 
 -- ==========================================================
 -- 6. TABELAS DE EVENTOS

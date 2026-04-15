@@ -327,6 +327,70 @@
                 </form>
             </div>
         </div>
+
+        <div class="card config-card mb-4">
+            <div class="card-header fw-bold">Configuração de Tickets e Knowledge Base</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="section-title">Atendimento por Chat</div>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <div class="fw-semibold">Habilitar atendimento por atendente</div>
+                                <div class="small-muted">Quando habilitado, clientes podem abrir ticket via chat na página de contato.</div>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="chatToggleSwitch">
+                                <label class="form-check-label" for="chatToggleSwitch" id="chatToggleLabel">Desabilitado</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mt-3">
+                        <div class="section-title">Knowledge Base</div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-3">
+                                <input id="kbTitulo" class="form-control" placeholder="Titulo" maxlength="255">
+                            </div>
+                            <div class="col-md-5">
+                                <input id="kbDescricao" class="form-control" placeholder="Descricao" maxlength="1000">
+                            </div>
+                            <div class="col-md-2">
+                                <input id="kbTags" class="form-control" placeholder="tags (ex: garantia)" maxlength="200">
+                            </div>
+                            <div class="col-md-2 d-grid">
+                                <button class="btn btn-success" id="kbSalvarBtn">💾 Salvar</button>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-auto">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="kbAtivo" checked>
+                                    <label class="form-check-label" for="kbAtivo">Ativar nesta Knowledge Base</label>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="kbLimparBtn">Limpar Formulário</button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="kbIdEdit">
+                        <div class="small-muted mt-2" id="kbStatus">Gerencie perguntas/respostas usadas pelo chatbot.</div>
+                        <div class="mt-3" style="display: flex; gap: 10px; align-items: center;">
+                            <input id="kbSearchInput" type="text" class="form-control" placeholder="🔍 Buscar (título, descrição ou tags)..." style="max-width: 400px;">
+                            <span id="kbResultCount" class="small-muted">-</span>
+                        </div>
+                        <div class="table-responsive mt-3">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr><th>ID</th><th>Titulo</th><th>Descricao</th><th>Tags</th><th>Ativo</th><th>Ações</th></tr>
+                                </thead>
+                                <tbody id="kbTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script src="assets/js/bootstrap.bundle.min.js"></script>
@@ -494,6 +558,122 @@
             }
         }
 
+        async function loadChatConfig() {
+            try {
+                const cfg = await fetchAuthenticated('/config/chat', 'GET');
+                const enabled = Boolean(cfg?.atendimentoChatHabilitado);
+                const toggle = document.getElementById('chatToggleSwitch');
+                const label = document.getElementById('chatToggleLabel');
+                if (toggle) toggle.checked = enabled;
+                if (label) label.textContent = enabled ? 'Habilitado' : 'Desabilitado';
+            } catch (e) {
+                const status = document.getElementById('kbStatus');
+                if (status) {
+                    status.textContent = 'Falha ao carregar configuração de chat: ' + (e.message || e);
+                    status.style.color = '#b91c1c';
+                }
+            }
+        }
+
+        let allKbItems = [];
+        
+        function clearKbForm() {
+            document.getElementById('kbIdEdit').value = '';
+            document.getElementById('kbTitulo').value = '';
+            document.getElementById('kbDescricao').value = '';
+            document.getElementById('kbTags').value = '';
+            document.getElementById('kbAtivo').checked = true;
+            const salvarBtn = document.getElementById('kbSalvarBtn');
+            if (salvarBtn) salvarBtn.textContent = '💾 Salvar';
+        }
+
+        function filterKbTable(searchTerm = '') {
+            const tbody = document.getElementById('kbTableBody');
+            if (!tbody) return;
+            const term = (searchTerm || '').trim().toLowerCase();
+            let visibleCount = 0;
+            let rowIdx = 0;
+            
+            allKbItems.forEach(item => {
+                const match = !term || 
+                    (item.titulo && item.titulo.toLowerCase().includes(term)) || 
+                    (item.descricao && item.descricao.toLowerCase().includes(term)) || 
+                    (item.tags && item.tags.toLowerCase().includes(term));
+                
+                const rows = tbody.querySelectorAll('tr');
+                if (rowIdx < rows.length) {
+                    const row = rows[rowIdx];
+                    row.style.display = match ? '' : 'none';
+                    if (match) visibleCount++;
+                }
+                rowIdx++;
+            });
+            
+            const resultCount = document.getElementById('kbResultCount');
+            if (resultCount) {
+                resultCount.textContent = term 
+                    ? `${visibleCount}/${allKbItems.length} resultados` 
+                    : `${allKbItems.length} total`;
+            }
+        }
+
+        async function loadKb() {
+            const tbody = document.getElementById('kbTableBody');
+            const status = document.getElementById('kbStatus');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="6" class="text-muted">Carregando...</td></tr>';
+            try {
+                const data = await fetchAuthenticated('/conhecimento', 'GET');
+                allKbItems = (Array.isArray(data) ? data : []).sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+                tbody.innerHTML = '';
+                allKbItems.forEach((item) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${item.id}</td>
+                        <td>${item.titulo || ''}</td>
+                        <td>${item.descricao || ''}</td>
+                        <td>${item.tags || ''}</td>
+                        <td>${item.ativo ? 'SIM' : 'NAO'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" data-action="edit">Editar</button>
+                            <button class="btn btn-sm btn-outline-danger" data-action="delete">Excluir</button>
+                        </td>
+                    `;
+                    tr.querySelector('[data-action="edit"]').addEventListener('click', () => {
+                        document.getElementById('kbIdEdit').value = item.id;
+                        document.getElementById('kbTitulo').value = item.titulo || '';
+                        document.getElementById('kbDescricao').value = item.descricao || '';
+                        document.getElementById('kbTags').value = item.tags || '';
+                        document.getElementById('kbAtivo').checked = item.ativo !== false;
+                        const salvarBtn = document.getElementById('kbSalvarBtn');
+                        if (salvarBtn) salvarBtn.textContent = '✏️ Atualizar';
+                        document.getElementById('kbTitulo').focus();
+                    });
+                    tr.querySelector('[data-action="delete"]').addEventListener('click', async () => {
+                        const ok = typeof window.showStyledConfirm === 'function'
+                            ? await window.showStyledConfirm('Deseja excluir este item da Knowledge Base?', { title: 'Excluir', confirmText: 'Excluir' })
+                            : confirm('Deseja excluir este item da Knowledge Base?');
+                        if (!ok) return;
+                        await fetchAuthenticated(`/conhecimento/${item.id}`, 'DELETE');
+                        await loadKb();
+                    });
+                    tbody.appendChild(tr);
+                });
+                if (!allKbItems.length) tbody.innerHTML = '<tr><td colspan="6" class="text-muted">Nenhum conhecimento cadastrado.</td></tr>';
+                if (status) {
+                    status.textContent = 'Knowledge Base carregada.';
+                    status.style.color = '#2e6f4b';
+                }
+                filterKbTable('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-danger">Falha ao carregar knowledge base.</td></tr>';
+                if (status) {
+                    status.textContent = 'Erro da KB: ' + (e.message || e);
+                    status.style.color = '#b91c1c';
+                }
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             if (!ensureOwner()) return;
 
@@ -511,6 +691,86 @@
             }
 
             document.getElementById('btnReloadConfig').addEventListener('click', loadConfig);
+
+            const chatToggle = document.getElementById('chatToggleSwitch');
+            if (chatToggle) {
+                chatToggle.addEventListener('change', async () => {
+                    const enabled = chatToggle.checked;
+                    try {
+                        await fetchAuthenticated('/config/chat', 'PUT', { atendimentoChatHabilitado: enabled });
+                        const label = document.getElementById('chatToggleLabel');
+                        if (label) label.textContent = enabled ? 'Habilitado' : 'Desabilitado';
+                        const status = document.getElementById('kbStatus');
+                        if (status) {
+                            status.textContent = `Atendimento por chat ${enabled ? 'habilitado' : 'desabilitado'} com sucesso.`;
+                            status.style.color = '#166534';
+                        }
+                    } catch (e) {
+                        chatToggle.checked = !enabled;
+                        const status = document.getElementById('kbStatus');
+                        if (status) {
+                            status.textContent = 'Falha ao atualizar configuração de chat: ' + (e.message || e);
+                            status.style.color = '#b91c1c';
+                        }
+                    }
+                });
+            }
+
+            const kbSalvarBtn = document.getElementById('kbSalvarBtn');
+            if (kbSalvarBtn) {
+                kbSalvarBtn.addEventListener('click', async () => {
+                    const idEdit = (document.getElementById('kbIdEdit').value || '').trim();
+                    const payload = {
+                        titulo: (document.getElementById('kbTitulo').value || '').trim(),
+                        descricao: (document.getElementById('kbDescricao').value || '').trim(),
+                        tags: (document.getElementById('kbTags').value || '').trim(),
+                        ativo: document.getElementById('kbAtivo').checked,
+                    };
+                    try {
+                        if (!payload.titulo || !payload.descricao) {
+                            throw new Error('Titulo e descricao são obrigatórios.');
+                        }
+                        if (idEdit) {
+                            await fetchAuthenticated(`/conhecimento/${idEdit}`, 'PUT', payload);
+                            const status = document.getElementById('kbStatus');
+                            if (status) {
+                                status.textContent = 'Item da Knowledge Base atualizado com sucesso!';
+                                status.style.color = '#166534';
+                            }
+                        } else {
+                            await fetchAuthenticated('/conhecimento', 'POST', payload);
+                            const status = document.getElementById('kbStatus');
+                            if (status) {
+                                status.textContent = 'Item adicionado à Knowledge Base com sucesso!';
+                                status.style.color = '#166534';
+                            }
+                        }
+                        clearKbForm();
+                        await loadKb();
+                    } catch (e) {
+                        const status = document.getElementById('kbStatus');
+                        if (status) {
+                            status.textContent = 'Falha ao salvar item da KB: ' + (e.message || e);
+                            status.style.color = '#b91c1c';
+                        }
+                    }
+                });
+            }
+
+            const kbLimparBtn = document.getElementById('kbLimparBtn');
+            if (kbLimparBtn) {
+                kbLimparBtn.addEventListener('click', () => clearKbForm());
+            }
+
+            const kbSearchInput = document.getElementById('kbSearchInput');
+            if (kbSearchInput) {
+                kbSearchInput.addEventListener('keyup', (e) => {
+                    filterKbTable(e.target.value);
+                });
+                kbSearchInput.addEventListener('change', (e) => {
+                    filterKbTable(e.target.value);
+                });
+            }
 
             document.getElementById('heroImageHistory').addEventListener('change', () => {
                 const selected = document.getElementById('heroImageHistory')?.value || '';
@@ -595,7 +855,7 @@
                 }
             });
 
-            await loadConfig();
+            await Promise.all([loadConfig(), loadChatConfig(), loadKb()]);
         });
     </script>
 </body>

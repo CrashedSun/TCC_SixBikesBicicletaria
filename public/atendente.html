@@ -141,6 +141,64 @@
         .logout-btn:hover {
             background:#6acb4a !important;
         }
+
+        .ticket-chat-box {
+            background: linear-gradient(180deg, #fbfffb 0%, #f4fbf4 100%);
+        }
+        .ticket-msg-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .ticket-msg-row.left { justify-content: flex-start; }
+        .ticket-msg-row.right { justify-content: flex-end; }
+        .ticket-msg-group {
+            max-width: min(78%, 680px);
+        }
+        .ticket-msg-meta {
+            font-size: 11px;
+            font-weight: 700;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        .ticket-msg-bubble {
+            border-radius: 16px;
+            padding: 10px 12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,.06);
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+        .ticket-msg-bubble.client {
+            background: #e9ecef;
+            color: #1f2937;
+            border-top-left-radius: 6px;
+        }
+        .ticket-msg-bubble.staff {
+            background: #198754;
+            color: #fff;
+            border-top-right-radius: 6px;
+        }
+        .ticket-msg-bubble.manager {
+            background: #ff9800;
+            color: #fff;
+            border-top-right-radius: 6px;
+        }
+        .ticket-msg-separator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 14px 0;
+            color: #6b7280;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .ticket-msg-separator::before,
+        .ticket-msg-separator::after {
+            content: '';
+            height: 1px;
+            background: #d9e4db;
+            flex: 1;
+        }
     </style>
 </head>
 
@@ -172,6 +230,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="assets/js/auth.js"></script> 
+<script src="assets/js/notifications.js"></script> 
 
 <script>
 /* ======================================================================
@@ -372,6 +431,10 @@ function loadPage(page) {
                 const assumidos = Array.isArray(ticketsAssumidos) ? ticketsAssumidos : (ticketsAssumidos?.data || []);
                 const agList = Array.isArray(agParaPgResp) ? agParaPgResp : (agParaPgResp?.data || agParaPgResp?.agendamentos || []);
 
+                if (typeof window.setAssignedTicketIds === 'function') {
+                    window.setAssignedTicketIds(assumidos.map((t) => t && t.id));
+                }
+
                 setText('countTicketsAbertos', abertos.length);
                 setText('countTicketsAssumidos', assumidos.length);
                 setText('countParaPagamento', agList.length);
@@ -386,12 +449,14 @@ function loadPage(page) {
                         const tr = document.createElement('tr');
                         const status = String(t.status||'').toUpperCase();
                         const badge = status === 'NOVO' ? 'bg-danger' : status === 'ABERTO' ? 'bg-warning' : 'bg-secondary';
+                        const unreadBadge = typeof window.getUnreadTicketBadge === 'function' ? window.getUnreadTicketBadge(t.id) : '';
                         tr.innerHTML = `
                             <td>${t.id}</td>
                             <td>${t.nome||'-'}</td>
-                            <td>${t.titulo||t.assunto||'-'}</td>
+                            <td data-unread-slot>${t.titulo||t.assunto||'-'}${unreadBadge}</td>
                             <td><span class="badge ${badge}">${status||'-'}</span></td>
                         `;
+                        tr.setAttribute('data-ticket-id', t.id);
                         tBody.appendChild(tr);
                     });
                     if (abertos.length === 0) tBody.innerHTML = '<tr><td colspan="4" class="text-muted">Nenhum ticket aberto.</td></tr>';
@@ -659,6 +724,221 @@ function loadPage(page) {
             btnRecarregar.addEventListener('click', carregarAgendamentosParaPagamento);
         }
 
+                let ticketChatModal = null;
+                let ticketChatInterval = null;
+                let ticketChatAtualId = null;
+
+                function ensureTicketChatModal() {
+                    let modalEl = document.getElementById('ticketChatModal');
+                    if (modalEl) return modalEl;
+                    modalEl = document.createElement('div');
+                    modalEl.className = 'modal fade';
+                    modalEl.id = 'ticketChatModal';
+                    modalEl.tabIndex = -1;
+                    modalEl.innerHTML = `
+                        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                            <div class="modal-content">
+                                <div class="modal-header" style="background:#7ed957;color:white;">
+                                    <h5 class="modal-title" id="ticketChatTitle">Chat do Ticket</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="ticketChatMessages" class="ticket-chat-box" style="height:380px; overflow:auto; border:1px solid #dfe5df; border-radius:10px; padding:10px;"></div>
+                                </div>
+                                <div class="modal-footer d-block">
+                                    <div class="input-group" id="ticketChatInputWrap">
+                                        <input type="text" id="ticketChatInput" class="form-control" placeholder="Digite sua mensagem...">
+                                        <button class="btn btn-success" id="ticketChatSend">Enviar</button>
+                                    </div>
+                                    <div class="text-end mt-2">
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modalEl);
+                    modalEl.addEventListener('hidden.bs.modal', () => {
+                        if (ticketChatInterval) clearInterval(ticketChatInterval);
+                        ticketChatInterval = null;
+                        ticketChatAtualId = null;
+                        window.__atendenteActiveTicketChatId = null;
+                    });
+                    return modalEl;
+                }
+
+                function escapeHtml(value) {
+                    return String(value || '')
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;');
+                }
+
+                window.getUnreadTicketBadge = function getUnreadTicketBadge(ticketId) {
+                    const unreadIds = typeof window.getUnreadTicketIds === 'function' ? window.getUnreadTicketIds() : new Set();
+                    const isAssigned = typeof window.isAssignedTicketId === 'function' ? window.isAssignedTicketId(ticketId) : false;
+                    return unreadIds.has(String(ticketId)) && isAssigned ? ' <span class="badge bg-danger ms-2" data-unread-badge="1">Nova msg</span>' : '';
+                };
+
+                window.clearUnreadTicketVisual = function clearUnreadTicketVisual(ticketId) {
+                    const id = String(ticketId || '');
+                    if (!id) return;
+                    document.querySelectorAll(`tr[data-ticket-id="${id}"]`).forEach((row) => {
+                        row.querySelectorAll('.badge.bg-danger.ms-2').forEach((badge) => {
+                            const isUnreadBadge =
+                                badge.getAttribute('data-unread-badge') === '1' ||
+                                String(badge.textContent || '').trim().toLowerCase() === 'nova msg';
+                            if (isUnreadBadge) badge.remove();
+                        });
+                    });
+                };
+
+                window.setUnreadTicketVisual = function setUnreadTicketVisual(ticketId) {
+                    const id = String(ticketId || '');
+                    if (!id) return;
+                    document.querySelectorAll(`tr[data-ticket-id="${id}"]`).forEach((row) => {
+                        const alreadyShown = Array.from(row.querySelectorAll('.badge.bg-danger.ms-2')).find((badge) =>
+                            badge.getAttribute('data-unread-badge') === '1' ||
+                            String(badge.textContent || '').trim().toLowerCase() === 'nova msg'
+                        );
+                        if (alreadyShown) return;
+                        const titleCell = row.querySelector('[data-unread-slot]') || (row.children && row.children.length > 1 ? row.children[1] : null);
+                        if (!titleCell) return;
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-danger ms-2';
+                        badge.textContent = 'Nova msg';
+                        badge.setAttribute('data-unread-badge', '1');
+                        titleCell.appendChild(badge);
+                    });
+                };
+
+                window.syncUnreadTicketVisuals = function syncUnreadTicketVisuals() {
+                    const unreadIds = typeof window.getUnreadTicketIds === 'function' ? window.getUnreadTicketIds() : new Set();
+                    const activeId = String(window.__atendenteActiveTicketChatId || '');
+                    document.querySelectorAll('tr[data-ticket-id]').forEach((row) => {
+                        const rowTicketId = String(row.getAttribute('data-ticket-id') || '');
+                        if (!rowTicketId) return;
+                        const isAssigned = typeof window.isAssignedTicketId === 'function' ? window.isAssignedTicketId(rowTicketId) : false;
+                        const shouldShow = unreadIds.has(rowTicketId) && rowTicketId !== activeId && isAssigned;
+                        const badge = Array.from(row.querySelectorAll('.badge.bg-danger.ms-2')).find((item) =>
+                            item.getAttribute('data-unread-badge') === '1' ||
+                            String(item.textContent || '').trim().toLowerCase() === 'nova msg'
+                        );
+                        if (shouldShow && !badge) {
+                            const titleCell = row.querySelector('[data-unread-slot]') || (row.children && row.children.length > 1 ? row.children[1] : null);
+                            if (!titleCell) return;
+                            const newBadge = document.createElement('span');
+                            newBadge.className = 'badge bg-danger ms-2';
+                            newBadge.textContent = 'Nova msg';
+                            newBadge.setAttribute('data-unread-badge', '1');
+                            titleCell.appendChild(newBadge);
+                        }
+                        if (!shouldShow && badge) {
+                            badge.remove();
+                        }
+                    });
+                };
+
+                function formatTicketMsg(m) {
+                    const tipo = String(m.tipo_usuario || '').toUpperCase();
+                    const isRight = ['ATENDENTE', 'GERENTE', 'PROPRIETARIO'].includes(tipo);
+                    const bubbleColor = tipo === 'CLIENTE'
+                        ? '#e9ecef'
+                        : (tipo === 'ATENDENTE' ? '#198754' : '#ff9800');
+                    const txtColor = tipo === 'CLIENTE' ? '#212529' : '#fff';
+                    const side = isRight ? 'right' : 'left';
+                    const hora = m.criado_em ? new Date(m.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                    const nome = m.nome_remetente || 'Usuário';
+                    return `
+                        <div class="ticket-msg-row ${side}">
+                            <div class="ticket-msg-group">
+                                <div class="ticket-msg-meta">${escapeHtml(nome)} (${escapeHtml(tipo || 'SISTEMA')}) • ${hora}</div>
+                                <div class="ticket-msg-bubble ${tipo === 'CLIENTE' ? 'client' : (tipo === 'ATENDENTE' ? 'staff' : 'manager')}" style="background:${bubbleColor}; color:${txtColor};">${escapeHtml(m.conteudo)}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                function renderTicketMessages(list) {
+                    const ordered = Array.isArray(list) ? [...list].sort((a, b) => new Date(a.criado_em || 0) - new Date(b.criado_em || 0)) : [];
+                    let lastDay = '';
+                    return ordered.map((m) => {
+                        const day = m.criado_em ? new Date(m.criado_em).toLocaleDateString('pt-BR') : '';
+                        const separator = day && day !== lastDay
+                            ? `<div class="ticket-msg-separator"><span>${day}</span></div>`
+                            : '';
+                        lastDay = day || lastDay;
+                        return separator + formatTicketMsg(m);
+                    }).join('');
+                }
+
+                async function refreshTicketChat(idTicket) {
+                    const box = document.getElementById('ticketChatMessages');
+                    if (!box) return;
+                    try {
+                        const list = await fetchAuthenticated(`/api/tickets/${idTicket}/mensagens`, 'GET');
+                        if (String(ticketChatAtualId || '') !== String(idTicket || '')) return;
+                        if (String(window.__atendenteActiveTicketChatId || '') !== String(idTicket || '')) return;
+                        box.innerHTML = renderTicketMessages(list);
+                        box.scrollTop = box.scrollHeight;
+                    } catch (e) {
+                        if (String(ticketChatAtualId || '') !== String(idTicket || '')) return;
+                        box.innerHTML = `<div class="text-danger">${e.message || 'Falha ao carregar mensagens.'}</div>`;
+                    }
+                }
+
+                async function abrirTicketChat(idTicket, podeResponder) {
+                    const modalEl = ensureTicketChatModal();
+                    document.getElementById('ticketChatTitle').textContent = `Chat do Ticket #${idTicket}`;
+                    document.getElementById('ticketChatInputWrap').style.display = podeResponder ? 'flex' : 'none';
+                    ticketChatAtualId = Number(idTicket);
+                    window.__atendenteActiveTicketChatId = ticketChatAtualId;
+
+                    const sendBtn = document.getElementById('ticketChatSend');
+                    const inputEl = document.getElementById('ticketChatInput');
+                    sendBtn.onclick = async () => {
+                        const texto = (inputEl.value || '').trim();
+                        if (!texto || !ticketChatAtualId) return;
+                        inputEl.value = '';
+                        try {
+                            await fetchAuthenticated(`/api/tickets/${ticketChatAtualId}/mensagens`, 'POST', { conteudo: texto });
+                            await refreshTicketChat(ticketChatAtualId);
+                        } catch (e) {
+                            alert(e.message || 'Falha ao enviar mensagem.');
+                        }
+                    };
+                    inputEl.onkeydown = (ev) => {
+                        if (ev.key === 'Enter') {
+                            ev.preventDefault();
+                            sendBtn.click();
+                        }
+                    };
+
+                    if (!ticketChatModal) ticketChatModal = new bootstrap.Modal(modalEl);
+                    ticketChatModal.show();
+                    if (typeof window.clearUnreadTicket === 'function') {
+                        window.clearUnreadTicket(ticketChatAtualId);
+                    }
+                    if (typeof window.clearUnreadTicketVisual === 'function') {
+                        window.clearUnreadTicketVisual(ticketChatAtualId);
+                    }
+                    if (typeof window.syncUnreadTicketVisuals === 'function') {
+                        window.syncUnreadTicketVisuals();
+                    }
+                    updateMyTicketIds();
+                    await refreshTicketChat(ticketChatAtualId);
+                    if (ticketChatInterval) clearInterval(ticketChatInterval);
+                    const openedTicketId = String(ticketChatAtualId || '');
+                    ticketChatInterval = setInterval(() => {
+                        if (!ticketChatAtualId) return;
+                        if (String(ticketChatAtualId) !== openedTicketId) return;
+                        if (String(window.__atendenteActiveTicketChatId || '') !== openedTicketId) return;
+                        refreshTicketChat(ticketChatAtualId);
+                    }, 2500);
+                }
+
                 async function carregarAbertos(){
                     try{
                         const itens = await fetchAuthenticated('/api/tickets/abertos','GET');
@@ -666,14 +946,17 @@ function loadPage(page) {
                         tbody.innerHTML='';
                         (itens||[]).forEach(t=>{
                             const tr = document.createElement('tr');
+                            const unreadBadge = typeof window.getUnreadTicketBadge === 'function' ? window.getUnreadTicketBadge(t.id) : '';
                             tr.innerHTML = `
                                 <td>${t.id}</td>
-                                <td>${t.nome||'-'}</td>
-                                <td>${t.titulo||'-'}</td>
+                                <td data-unread-slot>${t.nome||'-'}${unreadBadge}</td>
+                                <td>${t.assunto||t.titulo||'-'}</td>
                                 <td class="text-end">
                                     <button class="btn btn-sm btn-info me-1" data-action="detalhes" data-id="${t.id}">Detalhes</button>
+                                    <button class="btn btn-sm btn-primary me-1" data-action="chat" data-id="${t.id}">Ver Chat</button>
                                     <button class="btn btn-sm btn-success" data-action="assumir" data-id="${t.id}">Assumir</button>
                                 </td>`;
+                            tr.setAttribute('data-ticket-id', t.id);
                             tbody.appendChild(tr);
                         });
                         document.getElementById('countAbertos').textContent = (itens||[]).length;
@@ -682,14 +965,20 @@ function loadPage(page) {
                                 const action = btn.dataset.action;
                                 if(action === 'detalhes'){
                                     await mostrarDetalhes(btn.dataset.id);
+                                } else if(action === 'chat'){
+                                    await abrirTicketChat(btn.dataset.id, false);
                                 } else if(action === 'assumir'){
                                     btn.disabled = true;
-                                    try{ await fetchAuthenticated(`/api/tickets/${btn.dataset.id}/assumir`, 'PUT'); }
+                                    try{
+                                        await fetchAuthenticated(`/api/tickets/${btn.dataset.id}/assumir`, 'PUT');
+                                        if (typeof window.showStyledPopup === 'function') window.showStyledPopup('Ticket assumido com sucesso.', 'info');
+                                    }
                                     catch(e){ alert(e.message||'Falha ao assumir ticket'); }
                                     finally{ btn.disabled=false; await carregarAbertos(); await carregarAssumidos(); }
                                 }
                             });
                         });
+                        updateMyTicketIds();
                     } catch(e){
                         document.getElementById('ticketsAbertos').innerHTML = '<tr><td colspan="4" class="text-danger">Erro ao carregar</td></tr>';
                     }
@@ -698,18 +987,24 @@ function loadPage(page) {
                 async function carregarAssumidos(){
                     try{
                         const itens = await fetchAuthenticated('/api/tickets/assumidos','GET');
+                        if (typeof window.setAssignedTicketIds === 'function') {
+                            window.setAssignedTicketIds((itens || []).map((t) => t && t.id));
+                        }
                         const tbody = document.getElementById('ticketsAssumidos');
                         tbody.innerHTML='';
                         (itens||[]).forEach(t=>{
                             const tr = document.createElement('tr');
+                            const unreadBadge = typeof window.getUnreadTicketBadge === 'function' ? window.getUnreadTicketBadge(t.id) : '';
                             tr.innerHTML = `
                                 <td>${t.id}</td>
-                                <td>${t.titulo||'-'}</td>
+                                <td data-unread-slot>${t.assunto||t.titulo||'-'}${unreadBadge}</td>
                                 <td><span class="badge bg-info">${t.status}</span></td>
                                 <td class="text-end">
                                     <button class="btn btn-sm btn-info me-1" data-action="detalhes" data-id="${t.id}">Detalhes</button>
+                                    <button class="btn btn-sm btn-primary me-1" data-action="chat" data-id="${t.id}">Ver Chat</button>
                                     <button class="btn btn-sm btn-outline-secondary" data-action="fechar" data-id="${t.id}">Fechar</button>
                                 </td>`;
+                            tr.setAttribute('data-ticket-id', t.id);
                             tbody.appendChild(tr);
                         });
                         document.getElementById('countAssumidos').textContent = (itens||[]).length;
@@ -718,14 +1013,20 @@ function loadPage(page) {
                                 const action = btn.dataset.action;
                                 if(action === 'detalhes'){
                                     await mostrarDetalhes(btn.dataset.id);
+                                } else if(action === 'chat'){
+                                    await abrirTicketChat(btn.dataset.id, true);
                                 } else if(action === 'fechar'){
                                     btn.disabled=true;
-                                    try{ await fetchAuthenticated(`/api/tickets/${btn.dataset.id}/fechar`, 'PUT'); }
+                                    try{
+                                        await fetchAuthenticated(`/api/tickets/${btn.dataset.id}/fechar`, 'PUT');
+                                        if (typeof window.showStyledPopup === 'function') window.showStyledPopup('Ticket encerrado com sucesso.', 'info');
+                                    }
                                     catch(e){ alert(e.message||'Falha ao fechar ticket'); }
                                     finally{ btn.disabled=false; await carregarAssumidos(); }
                                 }
                             });
                         });
+                        updateMyTicketIds();
                     } catch(e){
                         document.getElementById('ticketsAssumidos').innerHTML = '<tr><td colspan="4" class="text-danger">Erro ao carregar</td></tr>';
                     }
@@ -752,6 +1053,334 @@ function loadPage(page) {
                 carregarAbertos();
                 carregarAssumidos();
         }
+
+    /* ================= TICKETS ================== */
+    else if (page === 'tickets') {
+        content.innerHTML = `
+            <h2>Tickets de Suporte</h2>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <input type="text" id="ticketsSearch" class="form-control" placeholder="Pesquisar por cliente ou assunto...">
+                </div>
+                <div class="col-md-3">
+                    <select id="ticketsFiltro" class="form-select">
+                        <option value="id">ID</option>
+                        <option value="nome">Cliente</option>
+                        <option value="assunto">Assunto</option>
+                    </select>
+                </div>
+                <div class="col-md-3 text-end">
+                    <button class="btn btn-outline-success w-100" id="ticketsClearFiltersBtn">Limpar filtros</button>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <div class="card p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold mb-0">Tickets Abertos</h5>
+                            <span class="badge bg-warning" id="ticketsAbertosCount">0</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle mb-0">
+                                <thead>
+                                    <tr><th>ID</th><th>Cliente</th><th>Assunto</th><th class="text-end">Ações</th></tr>
+                                </thead>
+                                <tbody id="ticketsAbertos"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold mb-0">Meus Tickets</h5>
+                            <span class="badge bg-info" id="ticketsAssumidosCount">0</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle mb-0">
+                                <thead>
+                                    <tr><th>ID</th><th>Cliente</th><th>Status</th><th class="text-end">Ações</th></tr>
+                                </thead>
+                                <tbody id="ticketsAssumidos"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        let ticketChatModal = null;
+        let ticketChatInterval = null;
+        let ticketChatAtualId = null;
+
+        function ensureTicketChatModal() {
+            let modalEl = document.getElementById('ticketChatModal');
+            if (modalEl) return modalEl;
+            modalEl = document.createElement('div');
+            modalEl.className = 'modal fade';
+            modalEl.id = 'ticketChatModal';
+            modalEl.tabIndex = -1;
+            modalEl.innerHTML = `
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header" style="background:#7ed957;color:white;">
+                            <h5 class="modal-title" id="ticketChatTitle">Chat do Ticket</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="ticketChatMessages" class="ticket-chat-box" style="height:380px; overflow:auto; border:1px solid #dfe5df; border-radius:10px; padding:10px;"></div>
+                        </div>
+                        <div class="modal-footer d-block">
+                            <div class="input-group" id="ticketChatInputWrap">
+                                <input type="text" id="ticketChatInput" class="form-control" placeholder="Digite sua mensagem...">
+                                <button class="btn btn-success" id="ticketChatSend">Enviar</button>
+                            </div>
+                            <div class="text-end mt-2">
+                                <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalEl);
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                if (ticketChatInterval) clearInterval(ticketChatInterval);
+                ticketChatInterval = null;
+                ticketChatAtualId = null;
+                window.__atendenteActiveTicketChatId = null;
+            });
+            return modalEl;
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatTicketMsg(m) {
+            const tipo = String(m.tipo_usuario || '').toUpperCase();
+            const side = ['ATENDENTE', 'GERENTE', 'PROPRIETARIO'].includes(tipo) ? 'right' : 'left';
+            const hora = m.criado_em ? new Date(m.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+            const bubbleClass = tipo === 'CLIENTE' ? 'client' : (tipo === 'ATENDENTE' ? 'staff' : 'manager');
+            const color = tipo === 'CLIENTE' ? '#e9ecef' : (tipo === 'ATENDENTE' ? '#198754' : '#ff9800');
+            const txtColor = tipo === 'CLIENTE' ? '#212529' : '#fff';
+            return `
+                <div class="ticket-msg-row ${side}">
+                    <div class="ticket-msg-group">
+                        <div class="ticket-msg-meta">${escapeHtml(m.nome_remetente || 'Usuário')} (${escapeHtml(tipo || 'SISTEMA')}) • ${hora}</div>
+                        <div class="ticket-msg-bubble ${bubbleClass}" style="background:${color}; color:${txtColor};">${escapeHtml(m.conteudo || '')}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTicketMessages(list) {
+            const ordered = Array.isArray(list) ? [...list].sort((a, b) => new Date(a.criado_em || 0) - new Date(b.criado_em || 0)) : [];
+            let lastDay = '';
+            return ordered.map((m) => {
+                const day = m.criado_em ? new Date(m.criado_em).toLocaleDateString('pt-BR') : '';
+                const separator = day && day !== lastDay
+                    ? `<div class="ticket-msg-separator"><span>${day}</span></div>`
+                    : '';
+                lastDay = day || lastDay;
+                return separator + formatTicketMsg(m);
+            }).join('');
+        }
+
+        async function refreshTicketChat(idTicket) {
+            const box = document.getElementById('ticketChatMessages');
+            if (!box) return;
+            try {
+                const list = await fetchAuthenticated(`/api/tickets/${idTicket}/mensagens`, 'GET');
+                if (String(ticketChatAtualId || '') !== String(idTicket || '')) return;
+                if (String(window.__atendenteActiveTicketChatId || '') !== String(idTicket || '')) return;
+                box.innerHTML = renderTicketMessages(list);
+                box.scrollTop = box.scrollHeight;
+            } catch (e) {
+                if (String(ticketChatAtualId || '') !== String(idTicket || '')) return;
+                box.innerHTML = `<div class="text-danger">${e.message || 'Falha ao carregar mensagens.'}</div>`;
+            }
+        }
+
+        async function abrirTicketChat(idTicket, podeResponder) {
+            const modalEl = ensureTicketChatModal();
+            document.getElementById('ticketChatTitle').textContent = `Chat do Ticket #${idTicket}`;
+            document.getElementById('ticketChatInputWrap').style.display = podeResponder ? 'flex' : 'none';
+            ticketChatAtualId = Number(idTicket);
+            window.__atendenteActiveTicketChatId = ticketChatAtualId;
+
+            const sendBtn = document.getElementById('ticketChatSend');
+            const inputEl = document.getElementById('ticketChatInput');
+            sendBtn.onclick = async () => {
+                const texto = (inputEl.value || '').trim();
+                if (!texto || !ticketChatAtualId) return;
+                inputEl.value = '';
+                try {
+                    await fetchAuthenticated(`/api/tickets/${ticketChatAtualId}/mensagens`, 'POST', { conteudo: texto });
+                    await refreshTicketChat(ticketChatAtualId);
+                } catch (e) {
+                    alert(e.message || 'Falha ao enviar mensagem.');
+                }
+            };
+            inputEl.onkeydown = (ev) => {
+                if (ev.key === 'Enter') {
+                    ev.preventDefault();
+                    sendBtn.click();
+                }
+            };
+
+            if (!ticketChatModal) ticketChatModal = new bootstrap.Modal(modalEl);
+            ticketChatModal.show();
+            if (typeof window.clearUnreadTicket === 'function') {
+                window.clearUnreadTicket(ticketChatAtualId);
+            }
+            if (typeof window.clearUnreadTicketVisual === 'function') {
+                window.clearUnreadTicketVisual(ticketChatAtualId);
+            }
+            if (typeof window.syncUnreadTicketVisuals === 'function') {
+                window.syncUnreadTicketVisuals();
+            }
+            await refreshTicketChat(ticketChatAtualId);
+            if (ticketChatInterval) clearInterval(ticketChatInterval);
+            const openedTicketId = String(ticketChatAtualId || '');
+            ticketChatInterval = setInterval(() => {
+                if (!ticketChatAtualId) return;
+                if (String(ticketChatAtualId) !== openedTicketId) return;
+                if (String(window.__atendenteActiveTicketChatId || '') !== openedTicketId) return;
+                refreshTicketChat(ticketChatAtualId);
+            }, 2500);
+        }
+
+        async function carregarTickets() {
+            const [abertosResp, assumidosResp] = await Promise.all([
+                fetchAuthenticated('/api/tickets/abertos', 'GET').catch(() => []),
+                fetchAuthenticated('/api/tickets/assumidos', 'GET').catch(() => [])
+            ]);
+
+            const normalizeFilterText = (value) => String(value || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^0-9a-z]/g, '')
+                .trim();
+
+            const abertos = Array.isArray(abertosResp) ? abertosResp : (abertosResp?.data || []);
+            const assumidos = Array.isArray(assumidosResp) ? assumidosResp : (assumidosResp?.data || []);
+            if (typeof window.setAssignedTicketIds === 'function') {
+                window.setAssignedTicketIds(assumidos.map((t) => t && t.id));
+            }
+
+            const openBody = document.getElementById('ticketsAbertos');
+            const assignedBody = document.getElementById('ticketsAssumidos');
+            document.getElementById('ticketsAbertosCount').textContent = abertos.length;
+            document.getElementById('ticketsAssumidosCount').textContent = assumidos.length;
+
+            openBody.innerHTML = '';
+            abertos.forEach((t) => {
+                const tr = document.createElement('tr');
+                const unreadBadge = typeof window.getUnreadTicketBadge === 'function' ? window.getUnreadTicketBadge(t.id) : '';
+                tr.innerHTML = `
+                    <td>${t.id}</td>
+                    <td>${t.nome || '-'}${unreadBadge}</td>
+                    <td>${t.assunto || t.titulo || '-'}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-primary me-1" data-action="chat" data-id="${t.id}">Ver Chat</button>
+                        <button class="btn btn-sm btn-success" data-action="assumir" data-id="${t.id}">Assumir</button>
+                    </td>
+                `;
+                tr.setAttribute('data-ticket-id', t.id);
+                tr.querySelector('[data-action="chat"]').addEventListener('click', () => abrirTicketChat(t.id, false));
+                tr.querySelector('[data-action="assumir"]').addEventListener('click', async (ev) => {
+                    const btn = ev.currentTarget;
+                    btn.disabled = true;
+                    try {
+                        await fetchAuthenticated(`/api/tickets/${t.id}/assumir`, 'PUT');
+                        if (typeof window.showStyledPopup === 'function') window.showStyledPopup('Ticket assumido com sucesso.', 'info');
+                        await carregarTickets();
+                    } catch (e) {
+                        alert(e.message || 'Falha ao assumir ticket');
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+                openBody.appendChild(tr);
+            });
+            if (!abertos.length) openBody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">Nenhum ticket aberto.</td></tr>';
+
+            assignedBody.innerHTML = '';
+            assumidos.forEach((t) => {
+                const tr = document.createElement('tr');
+                const unreadBadge = typeof window.getUnreadTicketBadge === 'function' ? window.getUnreadTicketBadge(t.id) : '';
+                tr.innerHTML = `
+                    <td>${t.id}</td>
+                    <td>${t.nome || '-'}${unreadBadge}</td>
+                    <td><span class="badge bg-info">${t.status || 'EM ATENDIMENTO'}</span></td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-primary me-1" data-action="chat" data-id="${t.id}">Ver Chat</button>
+                        <button class="btn btn-sm btn-outline-secondary" data-action="fechar" data-id="${t.id}">Fechar</button>
+                    </td>
+                `;
+                tr.setAttribute('data-ticket-id', t.id);
+                tr.querySelector('[data-action="chat"]').addEventListener('click', () => abrirTicketChat(t.id, true));
+                tr.querySelector('[data-action="fechar"]').addEventListener('click', async (ev) => {
+                    const btn = ev.currentTarget;
+                    btn.disabled = true;
+                    try {
+                        await fetchAuthenticated(`/api/tickets/${t.id}/fechar`, 'PUT');
+                        if (typeof window.showStyledPopup === 'function') window.showStyledPopup('Ticket encerrado com sucesso.', 'info');
+                        await carregarTickets();
+                    } catch (e) {
+                        alert(e.message || 'Falha ao fechar ticket');
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+                assignedBody.appendChild(tr);
+            });
+            if (!assumidos.length) assignedBody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">Nenhum ticket assumido.</td></tr>';
+
+            const search = document.getElementById('ticketsSearch');
+            const filtro = document.getElementById('ticketsFiltro');
+            if (search && filtro) {
+                const linhas = [...openBody.querySelectorAll('tr[data-ticket-id]'), ...assignedBody.querySelectorAll('tr[data-ticket-id]')];
+                const applyTicketsFilter = () => {
+                    const texto = normalizeFilterText(search.value);
+                    const campo = String(filtro.value || 'id');
+
+                    linhas.forEach((tr) => {
+                        const cellIndex = campo === 'id' ? 1 : campo === 'nome' ? 2 : 3;
+                        const valorRaw = tr.querySelector(`td:nth-child(${cellIndex})`)?.textContent || '';
+                        const valor = normalizeFilterText(valorRaw);
+                        tr.style.display = valor.includes(texto) ? '' : 'none';
+                    });
+                };
+
+                search.oninput = applyTicketsFilter;
+                filtro.onchange = applyTicketsFilter;
+                applyTicketsFilter();
+            }
+        }
+
+        const clearFiltersBtn = document.getElementById('ticketsClearFiltersBtn');
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', async () => {
+                const search = document.getElementById('ticketsSearch');
+                const filtro = document.getElementById('ticketsFiltro');
+                if (search) search.value = '';
+                if (filtro) filtro.value = 'id';
+                await carregarTickets();
+            });
+        }
+        carregarTickets().catch((e) => {
+            content.innerHTML = `<div class="alert alert-danger">Falha ao carregar tickets: ${e.message || e}</div>`;
+        });
+    }
 
     /* ================= CLIENTES ================== */
     else if (page === 'clientes') {
@@ -1686,14 +2315,123 @@ function setupTableSearchAndModal(page, searchId, filterId, tableId, modalId, bu
    ====================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (typeof window.getUnreadTicketBadge !== 'function') {
+        window.getUnreadTicketBadge = function getUnreadTicketBadge(ticketId) {
+            const unreadIds = typeof window.getUnreadTicketIds === 'function' ? window.getUnreadTicketIds() : new Set();
+            const isAssigned = typeof window.isAssignedTicketId === 'function' ? window.isAssignedTicketId(ticketId) : false;
+            return unreadIds.has(String(ticketId)) && isAssigned ? ' <span class="badge bg-danger ms-2" data-unread-badge="1">Nova msg</span>' : '';
+        };
+    }
+
+    if (typeof window.setAssignedTicketIds !== 'function') {
+        window.setAssignedTicketIds = function setAssignedTicketIds(ids) {
+            const next = new Set();
+            (Array.isArray(ids) ? ids : []).forEach((id) => {
+                const value = String(id || '');
+                if (value) next.add(value);
+            });
+            window.__atendenteAssignedTicketIds = next;
+        };
+    }
+
+    if (typeof window.isAssignedTicketId !== 'function') {
+        window.isAssignedTicketId = function isAssignedTicketId(ticketId) {
+            const id = String(ticketId || '');
+            if (!id) return false;
+            const assignedIds = window.__atendenteAssignedTicketIds instanceof Set
+                ? window.__atendenteAssignedTicketIds
+                : new Set();
+            return assignedIds.has(id);
+        };
+    }
+
+    if (typeof window.clearUnreadTicketVisual !== 'function') {
+        window.clearUnreadTicketVisual = function clearUnreadTicketVisual(ticketId) {
+            const id = String(ticketId || '');
+            if (!id) return;
+            document.querySelectorAll(`tr[data-ticket-id="${id}"]`).forEach((row) => {
+                row.querySelectorAll('.badge.bg-danger.ms-2').forEach((badge) => {
+                    const isUnreadBadge =
+                        badge.getAttribute('data-unread-badge') === '1' ||
+                        String(badge.textContent || '').trim().toLowerCase() === 'nova msg';
+                    if (isUnreadBadge) badge.remove();
+                });
+            });
+        };
+    }
+
+    if (typeof window.setUnreadTicketVisual !== 'function') {
+        window.setUnreadTicketVisual = function setUnreadTicketVisual(ticketId) {
+            const id = String(ticketId || '');
+            if (!id) return;
+            document.querySelectorAll(`tr[data-ticket-id="${id}"]`).forEach((row) => {
+                const alreadyShown = Array.from(row.querySelectorAll('.badge.bg-danger.ms-2')).find((badge) =>
+                    badge.getAttribute('data-unread-badge') === '1' ||
+                    String(badge.textContent || '').trim().toLowerCase() === 'nova msg'
+                );
+                if (alreadyShown) return;
+                const titleCell = row.querySelector('[data-unread-slot]') || (row.children && row.children.length > 1 ? row.children[1] : null);
+                if (!titleCell) return;
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-danger ms-2';
+                badge.textContent = 'Nova msg';
+                badge.setAttribute('data-unread-badge', '1');
+                titleCell.appendChild(badge);
+            });
+        };
+    }
+
+    if (typeof window.syncUnreadTicketVisuals !== 'function') {
+        window.syncUnreadTicketVisuals = function syncUnreadTicketVisuals() {
+            const unreadIds = typeof window.getUnreadTicketIds === 'function' ? window.getUnreadTicketIds() : new Set();
+            const activeId = String(window.__atendenteActiveTicketChatId || '');
+            document.querySelectorAll('tr[data-ticket-id]').forEach((row) => {
+                const rowTicketId = String(row.getAttribute('data-ticket-id') || '');
+                if (!rowTicketId) return;
+                const isAssigned = typeof window.isAssignedTicketId === 'function' ? window.isAssignedTicketId(rowTicketId) : false;
+                const shouldShow = unreadIds.has(rowTicketId) && rowTicketId !== activeId && isAssigned;
+                const badge = Array.from(row.querySelectorAll('.badge.bg-danger.ms-2')).find((item) =>
+                    item.getAttribute('data-unread-badge') === '1' ||
+                    String(item.textContent || '').trim().toLowerCase() === 'nova msg'
+                );
+                if (shouldShow && !badge) {
+                    const titleCell = row.querySelector('[data-unread-slot]') || (row.children && row.children.length > 1 ? row.children[1] : null);
+                    if (!titleCell) return;
+                    const newBadge = document.createElement('span');
+                    newBadge.className = 'badge bg-danger ms-2';
+                    newBadge.textContent = 'Nova msg';
+                    newBadge.setAttribute('data-unread-badge', '1');
+                    titleCell.appendChild(newBadge);
+                }
+                if (!shouldShow && badge) {
+                    badge.remove();
+                }
+            });
+        };
+    }
+
+    function syncUnreadSoon() {
+        setTimeout(() => {
+            if (typeof window.updateMyTicketIds === 'function') {
+                window.updateMyTicketIds();
+            }
+            if (typeof window.syncUnreadTicketVisuals === 'function') {
+                window.syncUnreadTicketVisuals();
+            }
+        }, 0);
+    }
+
     // 1. Inicia o dashboard (padrão ao carregar)
     loadPage('dashboard');
+    syncUnreadSoon();
 
     // 2. Listener para os links da Sidebar
     document.querySelectorAll('.sidebar a[data-page]').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const page = e.target.closest('a').dataset.page;
+            window.__atendenteSuppressRealtimeReloadUntil = Date.now() + 1500;
+            if (atendenteRealtimeTimer) clearTimeout(atendenteRealtimeTimer);
             
             // Gerencia o estado 'active' no menu
             document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
@@ -1701,6 +2439,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (page) {
                 loadPage(page);
+                syncUnreadSoon();
             }
         });
     });
@@ -1711,15 +2450,102 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let atendenteRealtimeTimer = null;
+    let myTicketIds = new Set();
+    
+    // Atualizar IDs de tickets que o atendente assumiu
+    function updateMyTicketIds() {
+        const assumidos = document.querySelectorAll('#ticketsAssumidos tr[data-ticket-id]');
+        myTicketIds.clear();
+        assumidos.forEach(tr => {
+            const tid = tr.getAttribute('data-ticket-id');
+            if (tid) myTicketIds.add(tid);
+        });
+        if (typeof window.setAssignedTicketIds === 'function') {
+            window.setAssignedTicketIds(Array.from(myTicketIds));
+        }
+    }
+    window.updateMyTicketIds = updateMyTicketIds;
+
     window.addEventListener('sb:realtime', (event) => {
         const detail = event && event.detail ? event.detail : {};
+        const payload = detail.payload || {};
+        const eventType = String(detail.type || detail.eventType || '').toLowerCase();
+        
+        // Extrair scope
         const scopeList = Array.isArray(detail.scopes) ? detail.scopes : [];
-        const eventType = String(detail.eventType || '').toLowerCase();
         const primaryScope = eventType.includes('.') ? eventType.split('.')[0] : '';
         const scopes = new Set([...scopeList, primaryScope].filter(Boolean));
+        
+        // Notificações específicas para tickets
+        // Regra: toast global para todos os atendentes apenas em novo ticket.
+        if (eventType === 'ticket.aberto') {
+            const ticket = payload;
+            if (NotificationSystem && ticket) {
+                NotificationSystem.showTicketAlert(ticket);
+            }
+        } else if (eventType === 'ticket.message.novo') {
+            const ticketId = payload.idTicket;
+            const activeTicketChatId = window.__atendenteActiveTicketChatId;
+            const isActiveChat = String(activeTicketChatId || '') === String(ticketId || '');
+            const isAssignedTicket = typeof window.isAssignedTicketId === 'function' ? window.isAssignedTicketId(ticketId) : false;
+            if (!isAssignedTicket) {
+                if (typeof window.clearUnreadTicket === 'function') {
+                    window.clearUnreadTicket(ticketId);
+                }
+                if (typeof window.clearUnreadTicketVisual === 'function') {
+                    window.clearUnreadTicketVisual(ticketId);
+                }
+                return;
+            }
+            if (String(payload.tipo_usuario || '').toUpperCase() === 'CLIENTE' && typeof window.markUnreadTicket === 'function') {
+                if (!isActiveChat) {
+                    window.markUnreadTicket(ticketId);
+                } else if (typeof window.clearUnreadTicket === 'function') {
+                    window.clearUnreadTicket(ticketId);
+                }
+                if (!isActiveChat && typeof window.setUnreadTicketVisual === 'function') {
+                    window.setUnreadTicketVisual(ticketId);
+                }
+                if (typeof window.syncUnreadTicketVisuals === 'function') {
+                    window.syncUnreadTicketVisuals();
+                }
+            }
+            // Regra: toast de nova mensagem somente para o atendente que assumiu o ticket.
+            if (!isActiveChat && String(payload.tipo_usuario || '').toUpperCase() === 'CLIENTE' && NotificationSystem) {
+                NotificationSystem.showMessageAlert(ticketId, payload.nome_remetente || 'Cliente', payload.preview || '...');
+            }
+        } else if (eventType === 'ticket.fechado') {
+            const ticketId = payload.idTicket;
+            const activeTicketChatId = window.__atendenteActiveTicketChatId;
+            const isActiveChat = String(activeTicketChatId || '') === String(ticketId || '');
+            if (isActiveChat) {
+                const modalEl = document.getElementById('ticketChatModal');
+                if (modalEl) {
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modalInstance.hide();
+                }
+                window.__atendenteActiveTicketChatId = null;
+            }
+        }
+        
         if (scopes.size === 0) return;
 
         const currentPage = window.__atendenteCurrentPage || 'dashboard';
+        const suppressRealtimeReloadUntil = Number(window.__atendenteSuppressRealtimeReloadUntil || 0);
+        if (Date.now() < suppressRealtimeReloadUntil) return;
+
+        const isTicketMessageMutation =
+            eventType === 'tickets.changed' &&
+            typeof payload.path === 'string' &&
+            payload.path.includes('/api/tickets/') &&
+            payload.path.includes('/mensagens');
+
+        // Mensagens de chat não devem reconstruir a página inteira; a atualização é incremental.
+        if (isTicketMessageMutation) return;
+
+        // Evita reconstruir toda a página de tickets a cada nova mensagem.
+        if (currentPage === 'tickets' && eventType === 'ticket.message.novo') return;
+
         const shouldReloadCurrentPage =
             (currentPage === 'dashboard') ||
             (currentPage === 'estoque' && (scopes.has('produtos') || scopes.has('estoque') || scopes.has('servicos'))) ||
@@ -1731,6 +2557,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!shouldReloadCurrentPage) return;
         if (atendenteRealtimeTimer) clearTimeout(atendenteRealtimeTimer);
         atendenteRealtimeTimer = setTimeout(() => {
+            updateMyTicketIds();
             loadPage(currentPage);
         }, 220);
     });

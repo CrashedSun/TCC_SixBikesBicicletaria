@@ -16,7 +16,13 @@ function authMiddleware(perfisPermitidos) {
             if (user.ativo === false) return res.status(403).json({ error: 'Conta desativada. Contate o administrador.' });
 
             // Atualiza req.user com informações confiáveis do DB
-            req.user = { id: user.id, perfil: user.tipoPerfil };
+            req.user = {
+                id: user.id,
+                perfil: user.tipoPerfil,
+                tipoPerfil: user.tipoPerfil,
+                nome: user.nome,
+                email: user.email,
+            };
 
             const userProfile = req.user.perfil.toUpperCase();
             const allowedProfiles = perfisPermitidos.map(p => p.toUpperCase());

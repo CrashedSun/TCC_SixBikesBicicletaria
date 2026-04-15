@@ -21,7 +21,8 @@ const DEFAULT_CONFIG = {
     socialFacebook: 'http://facebook.com/',
     socialInstagram: 'https://www.instagram.com/',
     socialTwitter: 'https://twitter.com/',
-    socialLinkedin: 'https://www.linkedin.com/'
+    socialLinkedin: 'https://www.linkedin.com/',
+    atendimentoChatHabilitado: false
 };
 
 const ALLOWED_KEYS = Object.keys(DEFAULT_CONFIG);
@@ -133,6 +134,23 @@ class SiteConfigService {
 
     async ensureTable() {
         await SiteConfigRepository.ensureTable();
+    }
+
+    async getChatConfig() {
+        const config = await this.getPublicConfig();
+        return {
+            atendimentoChatHabilitado: Boolean(config.atendimentoChatHabilitado)
+        };
+    }
+
+    async updateChatConfig(value) {
+        const current = await this.getPublicConfig();
+        const next = {
+            ...current,
+            atendimentoChatHabilitado: Boolean(value)
+        };
+        await SiteConfigRepository.updateRawConfig(next);
+        return { atendimentoChatHabilitado: next.atendimentoChatHabilitado };
     }
 }
 

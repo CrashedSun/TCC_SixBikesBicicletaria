@@ -5,7 +5,7 @@
 window.API_BASE_URL = window.API_BASE_URL || (window.location.protocol + '//' + window.location.hostname + ':8080/api');
 const API_BASE_URL = window.API_BASE_URL;
 const API_CACHE_PREFIX = 'cache:api:';
-const API_CACHE_TTL_MS = 2 * 60 * 1000;
+const API_CACHE_TTL_MS = 15 * 1000;
 
 function installStyledPopupSystem() {
     if (window.__sbStyledPopupInstalled) return;
@@ -242,6 +242,7 @@ function invalidateApiCacheByScope(scope) {
         agendamentos: ['/agendamentos'],
         reservas: ['/reservas'],
         tickets: ['/tickets'],
+        conhecimento: ['/conhecimento'],
         eventos: ['/eventos'],
         clientes: ['/clientes'],
         funcionarios: ['/funcionarios'],
@@ -274,6 +275,7 @@ function inferScopeFromRealtimeEvent(evt) {
     if (t.startsWith('agendamento.')) return 'agendamentos';
     if (t.startsWith('reserva.')) return 'reservas';
     if (t.startsWith('ticket.')) return 'tickets';
+    if (t.startsWith('conhecimento.')) return 'conhecimento';
     if (t.startsWith('evento.')) return 'eventos';
     if (t.startsWith('cliente.')) return 'clientes';
     if (t.startsWith('funcionario.')) return 'funcionarios';
@@ -329,7 +331,7 @@ function checkRestrictedAccess() {
 }
 
 
-async function fetchAuthenticated(url, method = 'GET', body = null) {
+async function fetchAuthenticated(url, method = 'GET', body = null, options = {}) {
     if (!checkRestrictedAccess()) { 
         throw new Error('Acesso interrompido pelo frontend.');
     }
@@ -349,8 +351,9 @@ async function fetchAuthenticated(url, method = 'GET', body = null) {
     const endpoint = normalizeEndpoint(url);
     const methodUpper = String(method || 'GET').toUpperCase();
     const isGet = methodUpper === 'GET' && !body;
+    const skipCache = Boolean(options?.skipCache);
 
-    if (isGet) {
+    if (isGet && !skipCache) {
         const cached = getCachedApi(endpoint);
         if (cached !== null) {
             return cached;
@@ -390,7 +393,7 @@ async function fetchAuthenticated(url, method = 'GET', body = null) {
 
         const result = await response.json();
 
-        if (isGet) {
+        if (isGet && !skipCache) {
             setCachedApi(endpoint, result);
         } else {
             const pathNoBase = endpoint.replace(API_BASE_URL.replace(/\/$/, ''), '');
@@ -399,6 +402,7 @@ async function fetchAuthenticated(url, method = 'GET', body = null) {
                 : pathNoBase.startsWith('/agendamentos') ? 'agendamentos'
                 : pathNoBase.startsWith('/reservas') ? 'reservas'
                 : pathNoBase.startsWith('/tickets') ? 'tickets'
+                : pathNoBase.startsWith('/conhecimento') ? 'conhecimento'
                 : pathNoBase.startsWith('/eventos') ? 'eventos'
                 : pathNoBase.startsWith('/clientes') ? 'clientes'
                 : pathNoBase.startsWith('/funcionarios') ? 'funcionarios'
@@ -441,6 +445,155 @@ window.openRealtimeStream = function openRealtimeStream(onEvent) {
 
     return es;
 };
+
+const CHAT_UNREAD_STORAGE_KEY = 'sb_unread_ticket_ids';
+
+function isContactPage() {
+    return window.location.pathname.toLowerCase().endsWith('/contato.html');
+}
+
+function isStaffPage() {
+    const currentPage = window.location.pathname.split('/').pop().toLowerCase();
+    return ['atendente.html', 'gerencia.html', 'mecanico.html'].includes(currentPage);
+}
+
+function isClientContext() {
+    const profile = String(localStorage.getItem('userProfile') || '').toUpperCase();
+    return !isStaffPage() && (!profile || profile === 'CLIENTE');
+}
+
+function readUnreadTicketIds() {
+    try {
+        const raw = localStorage.getItem(CHAT_UNREAD_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return new Set(Array.isArray(parsed) ? parsed.map((value) => String(value)).filter(Boolean) : []);
+    } catch (_) {
+        return new Set();
+    }
+}
+
+function writeUnreadTicketIds(ids) {
+    try {
+        localStorage.setItem(CHAT_UNREAD_STORAGE_KEY, JSON.stringify(Array.from(ids).map((value) => String(value)).filter(Boolean)));
+    } catch (_) {}
+}
+
+function ensureContactBadge() {
+    const links = document.querySelectorAll('nav.navbar a[href="contato.html"]');
+    links.forEach((link) => {
+        if (link.dataset.sbBadgeReady === '1') return;
+        link.dataset.sbBadgeReady = '1';
+        if (getComputedStyle(link).position === 'static') {
+            link.style.position = 'relative';
+        }
+
+        const badge = document.createElement('span');
+        badge.className = 'sb-chat-unread-badge';
+        badge.setAttribute('aria-hidden', 'true');
+        badge.style.cssText = 'display:none; position:absolute; top:-2px; right:-4px; width:12px; height:12px; border-radius:999px; background:#dc3545; border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.04);';
+        link.appendChild(badge);
+    });
+}
+
+function syncContactUnreadBadge() {
+    if (!isClientContext()) return;
+    ensureContactBadge();
+
+    const unreadCount = readUnreadTicketIds().size;
+    const showBadge = unreadCount > 0 && !isContactPage();
+    document.querySelectorAll('nav.navbar a[href="contato.html"] .sb-chat-unread-badge').forEach((badge) => {
+        badge.style.display = showBadge ? 'block' : 'none';
+    });
+}
+
+function markUnreadTicket(ticketId) {
+    if (!ticketId) return;
+    const ids = readUnreadTicketIds();
+    ids.add(String(ticketId));
+    writeUnreadTicketIds(ids);
+    syncContactUnreadBadge();
+}
+
+function clearUnreadTicket(ticketId = null) {
+    if (ticketId === null || ticketId === undefined || ticketId === '') {
+        writeUnreadTicketIds(new Set());
+        syncContactUnreadBadge();
+        return;
+    }
+
+    const ids = readUnreadTicketIds();
+    ids.delete(String(ticketId));
+    writeUnreadTicketIds(ids);
+    syncContactUnreadBadge();
+}
+
+async function reconcileUnreadTicketsForClient() {
+    if (!isClientContext()) return;
+
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+        clearUnreadTicket();
+        return;
+    }
+
+    const ids = readUnreadTicketIds();
+    if (ids.size === 0) {
+        syncContactUnreadBadge();
+        return;
+    }
+
+    try {
+        const meusTickets = await fetchAuthenticated('/tickets/meus', 'GET', null, { skipCache: true });
+        const tickets = Array.isArray(meusTickets) ? meusTickets : [];
+        const activeIds = new Set(
+            tickets
+                .filter((ticket) => ['ABERTO', 'EM ATENDIMENTO'].includes(String(ticket?.status || '').toUpperCase()))
+                .map((ticket) => String(ticket?.id || ticket?.idticket || ticket?.idTicket || ''))
+                .filter(Boolean)
+        );
+
+        const filteredIds = new Set(Array.from(ids).filter((id) => activeIds.has(String(id))));
+        if (filteredIds.size !== ids.size) {
+            writeUnreadTicketIds(filteredIds);
+        }
+    } catch (_) {
+        // Silencioso: evita quebrar render por falha de reconciliação.
+    }
+
+    syncContactUnreadBadge();
+}
+
+window.getUnreadTicketIds = readUnreadTicketIds;
+window.markUnreadTicket = markUnreadTicket;
+window.clearUnreadTicket = clearUnreadTicket;
+
+window.addEventListener('sb:realtime', (event) => {
+    const detail = event && event.detail ? event.detail : {};
+    const eventType = String(detail.type || detail.eventType || '').toLowerCase();
+    if (eventType === 'ticket.fechado') {
+        const payload = detail.payload || {};
+        if (payload.idTicket) {
+            clearUnreadTicket(payload.idTicket);
+        }
+        return;
+    }
+
+    if (eventType !== 'ticket.message.novo') return;
+
+    const payload = detail.payload || {};
+    const senderType = String(payload.tipo_usuario || '').toUpperCase();
+    const ticketId = payload.idTicket;
+    if (!ticketId) return;
+
+    if (isContactPage() && senderType === 'ATENDENTE') {
+        clearUnreadTicket(ticketId);
+        return;
+    }
+
+    if (['ATENDENTE', 'GERENTE', 'PROPRIETARIO'].includes(senderType)) {
+        markUnreadTicket(ticketId);
+    }
+});
 
 function initRealtimeGlobal() {
     if (window.__realtimeGlobalStarted) return;
@@ -638,9 +791,23 @@ async function checkAndShowChangePasswordModal() {
 
 // Inicia a verificação de acesso ao carregar páginas
 if (!window.location.pathname.includes('login.html') && !window.location.pathname.includes('registro.html')) {
-    document.addEventListener('DOMContentLoaded', () => {
+    const bootApp = () => {
         initRealtimeGlobal();
         initGridImageZoom();
+
+        if (isContactPage() && isClientContext()) {
+            clearUnreadTicket();
+        }
+
+        syncContactUnreadBadge();
+        reconcileUnreadTicketsForClient();
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === CHAT_UNREAD_STORAGE_KEY) {
+                syncContactUnreadBadge();
+            }
+        });
+
         // Verifica acesso apenas se necessário (páginas restritas)
         const path = window.location.pathname;
         const currentPage = path.split('/').pop();
@@ -665,5 +832,7 @@ if (!window.location.pathname.includes('login.html') && !window.location.pathnam
                 }
             }
         } catch(e){ console.warn('Falha ao ajustar link de perfil:', e.message); }
-    });
+    };
+
+    window.addEventListener('load', bootApp, { once: true });
 }

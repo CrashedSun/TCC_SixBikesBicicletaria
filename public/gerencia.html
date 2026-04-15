@@ -121,6 +121,49 @@
         .table-danger-custom {
             background-color: #f8d7da !important; /* Bloqueado */
         }
+        .ticket-chat-box {
+            background: linear-gradient(180deg, #fbfffb 0%, #f4fbf4 100%);
+        }
+        .ticket-msg-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .ticket-msg-row.left { justify-content: flex-start; }
+        .ticket-msg-row.right { justify-content: flex-end; }
+        .ticket-msg-group { max-width: min(78%, 680px); }
+        .ticket-msg-meta {
+            font-size: 11px;
+            font-weight: 700;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        .ticket-msg-bubble {
+            border-radius: 16px;
+            padding: 10px 12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,.06);
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+        .ticket-msg-bubble.client { background: #e9ecef; color: #1f2937; border-top-left-radius: 6px; }
+        .ticket-msg-bubble.staff { background: #198754; color: #fff; border-top-right-radius: 6px; }
+        .ticket-msg-bubble.manager { background: #ff9800; color: #fff; border-top-right-radius: 6px; }
+        .ticket-msg-separator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 14px 0;
+            color: #6b7280;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .ticket-msg-separator::before,
+        .ticket-msg-separator::after {
+            content: '';
+            height: 1px;
+            background: #d9e4db;
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -140,6 +183,7 @@
             <a href="#" class="nav-link" data-page="auditoria"><i class="fas fa-clipboard-list me-2"></i> Auditoria</a>
             <a href="#" class="nav-link" data-page="funcionarios"><i class="fas fa-users-cog me-2"></i> Gerenciar Funcionários</a>
             <a href="#" class="nav-link" data-page="eventos"><i class="fas fa-calendar-alt me-2"></i> Eventos</a>
+            <a href="#" class="nav-link" data-page="tickets"><i class="fas fa-ticket-alt me-2"></i> Tickets</a>
             <a href="#" class="nav-link" data-page="site-config"><i class="fas fa-paint-brush me-2"></i> Personalizar Site</a>
             <a href="#" class="nav-link" id="logoutButton"><i class="fas fa-sign-out-alt me-2"></i> Sair</a>
         </nav>
@@ -678,6 +722,337 @@
                 }
                 window.location.href = 'proprietario-site.html';
                 return;
+            }
+
+            else if (page === 'tickets') {
+                content.innerHTML = `
+                    <h2>Gerenciamento de Tickets</h2>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <input type="text" id="ticketsGerenciaSearch" class="form-control" placeholder="Pesquisar por cliente ou assunto...">
+                        </div>
+                        <div class="col-md-3">
+                            <select id="ticketsGerenciaFiltro" class="form-select">
+                                <option value="id">ID</option>
+                                <option value="nome">Cliente</option>
+                                <option value="assunto">Assunto</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <button class="btn btn-outline-success w-100" id="ticketsGerenciaClearFiltersBtn">Limpar filtros</button>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-lg-6">
+                            <div class="card p-0 h-100">
+                                <div class="card-header bg-light fw-bold">Tickets em Aberto (<span id="kpiTicketsAbertos">0</span>)</div>
+                                <div class="table-responsive">
+                                    <table class="table table-striped mb-0">
+                                        <thead><tr><th>ID</th><th>Cliente</th><th>Assunto</th><th class="text-center">Ações</th></tr></thead>
+                                        <tbody id="ticketsGerenciaAbertosTable"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card p-0 h-100">
+                                <div class="card-header bg-light fw-bold">Tickets em Atendimento (<span id="kpiTicketsEmAtendimento">0</span>)</div>
+                                <div class="table-responsive">
+                                    <table class="table table-striped mb-0">
+                                        <thead><tr><th>ID</th><th>Cliente</th><th>Assunto</th><th class="text-center">Ações</th></tr></thead>
+                                        <tbody id="ticketsGerenciaAtendimentoTable"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card p-0">
+                        <div class="card-header bg-light fw-bold">Tickets Encerrados (<span id="kpiTicketsFechados">0</span>)</div>
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0">
+                                <thead><tr><th>ID</th><th>Cliente</th><th>Assunto</th><th>Status</th><th class="text-center">Ações</th></tr></thead>
+                                <tbody id="ticketsGerenciaFechadosTable"></tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-2 border-top" id="ticketsGerenciaFechadosPager"></div>
+                    </div>
+                `;
+
+                let modalInstance = null;
+                function ensureTicketModal() {
+                    let el = document.getElementById('gerenciaTicketChatModal');
+                    if (el) return el;
+                    el = document.createElement('div');
+                    el.className = 'modal fade';
+                    el.id = 'gerenciaTicketChatModal';
+                    el.tabIndex = -1;
+                    el.innerHTML = `
+                        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                            <div class="modal-content">
+                                <div class="modal-header" style="background:#7ed957;color:white;">
+                                    <h5 class="modal-title" id="gerenciaTicketTitle">Chat do Ticket</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="gerenciaTicketChatBox" class="ticket-chat-box" style="max-height:430px; overflow:auto; border:1px solid #dfe5df; border-radius:10px; padding:10px;"></div>
+                                </div>
+                                <div class="modal-footer d-flex flex-column gap-2">
+                                    <div class="input-group" id="gerenciaInputWrap">
+                                        <input type="text" id="gerenciaTicketInput" class="form-control" placeholder="Digite sua mensagem...">
+                                        <button class="btn btn-success" id="gerenciaTicketSend">Enviar</button>
+                                    </div>
+                                    <div class="w-100 d-flex justify-content-end gap-2">
+                                        <button class="btn btn-warning" id="gerenciaTicketReopen">Reabrir Ticket</button>
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(el);
+                    return el;
+                }
+
+                function escapeHtml(value) {
+                    return String(value || '')
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;');
+                }
+
+                function msgHtml(m) {
+                    const tipo = String(m.tipo_usuario || '').toUpperCase();
+                    const right = ['ATENDENTE', 'GERENTE', 'PROPRIETARIO'].includes(tipo);
+                    const hora = m.criado_em ? new Date(m.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                    const bg = tipo === 'CLIENTE' ? '#e9ecef' : (tipo === 'ATENDENTE' ? '#198754' : '#ff9800');
+                    const color = tipo === 'CLIENTE' ? '#212529' : '#fff';
+                    return `<div class="ticket-msg-row ${right ? 'right' : 'left'}"><div class="ticket-msg-group"><div class="ticket-msg-meta">${escapeHtml(m.nome_remetente || 'Usuário')} (${escapeHtml(tipo)}) • ${hora}</div><div class="ticket-msg-bubble ${tipo === 'CLIENTE' ? 'client' : (tipo === 'ATENDENTE' ? 'staff' : 'manager')}" style="background:${bg};color:${color};">${escapeHtml(m.conteudo || '')}</div></div></div>`;
+                }
+
+                function renderMessages(list) {
+                    const ordered = Array.isArray(list) ? [...list].sort((a, b) => new Date(a.criado_em || 0) - new Date(b.criado_em || 0)) : [];
+                    let lastDay = '';
+                    return ordered.map((m) => {
+                        const day = m.criado_em ? new Date(m.criado_em).toLocaleDateString('pt-BR') : '';
+                        const separator = day && day !== lastDay ? `<div class="ticket-msg-separator"><span>${day}</span></div>` : '';
+                        lastDay = day || lastDay;
+                        return separator + msgHtml(m);
+                    }).join('');
+                }
+
+                async function openTicketChat(ticket, canWriteOverride = null) {
+                    const modalEl = ensureTicketModal();
+                    if (!modalInstance) modalInstance = new bootstrap.Modal(modalEl);
+                    document.getElementById('gerenciaTicketTitle').textContent = `Chat do Ticket #${ticket.id}`;
+
+                    const canWrite = typeof canWriteOverride === 'boolean' ? canWriteOverride : (ticket.status !== 'FECHADO');
+                    document.getElementById('gerenciaInputWrap').style.display = canWrite ? 'flex' : 'none';
+                    document.getElementById('gerenciaTicketReopen').style.display = ticket.status === 'FECHADO' ? 'inline-block' : 'none';
+
+                    const refreshChatMessages = async () => {
+                        const list = await fetchAuthenticated(`/api/tickets/${ticket.id}/mensagens`, 'GET');
+                        const box = document.getElementById('gerenciaTicketChatBox');
+                        box.innerHTML = renderMessages(list);
+                        box.scrollTop = box.scrollHeight;
+                    };
+
+                    document.getElementById('gerenciaTicketSend').onclick = async () => {
+                        const input = document.getElementById('gerenciaTicketInput');
+                        const texto = (input.value || '').trim();
+                        if (!texto) return;
+                        input.value = '';
+                        await fetchAuthenticated(`/api/tickets/${ticket.id}/mensagens`, 'POST', { conteudo: texto });
+                        await refreshChatMessages();
+                    };
+
+                    document.getElementById('gerenciaTicketReopen').onclick = async () => {
+                        await fetchAuthenticated(`/api/tickets/${ticket.id}/reabrir`, 'PUT');
+                        if (typeof window.showStyledPopup === 'function') window.showStyledPopup('Ticket reaberto com sucesso.', 'info');
+                        modalInstance.hide();
+                        await loadTicketsDashboard();
+                    };
+
+                    await refreshChatMessages();
+                    modalInstance.show();
+                }
+
+                const tbodyAbertos = document.getElementById('ticketsGerenciaAbertosTable');
+                const tbodyAtendimento = document.getElementById('ticketsGerenciaAtendimentoTable');
+                const tbodyFechados = document.getElementById('ticketsGerenciaFechadosTable');
+                const fechadosPager = document.getElementById('ticketsGerenciaFechadosPager');
+                const search = document.getElementById('ticketsGerenciaSearch');
+                const filtro = document.getElementById('ticketsGerenciaFiltro');
+                const clearFiltersBtn = document.getElementById('ticketsGerenciaClearFiltersBtn');
+                const fechadosPageSize = 20;
+                let fechadosCurrentPage = 1;
+
+                const normalizeFilterText = (value) => String(value || '')
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^0-9a-z]/g, '')
+                    .trim();
+
+                const applyTicketsFilter = () => {
+                    if (!search || !filtro) return;
+                    const texto = normalizeFilterText(search.value);
+                    const campo = String(filtro.value || 'id');
+                    const linhas = [
+                        ...tbodyAbertos.querySelectorAll('tr[data-ticket-id]'),
+                        ...tbodyAtendimento.querySelectorAll('tr[data-ticket-id]'),
+                        ...tbodyFechados.querySelectorAll('tr[data-ticket-id]')
+                    ];
+
+                    linhas.forEach((tr) => {
+                        const cellIndex = campo === 'id' ? 1 : campo === 'nome' ? 2 : 3;
+                        const valorRaw = tr.querySelector(`td:nth-child(${cellIndex})`)?.textContent || '';
+                        const valor = normalizeFilterText(valorRaw);
+                        tr.style.display = valor.includes(texto) ? '' : 'none';
+                    });
+                };
+
+                if (search) search.oninput = applyTicketsFilter;
+                if (filtro) filtro.onchange = applyTicketsFilter;
+                if (clearFiltersBtn) {
+                    clearFiltersBtn.addEventListener('click', async () => {
+                        if (search) search.value = '';
+                        if (filtro) filtro.value = 'id';
+                        await loadTicketsDashboard();
+                    });
+                }
+
+                async function loadTicketsDashboard() {
+                    const data = await fetchAuthenticated('/api/tickets/dashboard', 'GET');
+                    const abertos = Array.isArray(data?.abertos) ? data.abertos : [];
+                    const emAtendimento = Array.isArray(data?.emAtendimento) ? data.emAtendimento : [];
+                    const fechados = Array.isArray(data?.fechados) ? data.fechados : [];
+
+                    document.getElementById('kpiTicketsAbertos').textContent = abertos.length;
+                    document.getElementById('kpiTicketsEmAtendimento').textContent = emAtendimento.length;
+                    document.getElementById('kpiTicketsFechados').textContent = fechados.length;
+
+                    function renderTicketRows(targetBody, ticketList, emptyMessage, mode) {
+                        targetBody.innerHTML = '';
+                        const orderedList = [...ticketList].sort((a, b) => Number(b.id) - Number(a.id));
+                        let listToRender = orderedList;
+
+                        if (mode === 'fechados') {
+                            const totalPages = Math.max(1, Math.ceil(orderedList.length / fechadosPageSize));
+                            fechadosCurrentPage = Math.min(Math.max(1, fechadosCurrentPage), totalPages);
+                            const start = (fechadosCurrentPage - 1) * fechadosPageSize;
+                            const end = start + fechadosPageSize;
+                            listToRender = orderedList.slice(start, end);
+
+                            if (fechadosPager) {
+                                if (orderedList.length === 0) {
+                                    fechadosPager.innerHTML = '';
+                                } else {
+                                    fechadosPager.innerHTML = `
+                                        <small class="text-muted">Página ${fechadosCurrentPage} de ${totalPages}</small>
+                                        <div class="btn-group btn-group-sm" role="group" aria-label="Paginação tickets encerrados">
+                                            <button type="button" class="btn btn-outline-secondary" id="ticketsGerenciaFechadosPrev" ${fechadosCurrentPage === 1 ? 'disabled' : ''}>Anterior</button>
+                                            <button type="button" class="btn btn-outline-secondary" id="ticketsGerenciaFechadosNext" ${fechadosCurrentPage >= totalPages ? 'disabled' : ''}>Próxima</button>
+                                        </div>
+                                    `;
+
+                                    const prevBtn = document.getElementById('ticketsGerenciaFechadosPrev');
+                                    const nextBtn = document.getElementById('ticketsGerenciaFechadosNext');
+                                    if (prevBtn) {
+                                        prevBtn.onclick = async () => {
+                                            if (fechadosCurrentPage > 1) {
+                                                fechadosCurrentPage -= 1;
+                                                await loadTicketsDashboard();
+                                            }
+                                        };
+                                    }
+                                    if (nextBtn) {
+                                        nextBtn.onclick = async () => {
+                                            if (fechadosCurrentPage < totalPages) {
+                                                fechadosCurrentPage += 1;
+                                                await loadTicketsDashboard();
+                                            }
+                                        };
+                                    }
+                                }
+                            }
+                        }
+
+                        listToRender.forEach((t) => {
+                            const tr = document.createElement('tr');
+                            tr.setAttribute('data-ticket-id', t.id);
+                            if (mode === 'abertos') {
+                                tr.innerHTML = `
+                                    <td>${t.id}</td>
+                                    <td>${t.nome || '-'}</td>
+                                    <td>${t.assunto || t.titulo || '-'}</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-primary me-1" data-action="chat" data-id="${t.id}">Ver Chat</button>
+                                        <button class="btn btn-sm btn-success" data-action="assumir" data-id="${t.id}">Assumir</button>
+                                    </td>
+                                `;
+                                tr.querySelector('[data-action="chat"]').addEventListener('click', () => openTicketChat(t, false));
+                                tr.querySelector('[data-action="assumir"]').addEventListener('click', async (ev) => {
+                                    const btn = ev.currentTarget;
+                                    btn.disabled = true;
+                                    try {
+                                        await fetchAuthenticated(`/api/tickets/${t.id}/assumir`, 'PUT');
+                                        if (typeof window.showStyledPopup === 'function') window.showStyledPopup('Ticket assumido com sucesso.', 'info');
+                                        await loadTicketsDashboard();
+                                    } catch (e) {
+                                        alert(e.message || 'Falha ao assumir ticket.');
+                                    } finally {
+                                        btn.disabled = false;
+                                    }
+                                });
+                            } else if (mode === 'emAtendimento') {
+                                tr.innerHTML = `
+                                    <td>${t.id}</td>
+                                    <td>${t.nome || '-'}</td>
+                                    <td>${t.assunto || t.titulo || '-'}</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-primary me-1" data-action="chat" data-id="${t.id}">Ver Chat</button>
+                                        <button class="btn btn-sm btn-outline-secondary" data-action="fechar" data-id="${t.id}">Encerrar</button>
+                                    </td>
+                                `;
+                                tr.querySelector('[data-action="chat"]').addEventListener('click', () => openTicketChat(t, true));
+                                tr.querySelector('[data-action="fechar"]').addEventListener('click', async (ev) => {
+                                    const btn = ev.currentTarget;
+                                    btn.disabled = true;
+                                    try {
+                                        await fetchAuthenticated(`/api/tickets/${t.id}/fechar`, 'PUT');
+                                        if (typeof window.showStyledPopup === 'function') window.showStyledPopup('Ticket encerrado com sucesso.', 'info');
+                                        await loadTicketsDashboard();
+                                    } catch (e) {
+                                        alert(e.message || 'Falha ao encerrar ticket.');
+                                    } finally {
+                                        btn.disabled = false;
+                                    }
+                                });
+                            } else {
+                                tr.innerHTML = `<td>${t.id}</td><td>${t.nome || '-'}</td><td>${t.assunto || t.titulo || '-'}</td><td>${t.status}</td><td class="text-center"><button class="btn btn-sm btn-primary" data-id="${t.id}">Ver Chat</button></td>`;
+                                tr.querySelector('button').addEventListener('click', () => openTicketChat(t, false));
+                            }
+
+                            targetBody.appendChild(tr);
+                        });
+
+                        if (!orderedList.length) {
+                            const colspan = mode === 'fechados' ? 5 : 4;
+                            targetBody.innerHTML = `<tr><td colspan="${colspan}" class="text-muted text-center">${emptyMessage}</td></tr>`;
+                        }
+                    }
+
+                    renderTicketRows(tbodyAbertos, abertos, 'Nenhum ticket em aberto.', 'abertos');
+                    renderTicketRows(tbodyAtendimento, emAtendimento, 'Nenhum ticket em atendimento.', 'emAtendimento');
+                    renderTicketRows(tbodyFechados, fechados, 'Nenhum ticket encerrado.', 'fechados');
+                    applyTicketsFilter();
+                }
+
+                await loadTicketsDashboard();
             }
             
             /* ================= OUTRAS páginas (Simulação) ================== */
@@ -2366,10 +2741,15 @@
                                         <tbody></tbody>
                                     </table>
                                 </div>
+                                <div class="d-flex justify-content-between align-items-center p-2 border-top" id="auditoriaPager"></div>
                             </div>
                         `;
 
                         const tbody = document.querySelector('#auditoriaTable tbody');
+                        const auditoriaPager = document.getElementById('auditoriaPager');
+                        const auditoriaPageSize = 50;
+                        let auditoriaCurrentPage = 1;
+                        let auditoriaLogs = [];
 
                         const escapeHtml = (v) => String(v || '')
                             .replace(/&/g, '&amp;')
@@ -2400,38 +2780,89 @@
                             return params.toString();
                         }
 
+                        function renderAuditoriaPagination(totalItems) {
+                            const totalPages = Math.max(1, Math.ceil(totalItems / auditoriaPageSize));
+                            if (auditoriaCurrentPage > totalPages) {
+                                auditoriaCurrentPage = totalPages;
+                            }
+
+                            if (!auditoriaPager) return;
+                            if (!totalItems) {
+                                auditoriaPager.innerHTML = '';
+                                return;
+                            }
+
+                            auditoriaPager.innerHTML = `
+                                <small class="text-muted">Página ${auditoriaCurrentPage} de ${totalPages}</small>
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Paginação auditoria">
+                                    <button type="button" class="btn btn-outline-secondary" id="auditoriaPrevBtn" ${auditoriaCurrentPage === 1 ? 'disabled' : ''}>Anterior</button>
+                                    <button type="button" class="btn btn-outline-secondary" id="auditoriaNextBtn" ${auditoriaCurrentPage >= totalPages ? 'disabled' : ''}>Próxima</button>
+                                </div>
+                            `;
+
+                            const auditoriaPrevBtn = document.getElementById('auditoriaPrevBtn');
+                            const auditoriaNextBtn = document.getElementById('auditoriaNextBtn');
+                            if (auditoriaPrevBtn) {
+                                auditoriaPrevBtn.onclick = () => {
+                                    if (auditoriaCurrentPage <= 1) return;
+                                    auditoriaCurrentPage -= 1;
+                                    renderAuditoriaRows();
+                                };
+                            }
+                            if (auditoriaNextBtn) {
+                                auditoriaNextBtn.onclick = () => {
+                                    if (auditoriaCurrentPage >= totalPages) return;
+                                    auditoriaCurrentPage += 1;
+                                    renderAuditoriaRows();
+                                };
+                            }
+                        }
+
+                        function renderAuditoriaRows() {
+                            tbody.innerHTML = '';
+
+                            if (!auditoriaLogs.length) {
+                                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Nenhum log encontrado.</td></tr>';
+                                renderAuditoriaPagination(0);
+                                return;
+                            }
+
+                            const start = (auditoriaCurrentPage - 1) * auditoriaPageSize;
+                            const pageLogs = auditoriaLogs.slice(start, start + auditoriaPageSize);
+
+                            pageLogs.forEach((log) => {
+                                const created = log.criadoEm ? new Date(log.criadoEm).toLocaleString('pt-BR') : '-';
+                                const usuario = log.usuarioEmail || (log.usuarioId ? `ID ${log.usuarioId}` : 'ANONIMO');
+                                const msg = log.mensagem || '';
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `
+                                    <td>${escapeHtml(created)}</td>
+                                    <td>${escapeHtml(log.nivel)}</td>
+                                    <td>${escapeHtml(log.acao)}</td>
+                                    <td>${escapeHtml(usuario)}</td>
+                                    <td>${escapeHtml(log.metodo || '-')}</td>
+                                    <td title="${escapeHtml(log.rota || '')}">${escapeHtml(log.rota || '-')}</td>
+                                    <td>${escapeHtml(log.statusCode || '-')}</td>
+                                    <td>${escapeHtml(log.ip || '-')}</td>
+                                    <td title="${escapeHtml(msg)}">${escapeHtml(msg)}</td>
+                                `;
+                                tbody.appendChild(tr);
+                            });
+
+                            renderAuditoriaPagination(auditoriaLogs.length);
+                        }
+
                         async function carregarAuditoria() {
                             tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Carregando logs...</td></tr>';
                             try {
                                 const query = buildAuditQuery();
                                 const payload = await fetchAuthenticated(`/auditoria/logs${query ? `?${query}` : ''}`, 'GET');
-                                const logs = Array.isArray(payload?.data) ? payload.data : [];
-                                tbody.innerHTML = '';
-
-                                if (!logs.length) {
-                                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Nenhum log encontrado.</td></tr>';
-                                    return;
-                                }
-
-                                logs.forEach((log) => {
-                                    const created = log.criadoEm ? new Date(log.criadoEm).toLocaleString('pt-BR') : '-';
-                                    const usuario = log.usuarioEmail || (log.usuarioId ? `ID ${log.usuarioId}` : 'ANÔNIMO');
-                                    const msg = log.mensagem || '';
-                                    const tr = document.createElement('tr');
-                                    tr.innerHTML = `
-                                        <td>${escapeHtml(created)}</td>
-                                        <td>${escapeHtml(log.nivel)}</td>
-                                        <td>${escapeHtml(log.acao)}</td>
-                                        <td>${escapeHtml(usuario)}</td>
-                                        <td>${escapeHtml(log.metodo || '-')}</td>
-                                        <td title="${escapeHtml(log.rota || '')}">${escapeHtml(log.rota || '-')}</td>
-                                        <td>${escapeHtml(log.statusCode || '-')}</td>
-                                        <td>${escapeHtml(log.ip || '-')}</td>
-                                        <td title="${escapeHtml(msg)}">${escapeHtml(msg)}</td>
-                                    `;
-                                    tbody.appendChild(tr);
-                                });
+                                auditoriaLogs = Array.isArray(payload?.data) ? payload.data : [];
+                                auditoriaCurrentPage = 1;
+                                renderAuditoriaRows();
                             } catch (e) {
+                                auditoriaLogs = [];
+                                renderAuditoriaPagination(0);
                                 tbody.innerHTML = `<tr><td colspan="9" class="text-danger text-center">Erro ao carregar auditoria: ${escapeHtml(e.message || e)}</td></tr>`;
                             }
                         }
@@ -2447,6 +2878,7 @@
                             document.getElementById('auditDe').value = '';
                             document.getElementById('auditAte').value = '';
                             document.getElementById('auditLimit').value = '150';
+                            auditoriaCurrentPage = 1;
                             carregarAuditoria();
                         });
 
