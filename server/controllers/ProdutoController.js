@@ -1,8 +1,6 @@
 // server/controllers/ProdutoController.js
 const ProdutoService = require('../services/ProdutoService');
 const RealtimeService = require('../services/RealtimeService');
-const fs = require('fs');
-const path = require('path');
 
 class ProdutoController {
     /** Rota: GET /api/produtos */
@@ -16,65 +14,26 @@ class ProdutoController {
     /** Rota: POST /api/produtos (UC002) */
     async cadastrar(req, res) { 
         try {
-            // Permite envio de imagem em base64 no corpo JSON (sem alterar schema DB)
             const { imagemBase64, imagemNome } = req.body || {};
 
-            // Remove campos de imagem do objeto que segue para a Service (evita validações indevidas)
             const dados = { ...req.body };
             delete dados.imagemBase64; 
             delete dados.imagemNome;
 
-            // Cadastra produto normalmente (nome, preco, idCategoria, quantidadeInicial)
             const id = await ProdutoService.cadastrarProduto(dados);
 
-            // Se veio imagem, salvar cópia única em public/assets/img
             if (imagemBase64 && typeof imagemBase64 === 'string') {
-                const fs = require('fs');
-                const path = require('path');
-
-                // Extrai prefixo dataURL se presente
-                const match = imagemBase64.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
-                let base64Data = imagemBase64;
-                let ext = 'png';
-                if (match) {
-                    base64Data = match[2];
-                    const mime = match[1] || 'image/png';
-                    ext = mime.split('/')[1] || 'png';
-                } else {
-                    // Tentativa de deduzir extensão por nome
-                    if (imagemNome && typeof imagemNome === 'string') {
-                        const lower = imagemNome.toLowerCase();
-                        if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) ext = 'jpg';
-                        else if (lower.endsWith('.webp')) ext = 'webp';
-                        else if (lower.endsWith('.gif')) ext = 'gif';
-                        else if (lower.endsWith('.png')) ext = 'png';
-                    }
+                if (!imagemBase64.startsWith('data:image/')) {
+                    return res.status(400).json({ error: 'Formato de imagem inválido' });
                 }
 
-                // Gera nome único: produto-<id>-<timestamp>-<rand>.<ext>
-                const uniqueName = `produto-${id}-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
-                const outputDir = path.join(process.cwd(), 'public', 'assets', 'img');
-                const outputPath = path.join(outputDir, uniqueName);
-
                 try {
-                    // Garante pasta existente
-                    fs.mkdirSync(outputDir, { recursive: true });
-                    fs.writeFileSync(outputPath, base64Data, { encoding: 'base64' });
-                } catch (err) {
-                    console.error('Falha ao salvar imagem do produto:', err);
-                    // Não impede o cadastro do produto; apenas informa warning
-                }
-
-                // Persiste URL pública no banco
-                const publicUrl = `/assets/img/${uniqueName}`;
-                try {
-                    await ProdutoService.atualizarImagem(id, publicUrl);
+                    await ProdutoService.atualizarImagem(id, imagemBase64);
                 } catch (e) {
-                    console.warn('Imagem salva em disco, mas não gravada no DB:', e.message);
+                    console.warn('Imagem recebida, mas não gravada no DB:', e.message);
                 }
 
-                // Retorna também URL pública da imagem
-                return res.status(201).json({ id, message: "Produto cadastrado com sucesso.", imageUrl: publicUrl });
+                return res.status(201).json({ id, message: "Produto cadastrado com sucesso.", imageUrl: imagemBase64 });
             }
 
             RealtimeService.publish('produto.criado', { id, scope: 'estoque' });
@@ -141,24 +100,7 @@ class ProdutoController {
                     return res.status(400).json({ error: 'Formato de imagem inválido' });
                 }
 
-                let fileExtension = 'jpg';
-                const mimeMatch = imagemBase64.match(/^data:image\/(\w+);base64,/);
-                if (mimeMatch && mimeMatch[1]) {
-                    fileExtension = mimeMatch[1].toLowerCase() === 'jpeg' ? 'jpg' : mimeMatch[1].toLowerCase();
-                }
-
-                const fileName = `produto_${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExtension}`;
-                const uploadsDir = path.join(__dirname, '..', '..', 'public', 'assets', 'img', 'produtos');
-                const filePath = path.join(uploadsDir, fileName);
-
-                if (!fs.existsSync(uploadsDir)) {
-                    fs.mkdirSync(uploadsDir, { recursive: true });
-                }
-
-                const base64Data = imagemBase64.replace(/^data:image\/\w+;base64,/, '');
-                fs.writeFileSync(filePath, base64Data, { encoding: 'base64' });
-
-                imagemUrl = `/assets/img/produtos/${fileName}`;
+                imagemUrl = imagemBase64;
                 await ProdutoService.atualizarImagem(req.params.id, imagemUrl);
             }
 

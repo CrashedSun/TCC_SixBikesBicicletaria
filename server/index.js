@@ -32,6 +32,9 @@ const eventoController = require('./controllers/EventoController');
 const siteConfigController = require('./controllers/SiteConfigController');
 
 const app = express();
+// Em ambientes gerenciados (Cloud Run) o proxy frontal define o protocolo original
+// Habilitar 'trust proxy' faz com que `req.protocol` reflita corretamente 'https'
+app.set('trust proxy', true);
 const PORT = process.env.SERVER_PORT || 8080;
 
 // Fuso horário do Brasil: UTC-3 (Brasília Time)
@@ -340,7 +343,8 @@ const ANY_USER = ['CLIENTE', 'ATENDENTE', 'MECANICO', 'GERENTE', 'PROPRIETARIO']
 // ** 1. Produtos e Estoque (UC002, UC003) **
 app.get('/api/produtos', authMiddleware(['CLIENTE', ...ALL_EMPLOYEES]), produtoController.listarTodos); 
 // Rota de categorias DEVE vir antes de /:id para não capturar "categorias" como ID
-app.get('/api/produtos/categorias', authMiddleware(ALL_EMPLOYEES), produtoController.listarCategorias);
+// Public endpoint: listar categorias deve estar disponível para o site público
+app.get('/api/produtos/categorias', produtoController.listarCategorias);
 app.post('/api/produtos/categorias', authMiddleware(ADMIN_ROLES), produtoController.criarCategoria);
 app.post('/api/produtos', authMiddleware(ADMIN_ROLES), produtoController.cadastrar); 
 app.get('/api/produtos/:id', authMiddleware(['CLIENTE', ...ALL_EMPLOYEES]), produtoController.buscarPorId);

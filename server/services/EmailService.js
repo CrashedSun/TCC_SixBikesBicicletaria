@@ -37,17 +37,26 @@ class EmailService {
     async sendMail({ to, subject, html, text }) {
         if (!this.enabled) {
             console.warn(`[EMAIL] SMTP não configurado. E-mail suprimido para ${to}. Assunto: ${subject}`);
+            console.warn(`[EMAIL] Config: HOST=${process.env.SMTP_HOST}, USER=${process.env.SMTP_USER}, PORT=${process.env.SMTP_PORT}`);
             return { skipped: true };
         }
 
         const sender = this._buildSender();
-        return this.transporter.sendMail({
-            ...sender,
-            to,
-            subject,
-            html,
-            text,
-        });
+        try {
+            const result = await this.transporter.sendMail({
+                ...sender,
+                to,
+                subject,
+                html,
+                text,
+            });
+            console.log(`[EMAIL] E-mail enviado com sucesso para ${to}. MessageID: ${result.messageId || 'N/A'}`);
+            return result;
+        } catch (error) {
+            console.error(`[EMAIL] Falha ao enviar para ${to}. Erro: ${error.message}`);
+            console.error(`[EMAIL] Stack: ${error.stack}`);
+            throw error;
+        }
     }
 
     async sendPasswordResetEmail({ to, nome, resetLink, ttlMinutes }) {

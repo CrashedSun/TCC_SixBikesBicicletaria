@@ -34,8 +34,17 @@ function toSafeString(value, maxLen = 1200) {
 }
 
 function normalizeStoredImageUrl(value) {
-    const url = toSafeString(value, 1200);
+    // Permite base64 de qualquer tamanho (imagens podem ser grandes)
+    if (!value || typeof value !== 'string') return '';
+    
+    const url = String(value).trim();
     if (!url) return '';
+
+    // Se for base64, deixa como está (é conteúdo embutido, pode ser grande)
+    if (url.startsWith('data:image/')) return url;
+
+    // Para URLs, aplicar limite de tamanho
+    const limitedUrl = url.slice(0, 1200);
 
     const normalizeExt = (ext) => {
         const clean = String(ext || '').toLowerCase();
@@ -43,8 +52,8 @@ function normalizeStoredImageUrl(value) {
         return clean;
     };
 
-    const matchAbsolute = url.match(/^https?:\/\/[^/]+(\/.*)$/i);
-    const pathOnly = matchAbsolute ? matchAbsolute[1] : url;
+    const matchAbsolute = limitedUrl.match(/^https?:\/\/[^/]+(\/.*)$/i);
+    const pathOnly = matchAbsolute ? matchAbsolute[1] : limitedUrl;
 
     const uploadsMatch = pathOnly.match(/^\/?uploads\/(site-(?:hero|about)-[a-z0-9-]+)\.([a-z0-9+]+)$/i);
     if (uploadsMatch) return `/assets/img/${uploadsMatch[1]}.${normalizeExt(uploadsMatch[2])}`;
@@ -53,15 +62,18 @@ function normalizeStoredImageUrl(value) {
     if (assetsMatch) return `/assets/img/${assetsMatch[1]}.${normalizeExt(assetsMatch[2])}`;
 
     if (pathOnly.startsWith('/assets/img/')) return pathOnly;
-    return url;
+    return limitedUrl;
 }
 
 function sanitizeImageHistory(list) {
     if (!Array.isArray(list)) return [];
     const unique = [];
     for (const item of list) {
+        // Não inclui base64 no histórico (é muito grande e não precisa manter histórico disso)
+        if (String(item || '').startsWith('data:image/')) continue;
+        
         const normalized = normalizeStoredImageUrl(item);
-        if (!normalized) continue;
+        if (!normalized || normalized.startsWith('data:image/')) continue;
         if (!unique.includes(normalized)) unique.push(normalized);
         if (unique.length >= 10) break;
     }
@@ -74,8 +86,9 @@ function updateImageHistory(currentHistory, currentUrl, nextUrl) {
     const fromConfig = sanitizeImageHistory(currentHistory);
     const result = [];
 
-    if (normalizedNext) result.push(normalizedNext);
-    if (normalizedCurrent && normalizedCurrent !== normalizedNext) result.push(normalizedCurrent);
+    // Não adiciona base64 ao histórico, apenas URLs normais
+    if (normalizedNext && !normalizedNext.startsWith('data:image/')) result.push(normalizedNext);
+    if (normalizedCurrent && normalizedCurrent !== normalizedNext && !normalizedCurrent.startsWith('data:image/')) result.push(normalizedCurrent);
 
     for (const item of fromConfig) {
         if (item !== normalizedNext && item !== normalizedCurrent) {

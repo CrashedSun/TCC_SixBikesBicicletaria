@@ -189,6 +189,7 @@
             .page-intro h2 { font-size: 1.05rem; }
         }
     </style>
+    <script src="assets/js/runtime-config.js"></script>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light shadow">
@@ -418,6 +419,19 @@
             return true;
         }
 
+        function isDataUrl(u) {
+            return typeof u === 'string' && u.startsWith('data:image/');
+        }
+
+        function formatImageLabel(u) {
+            if (!u) return 'Imagem atual: nao definida';
+            if (isDataUrl(u)) {
+                const preview = u.slice(0, 60).replace(/\s+/g, '');
+                return `Imagem atual: (base64) ${preview}...`;
+            }
+            return `Imagem atual: ${u}`;
+        }
+
         function fillForm(data) {
             FIELDS.forEach((k) => {
                 const el = document.getElementById(k);
@@ -436,7 +450,7 @@
             }
             const heroCurrent = document.getElementById('heroImageCurrent');
             if (heroCurrent) {
-                heroCurrent.textContent = data?.heroImageUrl ? `Imagem atual: ${data.heroImageUrl}` : 'Imagem atual: nao definida';
+                heroCurrent.textContent = formatImageLabel(data?.heroImageUrl);
             }
 
             fillHistorySelect('heroImageHistory', data?.heroImageHistory || [], data?.heroImageUrl || '');
@@ -455,7 +469,7 @@
             }
             const aboutCurrent = document.getElementById('aboutImageCurrent');
             if (aboutCurrent) {
-                aboutCurrent.textContent = data?.aboutImageUrl ? `Imagem atual: ${data.aboutImageUrl}` : 'Imagem atual: nao definida';
+                aboutCurrent.textContent = formatImageLabel(data?.aboutImageUrl);
             }
 
             fillHistorySelect('aboutImageHistory', data?.aboutImageHistory || [], data?.aboutImageUrl || '');
@@ -675,17 +689,20 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('[DEBUG] DOMContentLoaded iniciado');
             if (!ensureOwner()) return;
 
             const heroPreview = document.getElementById('heroImagePreview');
             if (heroPreview) {
                 heroPreview.addEventListener('error', () => {
+                    console.warn('[DEBUG] Erro ao carregar heroImagePreview');
                     heroPreview.style.display = 'none';
                 });
             }
             const aboutPreview = document.getElementById('aboutImagePreview');
             if (aboutPreview) {
                 aboutPreview.addEventListener('error', () => {
+                    console.warn('[DEBUG] Erro ao carregar aboutImagePreview');
                     aboutPreview.style.display = 'none';
                 });
             }
@@ -693,11 +710,15 @@
             document.getElementById('btnReloadConfig').addEventListener('click', loadConfig);
 
             const chatToggle = document.getElementById('chatToggleSwitch');
+            console.log('[DEBUG] chatToggle encontrado:', !!chatToggle);
             if (chatToggle) {
                 chatToggle.addEventListener('change', async () => {
+                    console.log('[DEBUG] Toggle mudou para:', chatToggle.checked);
                     const enabled = chatToggle.checked;
                     try {
-                        await fetchAuthenticated('/config/chat', 'PUT', { atendimentoChatHabilitado: enabled });
+                        console.log('[DEBUG] Enviando PUT /config/chat com:', { atendimentoChatHabilitado: enabled });
+                        const response = await fetchAuthenticated('/config/chat', 'PUT', { atendimentoChatHabilitado: enabled });
+                        console.log('[DEBUG] Resposta do PUT:', response);
                         const label = document.getElementById('chatToggleLabel');
                         if (label) label.textContent = enabled ? 'Habilitado' : 'Desabilitado';
                         const status = document.getElementById('kbStatus');
@@ -706,6 +727,7 @@
                             status.style.color = '#166534';
                         }
                     } catch (e) {
+                        console.error('[DEBUG] Erro no PUT:', e);
                         chatToggle.checked = !enabled;
                         const status = document.getElementById('kbStatus');
                         if (status) {

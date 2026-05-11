@@ -39,7 +39,8 @@ class UsuarioRepository {
         } catch (error) {
             // Em caso de erro de DB, lance a exceção
             console.error("ERRO NO REPOSITÓRIO:", error.message);
-            throw new Error("Falha na busca de credenciais no banco.");
+            const detail = error && error.message ? ` Detalhes: ${error.message}` : '';
+            throw new Error(`Falha na busca de credenciais no banco.${detail}`);
         }
     }
 

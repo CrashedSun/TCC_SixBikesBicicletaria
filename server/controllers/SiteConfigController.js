@@ -10,6 +10,8 @@ function getPublicBaseUrl(req) {
 
 function toAbsoluteIfNeeded(req, url) {
     if (!url || typeof url !== 'string') return '';
+    // Se for base64, deixa como está (é conteúdo embutido)
+    if (url.startsWith('data:image/')) return url;
     if (/^https?:\/\//i.test(url)) return url;
     if (url.startsWith('/assets/img/') || url.startsWith('/uploads/')) return `${getPublicBaseUrl(req)}${url}`;
     return url;
@@ -17,6 +19,8 @@ function toAbsoluteIfNeeded(req, url) {
 
 function normalizeLegacyUploadUrl(url) {
     if (!url || typeof url !== 'string') return url;
+    // Se for base64, deixa como está
+    if (url.startsWith('data:image/')) return url;
 
     const normalizeExt = (ext) => {
         const clean = String(ext || '').toLowerCase();
@@ -137,15 +141,21 @@ class SiteConfigController {
         try {
             const payload = { ...(req.body || {}) };
 
-            // Fluxo de upload igual produtos/servicos: recebe base64 + nome e grava arquivo fisico.
-            if (payload.heroImageBase64) {
-                payload.heroImageUrl = saveImageFromBase64(payload.heroImageBase64, payload.heroImageName, 'site-hero');
+            // Salva base64 diretamente (igual produtos/serviços), não converte em arquivo
+            if (payload.heroImageBase64 && typeof payload.heroImageBase64 === 'string') {
+                if (!payload.heroImageBase64.startsWith('data:image/')) {
+                    return res.status(400).json({ error: 'Formato de imagem hero inválido' });
+                }
+                payload.heroImageUrl = payload.heroImageBase64;
             } else if (payload.heroImageUrl) {
                 payload.heroImageUrl = normalizeIncomingImageUrl(payload.heroImageUrl);
             }
 
-            if (payload.aboutImageBase64) {
-                payload.aboutImageUrl = saveImageFromBase64(payload.aboutImageBase64, payload.aboutImageName, 'site-about');
+            if (payload.aboutImageBase64 && typeof payload.aboutImageBase64 === 'string') {
+                if (!payload.aboutImageBase64.startsWith('data:image/')) {
+                    return res.status(400).json({ error: 'Formato de imagem about inválido' });
+                }
+                payload.aboutImageUrl = payload.aboutImageBase64;
             } else if (payload.aboutImageUrl) {
                 payload.aboutImageUrl = normalizeIncomingImageUrl(payload.aboutImageUrl);
             }

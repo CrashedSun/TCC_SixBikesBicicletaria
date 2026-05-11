@@ -200,6 +200,7 @@
             flex: 1;
         }
     </style>
+    <script src="assets/js/runtime-config.js"></script>
 </head>
 
 <body>
@@ -1817,10 +1818,10 @@ function loadPage(page) {
                             const cab = data.reserva || {};
                             const itens = data.itens || [];
                             reservaAtual = { id: cab.idReserva ?? cab.idreserva ?? id, itens: itens.map(it => ({
-                                idProduto: it.idProduto ?? it.idproduto,
-                                nomeProduto: it.nomeProduto ?? it.nomeproduto,
-                                quantidade: it.quantidade,
-                                valorUnitario: it.valorUnitario
+                                idProduto: it.idProduto ?? it.idproduto ?? it.id_produto,
+                                nomeProduto: it.nomeProduto ?? it.nomeproduto ?? it.nome_produto,
+                                quantidade: Number(it.quantidade ?? 1),
+                                valorUnitario: Number(it.valorUnitario ?? it.valorunitario ?? it.valor_unitario ?? 0)
                             })) };
                             document.getElementById('reservaInfo').innerHTML = `Reserva #${reservaAtual.id} - Cliente: ${cab.nomeCliente ?? cab.nomecliente ?? ''}`;
                             renderItensModal(reservaAtual.itens);

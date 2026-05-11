@@ -21,6 +21,7 @@
     .logout-link { cursor:pointer; }
     .readonly { background:#e9ecef; }
   </style>
+  <script src="assets/js/runtime-config.js"></script>
 </head>
 <body>
   <!-- Header -->
@@ -330,8 +331,8 @@
         if(nova.length < 6){ status.textContent='Nova senha muito curta.'; status.style.color='red'; return; }
         if(nova !== conf){ status.textContent='Senha e confirmação diferentes.'; status.style.color='red'; return; }
         try {
-          // não temos endpoint que valide senha atual; assume token válido e apenas envia nova senha.
-          const resp = await fetchAuthenticated('/senha', 'PUT', { senha: nova });
+          // Endpoint correto no backend para trocar senha do usuário logado
+          const resp = await fetchAuthenticated('/usuarios/me/trocar-senha', 'PUT', { senha: nova });
           status.textContent = resp.message || 'Senha alterada.';
           status.style.color = 'green';
           document.getElementById('senhaAtual').value='';

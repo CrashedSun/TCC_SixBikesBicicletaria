@@ -27,3 +27,76 @@ npm run dev:backend
 
 # Terminal 2
 npm run dev:frontend
+
+
+
+
+====================================================================
+
+
+
+Como prosseguir (inicialização e uso)
+
+Subir tudo
+Na raiz do projeto Six Bikes:
+npm run docker:up
+Ou:
+docker compose up -d --build
+Ver logs
+npm run docker:logs
+Ou logs de um serviço:
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f db
+Acessar aplicação
+Frontend: http://localhost:3000/index.html
+API: http://localhost:8080
+Parar ambiente
+npm run docker:down
+Ou:
+docker compose down
+Resetar banco (quando precisar recriar do zero)
+Atenção: apaga dados persistidos
+docker compose down -v
+docker compose up -d --build
+Observação importante
+
+O script criaçãodb.sql roda apenas na primeira criação do volume do Postgres. Se você alterar esse SQL depois, precisa resetar volume para reaplicar.
+
+Credenciais seed (dinâmicas)
+
+No seed de usuário, a senha inicial NÃO fica hardcoded em hash fixo.
+A senha é gerada dinamicamente a partir do e-mail: parte antes do @.
+Exemplos:
+- proprietario@sixbikes.com -> senha: proprietario
+- gerente@sixbikes.com -> senha: gerente
+- atendente@sixbikes.com -> senha: atendente
+- mecanico@sixbikes.com -> senha: mecanico
+
+Obs.: para perfis de funcionário, o campo trocar_senha inicia como true para forçar troca no primeiro acesso.
+Próximos passos para migração Google Cloud
+
+Separar segredo do banco e JWT em Secret Manager (em vez de arquivo env em produção).
+Migrar banco para Cloud SQL PostgreSQL.
+Escolher runtime:
+Cloud Run para backend e frontend em serviços separados.
+Banco fora do compose (Cloud SQL).
+Publicar imagem em Artifact Registry e fazer deploy por CI/CD.
+
+
+
+
+
+Para voltar o sistema para fresh start no Docker, com apenas os dados padrão do seed, faça assim:
+
+Pare e remova os containers + volume do banco
+Comando:
+docker compose down -v
+
+Suba tudo novamente reconstruindo
+Comando:
+docker compose up -d --build
+
+(Opcional) confira se os serviços subiram
+Comando:
+docker compose ps

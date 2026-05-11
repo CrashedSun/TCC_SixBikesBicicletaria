@@ -7,6 +7,9 @@ const NotificationSystem = (() => {
     let toastContainer = null;
     let ticketBadgeCount = 0;
     let messageBadgeCount = 0;
+    // Dedupe: evita mostrar a mesma notificação várias vezes em curto intervalo
+    const _recentNotifications = new Set();
+    const _dedupeTTL = 5000; // ms
 
     function ensureContainer() {
         if (toastContainer) return;
@@ -69,6 +72,10 @@ const NotificationSystem = (() => {
         const assunto = ticket?.assunto_resumido || ticket?.assunto || ticket?.titulo || 'Sem assunto';
         const ticketId = ticket?.idTicket || ticket?.id_ticket || ticket?.id || 'novo';
         const msg = `🎫 Novo ticket: ${nomeCliente}\n"${assunto}"`;
+        const tag = `ticket-${ticketId}`;
+        if (_recentNotifications.has(tag)) return;
+        _recentNotifications.add(tag);
+        setTimeout(() => { _recentNotifications.delete(tag); }, _dedupeTTL);
         showToast(msg, 'success', 8000);
         
         if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
@@ -85,6 +92,10 @@ const NotificationSystem = (() => {
     function showMessageAlert(ticketId, senderName, preview) {
         const safePreview = String(preview || '');
         const msg = `💬 Mensagem de ${senderName}: ${safePreview.substring(0, 50)}${safePreview.length > 50 ? '...' : ''}`;
+        const tag = `message-${ticketId}-${safePreview.substring(0,50)}`;
+        if (_recentNotifications.has(tag)) return;
+        _recentNotifications.add(tag);
+        setTimeout(() => { _recentNotifications.delete(tag); }, _dedupeTTL);
         showToast(msg, 'info', 6000);
         
         if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {

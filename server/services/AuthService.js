@@ -82,7 +82,11 @@ class AuthService {
                 userAgent: meta.userAgent,
             });
 
-            const appBase = (process.env.APP_PUBLIC_URL || 'http://localhost:3000').replace(/\/$/, '');
+            // Usar a URL do site passada pelo controller (detectada dinamicamente)
+            const appBase = (meta.frontendUrl || process.env.APP_PUBLIC_URL).replace(/\/$/, '');
+            if (!appBase) {
+                throw new Error('URL do site não configurada. Configure APP_PUBLIC_URL ou acesse através da URL correta.');
+            }
             const resetLink = `${appBase}/redefinir-senha.html?token=${encodeURIComponent(rawToken)}`;
 
             await EmailService.sendPasswordResetEmail({

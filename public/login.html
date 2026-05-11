@@ -17,13 +17,27 @@
     <link rel="stylesheet" href="assets/css/fontawesome.min.css">
 
     <style>
+        html, body {
+            height: 100% !important;
+            min-height: 100vh !important;
+            min-height: -webkit-fill-available !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
         body {
-            background-color: #f8f9fa;
+            background-color: #f8f9fa !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 20px !important;
+            box-sizing: border-box !important;
         }
 
         .login-box {
+            width: 100%;
             max-width: 400px;
-            margin: 80px auto;
             background: #fff;
             border-radius: 10px;
             box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.05);
@@ -36,19 +50,20 @@
         }
 
         .btn-success {
-            background-color: #59ab6e;
-            border-color: #59ab6e;
+            background-color: #59ab6e !important;
+            border-color: #59ab6e !important;
         }
 
         .btn-success:hover {
-            background-color: #46915a;
-            border-color: #46915a;
+            background-color: #46915a !important;
+            border-color: #46915a !important;
         }
     </style>
+    <script src="assets/js/runtime-config.js"></script>
 </head>
 
 <body>
-    <div class="container">
+    <div>
         <div class="login-box position-relative">
             <a href="index.html" class="btn btn-sm btn-outline-success position-absolute top-0 end-0 m-2" title="Voltar para Home">
                 &larr; Home
@@ -143,12 +158,10 @@
             performLogin(email, senha, nova); // Segundo passo com novaSenha
         });
     </script>
+    <script>
+        // Corrige altura no WebView Android
+        document.documentElement.style.height = window.innerHeight + 'px';
+        document.body.style.height = window.innerHeight + 'px';
+    </script>
 </body>
 </html>
-
-
-
-
-
-
-

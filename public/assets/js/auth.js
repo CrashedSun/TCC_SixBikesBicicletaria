@@ -1,8 +1,21 @@
 // public/assets/js/auth.js (Código completo)
 
 // Exponha a URL base da API globalmente e mantenha uma cópia local
-// Usa o hostname atual para funcionar em qualquer dispositivo na rede
-window.API_BASE_URL = window.API_BASE_URL || (window.location.protocol + '//' + window.location.hostname + ':8080/api');
+function resolveApiBaseUrl() {
+    const configured = String(window.API_BASE_URL || '').trim().replace(/\/$/, '');
+    if (configured) return configured;
+
+    const host = String(window.location.hostname || '').trim();
+    if (host.includes('run.app') && host.includes('sixbikes-frontend')) {
+        const backendHost = host.replace('sixbikes-frontend', 'sixbikes-backend');
+        return `${window.location.protocol}//${backendHost}/api`;
+    }
+
+    // Fallback local (desenvolvimento)
+    return `${window.location.protocol}//${window.location.hostname}:8080/api`;
+}
+
+window.API_BASE_URL = resolveApiBaseUrl();
 const API_BASE_URL = window.API_BASE_URL;
 const API_CACHE_PREFIX = 'cache:api:';
 const API_CACHE_TTL_MS = 15 * 1000;
@@ -247,7 +260,8 @@ function invalidateApiCacheByScope(scope) {
         clientes: ['/clientes'],
         funcionarios: ['/funcionarios'],
         usuarios: ['/usuarios'],
-        'site-config': ['/site-config']
+        'site-config': ['/site-config'],
+        'config-chat': ['/config/chat']
     };
 
     const related = prefixes[scope] || [];
@@ -408,6 +422,7 @@ async function fetchAuthenticated(url, method = 'GET', body = null, options = {}
                 : pathNoBase.startsWith('/funcionarios') ? 'funcionarios'
                 : pathNoBase.startsWith('/usuarios') ? 'usuarios'
                 : pathNoBase.startsWith('/site-config') ? 'site-config'
+                : pathNoBase.startsWith('/config/chat') ? 'config-chat'
                 : null;
             if (scopeByPath) invalidateApiCacheByScope(scopeByPath);
         }
@@ -421,11 +436,24 @@ async function fetchAuthenticated(url, method = 'GET', body = null, options = {}
 
 // Canal SSE autenticado para receber triggers incrementais do backend
 window.openRealtimeStream = function openRealtimeStream(onEvent) {
+    // Reuse existing EventSource if already open to avoid multiple connections
+    if (window.__realtimeEventSource && window.__realtimeEventSource.readyState !== EventSource.CLOSED) {
+        const existing = window.__realtimeEventSource;
+        if (typeof onEvent === 'function') {
+            // Attach the onEvent via sb:realtime listener to reuse the single stream
+            const handler = (ev) => { try { onEvent(ev.detail); } catch (e) { console.warn('onEvent handler error:', e); } };
+            window.addEventListener('sb:realtime', handler);
+            // Return the existing EventSource and keep listener attached (no automatic removal)
+        }
+        return existing;
+    }
+
     const token = localStorage.getItem('userToken');
     const streamUrl = token
         ? `${API_BASE_URL}/realtime/stream?token=${encodeURIComponent(token)}`
         : `${API_BASE_URL}/realtime/stream`;
     const es = new EventSource(streamUrl);
+    window.__realtimeEventSource = es;
 
     es.onmessage = (event) => {
         try {

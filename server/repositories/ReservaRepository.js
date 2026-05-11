@@ -86,8 +86,11 @@ class ReservaRepository {
               JOIN usuario u ON u.id = r.idcliente
              WHERE r.idreserva = $1`;
            const itensSQL = `
-              SELECT ir.idreserva, ir.idproduto, ir.quantidade, ir.valorunitario,
-                    p.nome as nomeproduto
+              SELECT ir.idreserva AS "idReserva",
+                     ir.idproduto AS "idProduto",
+                     ir.quantidade AS "quantidade",
+                     ir.valorunitario AS "valorUnitario",
+                     p.nome AS "nomeProduto"
                 FROM itemreserva ir
                 JOIN produto p ON p.idproduto = ir.idproduto
                WHERE ir.idreserva = $1
@@ -106,7 +109,8 @@ class ReservaRepository {
             const insertItemSQL = 'INSERT INTO itemreserva (idReserva, idProduto, quantidade, valorUnitario) VALUES ($1,$2,$3,$4)';
             for (const it of itens) {
                 const qtd = parseInt(it.quantidade, 10) || 1;
-                const val = typeof it.valorUnitario === 'number' ? it.valorUnitario : parseFloat(String(it.valorUnitario||'0').replace(',','.')) || 0;
+                const rawValor = it.valorUnitario ?? it.valorunitario ?? it.valor_unitario;
+                const val = typeof rawValor === 'number' ? rawValor : parseFloat(String(rawValor || '0').replace(',', '.')) || 0;
                 await client.query(insertItemSQL, [idReserva, it.idProduto, qtd, val]);
             }
             if (client.query) await client.query('COMMIT');

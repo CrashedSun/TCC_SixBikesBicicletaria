@@ -47,6 +47,9 @@ class AuthController {
 
             return res.status(200).json(authData);
         } catch (error) {
+            const mensagem = String(error?.message || '');
+            const falhaBanco = /banco|postgres|credenciais no banco|comunica[cç][aã]o com o banco|ECONNREFUSED|ETIMEDOUT|ENOTFOUND/i.test(mensagem);
+
             try {
                 await AuditoriaRepository.create({
                     requestId: req.requestId,
@@ -66,7 +69,12 @@ class AuthController {
                 });
                 req.__loginAuditHandled = true;
             } catch (_) {}
-            return res.status(401).json({ error: error.message || 'Falha ao autenticar.' });
+
+            if (falhaBanco) {
+                return res.status(500).json({ error: mensagem || 'Falha na comunicação com o banco de dados.' });
+            }
+
+            return res.status(401).json({ error: mensagem || 'Falha ao autenticar.' });
         }
     }
 
@@ -89,9 +97,17 @@ class AuthController {
         }
 
         try {
+            // Construir URL base do FRONTEND dinamicamente a partir do request
+            // Se backend está em "backend", substitui por "frontend" no hostname
+            let host = req.get('host') || 'localhost:3000';
+            host = host.replace('sixbikes-backend', 'sixbikes-frontend').replace(':8080', '');
+            const protocol = req.protocol || 'https';
+            const frontendUrl = `${protocol}://${host}`;
+
             const result = await AuthService.requestPasswordReset(email, {
                 ip: req.ip,
                 userAgent: req.get('user-agent') || null,
+                frontendUrl: frontendUrl,
             });
 
             try {

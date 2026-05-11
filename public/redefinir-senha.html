@@ -24,6 +24,7 @@
         .btn-success { background-color: #59ab6e; border-color: #59ab6e; }
         .btn-success:hover { background-color: #46915a; border-color: #46915a; }
     </style>
+    <script src="assets/js/runtime-config.js"></script>
 </head>
 <body>
     <div class="container">
@@ -93,7 +94,8 @@
             statusEl.textContent = 'Redefinindo senha...';
 
             try {
-                const response = await fetch('http://localhost:8080/api/auth/recuperar-senha/confirmar', {
+                const endpoint = (window.API_BASE_URL || 'http://localhost:8080/api').replace(/\/api\/?$/, '') + '/api/auth/recuperar-senha/confirmar';
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ token, senha })

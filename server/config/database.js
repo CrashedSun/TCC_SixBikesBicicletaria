@@ -7,26 +7,54 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 class DatabaseConfig {
     constructor() {
         if (!DatabaseConfig.instance) {
-            this.pool = new Pool({
-                user: process.env.DB_USER, 
-                host: process.env.DB_HOST,
-                database: process.env.DB_NAME, 
-                password: process.env.DB_PASSWORD, 
-                port: process.env.DB_PORT,
-            });
-
-            this._rawPoolQuery = this.pool.query.bind(this.pool);
-            this._inFlightProcessMap = new Map();
-            this._processHistory = [];
-            this._maxHistoryEntries = 300;
-
-            // Envolve a query da pool para garantir rastreio/processamento centralizado.
-            this.pool.query = (sql, params) => {
-                return this.query(sql, params, { source: 'pool' });
-            };
-
+            this.initializePool();
             DatabaseConfig.instance = this;
         }
+        return DatabaseConfig.instance;
+    }
+
+    async initializePool() {
+        // O Cloud Run injeta DB_PASSWORD via secret/env; não dependemos de Secret Manager no boot.
+        const dbPassword = process.env.DB_PASSWORD;
+        const dbHost = process.env.DB_POOLER_HOST || process.env.DB_HOST;
+        const dbUser = process.env.DB_POOLER_USER || process.env.DB_USER;
+
+        const poolConfig = {
+            user: dbUser, 
+            host: dbHost,
+            database: process.env.DB_NAME, 
+            password: dbPassword, 
+            port: process.env.DB_PORT,
+            family: 4,
+        };
+
+        // Adiciona SSL quando usando Supabase
+        if (process.env.DB_SSL === 'true' || dbHost?.includes('supabase')) {
+            poolConfig.ssl = {
+                rejectUnauthorized: false
+            };
+            // Quando usamos o pooler da Supabase é necessário fornecer SNI (servername)
+            // apontando para o host do projeto (DB_HOST) para que o pooler identifique o tenant.
+            if (process.env.DB_POOLER_HOST) {
+                poolConfig.ssl.servername = process.env.DB_HOST || dbHost;
+            }
+        }
+
+        console.log(`[DATABASE] Conectando em ${dbHost} como ${dbUser} (${process.env.DB_NAME || 'postgres'})`);
+
+        this.pool = new Pool(poolConfig);
+
+        this._rawPoolQuery = this.pool.query.bind(this.pool);
+        this._inFlightProcessMap = new Map();
+        this._processHistory = [];
+        this._maxHistoryEntries = 300;
+
+        // Envolve a query da pool para garantir rastreio/processamento centralizado.
+        this.pool.query = (sql, params) => {
+            return this.query(sql, params, { source: 'pool' });
+        };
+
+        DatabaseConfig.instance = this;
         return DatabaseConfig.instance;
     }
 

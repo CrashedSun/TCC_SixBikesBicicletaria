@@ -19,6 +19,7 @@
 
     <!-- Load map styles -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="" />
+    <script src="assets/js/runtime-config.js"></script>
 </head>
 
 <body>
@@ -147,7 +148,7 @@
         const messages = document.getElementById('chatMessages');
         const input = document.getElementById('chatInput');
         const sendBtn = document.getElementById('sendBtn');
-        const API_BASE = `${window.location.protocol}//${window.location.hostname}:8080/api`;
+        const API_BASE = window.API_BASE_URL || `${window.location.protocol}//${window.location.hostname}:8080/api`;
 
         let atendimentoHabilitado = true;
         let currentTicketId = null;
@@ -289,9 +290,16 @@
         function exibirKB() {
             messages.innerHTML = '';
             addMsg('Olá! 👋 Bem-vindo à SixBikes Bicicletaria! Veja se encontra sua resposta abaixo ou fale com nosso atendente.', 'system', 'Sistema');
+
+            if (!atendimentoHabilitado) {
+                addMsg('Atendimento por chat está indisponível no momento. Tente novamente mais tarde.', 'system', 'Sistema');
+            }
             
             if (conhecimentoItems.length === 0) {
-                addMsg('Nenhuma resposta pré-cadastrada disponível. Clique no botão abaixo para falar com um atendente.', 'system', 'Sistema');
+                const emptyKbText = atendimentoHabilitado
+                    ? 'Nenhuma resposta pré-cadastrada disponível. Clique no botão abaixo para falar com um atendente.'
+                    : 'Nenhuma resposta pré-cadastrada disponível no momento.';
+                addMsg(emptyKbText, 'system', 'Sistema');
             } else {
                 const kbList = document.createElement('div');
                 kbList.className = 'mt-1';
@@ -303,7 +311,8 @@
             divAtendente.className = 'mt-3 pt-3 border-top';
             const btnAtendente = document.createElement('button');
             btnAtendente.className = 'btn btn-success w-100';
-            btnAtendente.textContent = '💬 Falar com um Atendente';
+            btnAtendente.textContent = atendimentoHabilitado ? '💬 Falar com um Atendente' : 'Atendimento por chat indisponível';
+            btnAtendente.disabled = !atendimentoHabilitado;
             btnAtendente.onclick = abrirTicket;
             divAtendente.appendChild(btnAtendente);
             messages.appendChild(divAtendente);
@@ -337,7 +346,8 @@
 
             const btnAtendente = document.createElement('button');
             btnAtendente.className = 'btn btn-success w-100 mt-1';
-            btnAtendente.textContent = '💬 Iniciar novo atendimento';
+            btnAtendente.textContent = atendimentoHabilitado ? '💬 Iniciar novo atendimento' : 'Atendimento por chat indisponível';
+            btnAtendente.disabled = !atendimentoHabilitado;
             btnAtendente.onclick = abrirTicket;
             section.appendChild(btnAtendente);
 
@@ -364,7 +374,8 @@
             btnBack.onclick = exibirKB;
             const btnAtendente = document.createElement('button');
             btnAtendente.className = 'btn btn-sm btn-success flex-grow-1';
-            btnAtendente.textContent = 'Falar com Atendente';
+            btnAtendente.textContent = atendimentoHabilitado ? 'Falar com Atendente' : 'Chat indisponível';
+            btnAtendente.disabled = !atendimentoHabilitado;
             btnAtendente.onclick = abrirTicket;
             divAcoes.appendChild(btnBack);
             divAcoes.appendChild(btnAtendente);
@@ -373,6 +384,12 @@
         }
 
         async function abrirTicket() {
+            if (!atendimentoHabilitado) {
+                input.disabled = true;
+                sendBtn.disabled = true;
+                addMsg('Atendimento por chat está indisponível no momento. Tente novamente mais tarde.', 'system', 'Sistema');
+                return;
+            }
             kbMode = false;
             input.disabled = false;
             sendBtn.disabled = false;
@@ -489,13 +506,17 @@
                 currentTicketStatus = String(ticketPreferencial.status || '').toUpperCase() || null;
                 currentChatToken = null;
                 kbMode = false;
-                input.disabled = false;
-                sendBtn.disabled = false;
+                const podeEnviar = atendimentoHabilitado && currentTicketStatus !== 'FECHADO';
+                input.disabled = !podeEnviar;
+                sendBtn.disabled = !podeEnviar;
                 if (currentTicketId) {
                     if (currentTicketStatus === 'FECHADO') {
                         addMsg(`Continuando o histórico do ticket #${currentTicketId} (fechado).`, 'system', 'Sistema');
                     } else {
                         addMsg(`Continuando o ticket #${currentTicketId}.`, 'system', 'Sistema');
+                    }
+                    if (!atendimentoHabilitado) {
+                        addMsg('Atendimento por chat está indisponível no momento. Você pode apenas visualizar o histórico deste ticket.', 'system', 'Sistema');
                     }
                     if (typeof window.clearUnreadTicket === 'function') {
                         window.clearUnreadTicket(currentTicketId);
